@@ -1,1 +1,66 @@
 /* You can add global styles to this file, and also import other style files */
+@use 'styles/colors' as *;
+
+/* Global reset i osnovni stilovi */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  background-color: $color-background; // prijatna bijela
+  color: $color-text-primary; // primarni tekst
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.page { padding-top: 86px; }
+
+a {
+  text-decoration: none;
+  color: $color-text-primary;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: $color-accent; // accent boja
+  }
+}
+
+ul, ol {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+input, textarea, select, button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #E5E5E5;
+}
+
+/* Utility classes */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}

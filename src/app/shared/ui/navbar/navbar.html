@@ -1,0 +1,67 @@
+<header class="nav-wrap" [class.nav-hidden]="_hidden()">
+  <div class="nav-inner">
+    <button class="menu-btn" type="button"
+            aria-label="Toggle menu"
+            [attr.aria-expanded]="mobileOpen"
+            aria-controls="side-menu"
+            (click)="toggleMenu()">
+      <img ngSrc="assets/images/icons/hamburger-menu.png" alt="Menu" class="menu-icon" height="512" width="512"/>
+    </button>
+
+    <div class="brand">Beatovic</div>
+
+    <a routerLink="/cart" class="cart-btn" aria-label="Cart">
+      <img ngSrc="assets/images/icons/shopping-bag.png" alt="Menu" class="menu-icon" height="512" width="512"/>
+    </a>
+  </div>
+
+  <!-- Backdrop -->
+  @if (mobileOpen) {
+    <div class="backdrop" (click)="closeMenu()"></div>
+  }
+
+  <!-- Side menu (uvijek dostupno, na svim uređajima) -->
+  <nav id="side-menu" class="mobile-menu" [class.open]="mobileOpen">
+    <!-- Lijevi panel: glavni meni -->
+    <div class="menu-col main">
+      <ul class="menu-list">
+        @for (item of menu; track item.label; let i = $index) {
+          @if (!item.children) {
+            <li>
+              <a class="menu-item" [routerLink]="item.link" (click)="closeMenu()">
+                <span class="label">{{ item.label }}</span>
+              </a>
+            </li>
+          } @else {
+            <li>
+              <button class="menu-item has-children" type="button"
+                      (click)="openSub(i)" [attr.aria-expanded]="activeParent() === i">
+                <span class="label">{{ item.label }}</span>
+                <span class="chev">›</span>
+              </button>
+            </li>
+          }
+        }
+      </ul>
+    </div>
+
+    <!-- Desni panel: podmeni -->
+    <div class="menu-col sub" [class.open]="activeParent() !== null">
+      <div class="submenu-header">
+        <button class="back-btn" type="button" (click)="closeSub()" aria-label="Back">‹</button>
+        <div class="submenu-title">{{ activeTitle() }}</div>
+        <div class="spacer"></div>
+      </div>
+
+      <ul class="submenu-list">
+        @for (child of activeChildren(); track child.label) {
+          <li>
+            <a [routerLink]="child.link" (click)="closeMenu()">
+              <span class="label">{{ child.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+  </nav>
+</header>
