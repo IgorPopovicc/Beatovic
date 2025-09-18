@@ -1,0 +1,41 @@
+<section class="hero"
+         (mouseenter)="pause()" (mouseleave)="resume()"
+         aria-roledescription="carousel"
+         aria-live="polite">
+
+  <!-- SLIDES -->
+  <div class="slides">
+    @for (s of slides; let i = $index; track i) {
+      <div class="slide" [class.active]="i === index()"
+           [attr.aria-hidden]="i === index() ? 'false' : 'true'">
+        <!-- Picture: mobilna slika ispred desktop varijante -->
+        <picture>
+          <source [srcset]="s.mobile" media="(max-width: 768px)" />
+          <img
+            ngSrc="{{ s.desktop }}"
+            [alt]="s.alt"
+            width="1920" height="600"
+            [sizes]="'(max-width:768px) 100vw, 100vw'"
+            loading="eager"
+          />
+        </picture>
+      </div>
+    }
+  </div>
+
+  <!-- KONTROLE -->
+  <button class="ctrl prev" type="button" (click)="prev()" aria-label="Previous slide">‹</button>
+  <button class="ctrl next" type="button" (click)="next()" aria-label="Next slide">›</button>
+
+  <!-- TAČKICE -->
+  <div class="dots">
+    @for (s of slides; let i = $index; track i) {
+      <button type="button"
+              class="dot"
+              [class.active]="i === index()"
+              (click)="go(i)"
+              [attr.aria-label]="'Go to slide ' + (i+1)">
+      </button>
+    }
+  </div>
+</section>

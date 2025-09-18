@@ -8,11 +8,50 @@
       <img ngSrc="assets/images/icons/hamburger-menu.png" alt="Menu" class="menu-icon" height="512" width="512"/>
     </button>
 
-    <div class="brand">Beatovic</div>
+    <div class="brand">
+      <img class="brand-logo" ngSrc="assets/images/logo/main-logo.png" alt="logo" height="72" width="232">
+    </div>
 
-    <a routerLink="/cart" class="cart-btn" aria-label="Cart">
-      <img ngSrc="assets/images/icons/shopping-bag.png" alt="Menu" class="menu-icon" height="512" width="512"/>
-    </a>
+    <div class="header-actions">
+      <!-- SEARCH WRAP (desktop/tablet inline) -->
+      <div class="search" [class.open]="searchOpen()">
+        <input
+          #searchInputInline
+          type="text"
+          class="search-input-inline"
+          placeholder="Pretražite ovde"
+          (keydown.escape)="closeSearch()"
+        />
+        <button
+          type="button"
+          class="search-btn"
+          aria-label="Search"
+          [attr.aria-expanded]="searchOpen()"
+          (click)="toggleSearch()">
+          <img ngSrc="assets/images/icons/search.png" alt="" class="menu-icon" width="512" height="512"/>
+        </button>
+      </div>
+
+      <!-- CART (ne diramo) -->
+      <a routerLink="/cart" class="cart-btn" aria-label="Cart">
+        <img ngSrc="assets/images/icons/shopping-bag.png" alt="Cart" class="menu-icon" width="512" height="512"/>
+      </a>
+    </div>
+
+    <!-- MOBILE FULL-WIDTH SEARCH BAR (stalno u DOM-u; samo klasa mijenja stanje) -->
+    <div class="search-mobile" [class.open]="searchOpen()">
+      <input
+        #searchInputMobile
+        type="text"
+        class="search-input-mobile"
+        placeholder="Pretražite ovde"
+        (keydown.escape)="closeSearch()"
+      />
+    </div>
+    <!-- backdrop samo za mob -->
+    @if (searchOpen() && isMobile) {
+      <div class="search-backdrop" (click)="closeSearch()"></div>
+    }
   </div>
 
   <!-- Backdrop -->

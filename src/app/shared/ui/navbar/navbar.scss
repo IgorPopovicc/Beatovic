@@ -1,13 +1,27 @@
 .nav-wrap {
   position: fixed; top: 0; left: 0; right: 0;
-  height: 86px; background:#FAFAFA; border-bottom:1px solid #E5E5E5;
+  height: 98px; background:#FAFAFA; border-bottom:1px solid #E5E5E5;
   display: flex; align-items:center; z-index:1000;
   transition: transform .2s ease-in-out;
 }
 .nav-wrap.nav-hidden { transform: translateY(-100%); }
 
 .nav-inner { width: 100%; display: flex; align-items: center; justify-content: space-between; margin: 0 40px }
-.brand { font-weight: 600; font-size: 1.1rem; }
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.brand-logo {
+  display: block;
+  height: auto;
+  width: 232px;
+  max-width: 40vw;
+  object-fit: contain;
+}
 
 .menu-btn {
   display: flex; width: 44px; height: 44px; border: none; background: none; cursor: pointer;
@@ -15,7 +29,52 @@
 }
 .menu-line { width: 22px; height: 2px; background: #111; margin: 3px 0; }
 
-.cart-btn { text-decoration: none; }
+.cart-btn {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.header-actions { display: flex; align-items: center; gap: 12px; }
+
+/* ============ DESKTOP/TABLET: inline input ============ */
+.search{ position: relative; display: flex; align-items: center; }
+.search-btn{ background: none; border: 0; cursor: pointer; padding: 0; }
+
+.search-input-inline{
+  height: 40px; width: 0; padding: 0; opacity: 0; pointer-events: none;
+  border: 1px solid #E5E5E5; background: #fff; color: #111; border-radius: 9999px;
+  outline: none; font: inherit;
+  transition: width 220ms ease, padding 220ms ease, opacity 160ms ease, margin 220ms ease;
+}
+.search.open .search-input-inline{
+  width: clamp(180px, 28vw, 420px);
+  padding: 0 14px; opacity: 1; pointer-events: auto; margin-right: 8px;
+}
+.search-input-inline:focus{ border-color: #BFA888; box-shadow: 0 0 0 3px rgba(191,168,136,.2); }
+
+/* ============ MOBILNI: full-width bar ispod headera ============ */
+/* visina headera je 86px */
+.search-mobile{
+  position: fixed; top: 86px; left: 0; right: 0;
+  padding: 10px 12px; background: #FAFAFA; border-bottom: 1px solid #E5E5E5;
+  transform: translateX(100%); transition: transform 240ms ease;
+  z-index: 1000; /* ispod headera (koji je 1000) ili 1001 ako treba iznad */
+  display: none; /* desktop: ne prikazuj mobilni bar */
+}
+.search-mobile.open{ transform: translateX(0); }
+
+.search-input-mobile{
+  width: 100%; height: 42px; border-radius: 9999px;
+  border: 1px solid #E5E5E5; background: #fff; color: #111;
+  padding: 0 14px; outline: none; font: inherit;
+}
+.search-input-mobile:focus{ border-color: #BFA888; box-shadow: 0 0 0 3px rgba(191,168,136,.2); }
+
+/* backdrop samo na mobu, da zatvori na klik */
+.search-backdrop{
+  position: fixed; inset: calc(86px + 62px) 0 0 0;  /* ispod bara */
+  background: rgba(0,0,0,.25); z-index: 999;
+}
 
 /* Backdrop za sve uređaje */
 .backdrop {
@@ -25,7 +84,7 @@
 
 /* ========== Dvokolonski drawer ========== */
 .mobile-menu {
-  position: fixed; top: 86px; left: 0; bottom: 0;
+  position: fixed; top: 98px; left: 0; bottom: 0;
   width: clamp(220px, 22vw, 300px);
   background: #FAFAFA; border-right: 1px solid #E5E5E5;
   display: flex;
@@ -72,7 +131,7 @@
   width: 36px; height: 36px; border: none; background: none; cursor: pointer;
   font-size: 20px; color: #111; border-radius: 8px;
 }
-.submenu-title { font-weight: 600; text-align: center; }
+.submenu-title { font-weight: 600; text-align: center; font-size: 20px }
 .spacer { width: 44px; } /* poravnanje */
 
 .submenu-list {
@@ -90,12 +149,13 @@
   padding: 12px 10px;
   color: #111; text-decoration: none;
   border-radius: 8px;
+  font-size: 20px;
 }
 .menu-item:hover,
 .submenu-list a:hover,
 .mobile-menu a:hover { background: rgba(0,0,0,.05); }
 
-.menu-item.has-children .chev { font-size: 18px; }
+.menu-item.has-children .chev { font-size: 24px; }
 
 /* Ikonice */
 .menu-icon {
@@ -134,6 +194,10 @@
     width: calc(100% - 300px);
     border-left: 1px solid #E5E5E5;
   }
+
+  .brand-logo {
+    width: 180px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -151,5 +215,16 @@
     border-left: none;
     border-right: none;
     transform: translateX(100%);
+  }
+
+  .brand-logo {
+    width: 140px;
+  }
+
+  .search-input-inline {
+    display: none;
+  }
+  .search-mobile {
+    display: block;
   }
 }

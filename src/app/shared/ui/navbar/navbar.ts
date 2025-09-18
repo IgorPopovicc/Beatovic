@@ -1,4 +1,14 @@
-import { Component, computed, HostListener, inject, PLATFORM_ID, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  ElementRef,
+  HostListener,
+  inject,
+  OnInit,
+  PLATFORM_ID,
+  signal,
+  ViewChild
+} from '@angular/core';
 import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 
@@ -11,13 +21,19 @@ import { Router, RouterLink } from '@angular/router';
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss'
 })
-export class Navbar {
+export class Navbar implements OnInit {
   private platformId = inject(PLATFORM_ID);
   private _lastY = 0;
   private _threshold = 80;
   private router = inject(Router);
   _hidden = signal(false);
   mobileOpen = false;
+
+  searchOpen = signal(false);
+  isMobile = false;
+
+  @ViewChild('searchInputInline') searchInputInline?: ElementRef<HTMLInputElement>;
+  @ViewChild('searchInputMobile') searchInputMobile?: ElementRef<HTMLInputElement>;
 
   menu: MenuItem[] = [
     { label: 'Home', link: '/' },
@@ -34,6 +50,24 @@ export class Navbar {
     { label: 'Account', link: '/account' }
   ];
 
+  ngOnInit() {
+    if (isPlatformBrowser(this.platformId)) {
+      const mq = window.matchMedia('(max-width: 768px)');
+      this.isMobile = mq.matches;
+      mq.addEventListener?.('change', e => this.isMobile = e.matches);
+    }
+  }
+
+  toggleSearch() {
+    this.searchOpen.update(v => !v);
+    // fokusiraj odgovarajući input nakon sljedećeg tick-a
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => {
+        (this.isMobile ? this.searchInputMobile : this.searchInputInline)?.nativeElement.focus();
+      }, 0);
+    }
+  }
+  closeSearch() { this.searchOpen.set(false); }
 
   activeParent = signal<number | null>(null);
 
