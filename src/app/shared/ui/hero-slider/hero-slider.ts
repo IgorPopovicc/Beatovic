@@ -1,10 +1,12 @@
-import { Component, OnDestroy, OnInit, Signal, signal, effect, inject } from '@angular/core';
+import {Component, OnDestroy, OnInit, signal, effect, inject, Injector} from '@angular/core';
 import { NgOptimizedImage, isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID } from '@angular/core';
 
 type Slide = {
   alt: string;
   desktop: string;
+  desktopW: number;
+  desktopH: number;
   mobile: string;
 };
 
@@ -18,11 +20,19 @@ type Slide = {
 export class HeroSlider
   implements OnInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
+  private injector = inject(Injector);
+
+  private autoRestart = effect(() => {
+    this.index();
+    if (!this.paused()) {
+      this.restartTimer();
+    }
+  }, { injector: this.injector });
 
   slides: Slide[] = [
-    { alt: 'Poklon popust 2000 RSD', desktop: 'assets/images/banner/banner.webp', mobile: 'assets/images/banner/banner-mobile.jpg' },
-    { alt: 'Nova kolekcija',         desktop: 'assets/images/banner/banner.webp', mobile: 'assets/images/banner/banner-mobile.jpg' },
-    { alt: 'Popusti do 50%',         desktop: 'assets/images/banner/banner.webp', mobile: 'assets/images/banner/banner-mobile.jpg' },
+    { alt: 'Poklon popust 2000 RSD', desktop: 'assets/images/banner/banner.webp', desktopW: 1920, desktopH: 600, mobile: 'assets/images/banner/banner-mobile.jpg' },
+    { alt: 'Nova kolekcija',         desktop: 'assets/images/banner/banner.webp', desktopW: 1920, desktopH: 600, mobile: 'assets/images/banner/banner-mobile.jpg' },
+    { alt: 'Popusti do 50%',         desktop: 'assets/images/banner/banner.webp', desktopW: 1920, desktopH: 600, mobile: 'assets/images/banner/banner-mobile.jpg' },
   ];
 
   index = signal(0);
@@ -33,9 +43,6 @@ export class HeroSlider
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.startTimer();
-      effect(() => {
-        this.index(); if (!this.paused()) this.restartTimer();
-      });
     }
   }
 

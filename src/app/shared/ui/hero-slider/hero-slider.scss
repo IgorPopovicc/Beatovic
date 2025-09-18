@@ -26,13 +26,18 @@
 .slides{ position: absolute; inset: 0; }
 .slide{
   position: absolute; inset: 0;
-  opacity: 0; transform: scale(1.02);
-  transition: opacity .6s ease, transform .8s ease;
-  will-change: opacity, transform;
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity .6s, transform .8s;
 }
 .slide.active{ opacity: 1; transform: scale(1); }
 .slide img{
   width: 100%; height: 100%; object-fit: cover; display: block;
+}
+
+.slides .slide:first-child{
+  opacity: 1;
+  transform: scale(1);
 }
 
 /* KONTROLE */
