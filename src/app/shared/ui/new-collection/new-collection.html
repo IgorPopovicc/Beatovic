@@ -1,0 +1,35 @@
+<section class="promo-video">
+  <!-- VIDEO BACKGROUND -->
+  <div class="video-wrap">
+    <video
+      class="bg-video"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="metadata"
+    >
+      <source src="assets/media/videos/test.mp4"  type="video/mp4" />
+    </video>
+    <div class="overlay"></div>
+  </div>
+
+  <!-- SADRŽAJ -->
+  <div class="content">
+    <div class="panel left">
+      <h2>Nova kolekcija trčanja</h2>
+      <p>Lagane, prozračne tkanine i poboljšana podrška.</p>
+      <a class="btn" routerLink="/catalog/running">Istraži novu kolekciju</a>
+    </div>
+
+    <div class="panel right">
+      <section class="product-grid">
+        @for (p of (products || []); track p.id) {
+          <app-product-card [product]="p"></app-product-card>
+        } @empty {
+          <div class="empty">Nema proizvoda.</div>
+        }
+      </section>
+    </div>
+  </div>
+</section>

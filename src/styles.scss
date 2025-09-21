@@ -1,7 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 @use 'styles/colors' as *;
+@import url('https://fonts.googleapis.com/css2?family=Genos:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
-/* Global reset i osnovni stilovi */
 * {
   margin: 0;
   padding: 0;
@@ -10,9 +10,9 @@
 
 html, body {
   height: 100%;
-  font-family: 'Helvetica Neue', Arial, sans-serif;
-  background-color: $color-background; // prijatna bijela
-  color: $color-text-primary; // primarni tekst
+  font-family: 'Poppins', sans-serif !important;
+  background-color: $color-background;
+  color: $color-text-primary;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -57,10 +57,21 @@ hr {
   border-top: 1px solid #E5E5E5;
 }
 
-/* Utility classes */
 .container {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1rem;
 }
+
+.product-grid {
+  display: grid;
+  gap: 26px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.product-grid app-product-card { height: 100%; }
+
+@media (max-width: 768px){
+  .product-grid { grid-template-columns: repeat(2, 1fr); }
+}
+

@@ -1,0 +1,41 @@
+<article class="card" [routerLink]="['/product', product.slug]" aria-label="{{ product.name }}">
+  <div class="media">
+    @if (product.discountLabel || percentOff) {
+      <span class="badge">
+        {{ product.discountLabel || percentOff }}
+      </span>
+    }
+
+    <picture>
+      <source [srcset]="product.image.mobile" media="(max-width: 768px)" />
+      <img
+        [ngSrc]="product.image.desktop"
+        [alt]="product.image.alt"
+        [width]="product.image.w"
+        [height]="product.image.h"
+        [sizes]="'(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw'"
+        [priority]="product.priority === true"
+        [attr.loading]="product.priority ? null : 'lazy'"
+      />
+    </picture>
+  </div>
+
+  <div class="body">
+    <h3 class="name">{{ product.name }}</h3>
+
+    @if (product.subtitle) {
+      <p class="subtitle">{{ product.subtitle }}</p>
+    }
+
+    <div class="price-row">
+      @if (hasDiscount) {
+        <span class="old-price">
+          {{ product.oldPrice! | number:'1.0-0' }} {{ product.currency || 'RSD' }}
+        </span>
+      }
+      <span class="price">
+        {{ product.price | number:'1.0-0' }} {{ product.currency || 'RSD' }}
+      </span>
+    </div>
+  </div>
+</article>
