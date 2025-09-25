@@ -5,13 +5,15 @@
     "ng": "ng",
     "start": "ng serve",
     "start:ssr": "ng run Beatovic:serve-ssr",
-    "build": "ng build && ng run Beatovic:server",
-    "build:prod": "ng build --configuration production && ng run Beatovic:server:production",
+    "build": "ng build --configuration production && ng run Beatovic:server:production",
+    "build:dev": "ng build && ng run Beatovic:server",
     "serve:ssr": "node dist/Beatovic/server/server.mjs",
     "vercel-build": "npm run build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "print:proj": "node -e \"console.log(Object.keys(require('./angular.json').projects))\""
   },
+  "engines": { "node": "20.x" },
   "prettier": {
     "printWidth": 100,
     "singleQuote": true,
