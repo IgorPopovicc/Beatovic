@@ -1,59 +1,81 @@
-# Beatovic
+# Beatovic 👜👟
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.2.2.
+**Beatovic** is an **SSR e-commerce application** for a boutique, built with **Angular 20** (standalone components, signals, modern `@if`/`@for` blocks) and deployed on **Vercel**.  
+The backend is implemented in **Spring Boot**, exposing REST APIs for products, collections, and orders.
 
-## Development server
+--------------------
 
-To start a local development server, run:
+## 🚀 Development
 
-```bash
-ng serve
-```
+Start the local dev server:
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+npm install
+npm start
+Open http://localhost:4200 in your browser.
+The app will automatically reload on source file changes.
 
-## Code scaffolding
+--------------------
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Run with SSR locally (server-side rendering):
 
-```bash
-ng generate component component-name
-```
+Copy code
+npm run build:prod
+npm run serve:ssr
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+--------------------
 
-```bash
-ng generate --help
-```
+📦 Build
+Create a production build:
 
-## Building
+Copy code
+npm run build:prod
 
-To build the project run:
+Build output is located in:
 
-```bash
-ng build
-```
+dist/Beatovic/browser → static client assets
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+dist/Beatovic/server/server.mjs → SSR server entrypoint
 
-## Running unit tests
+🌐 Deployment (Vercel)
+This project is configured for deployment on Vercel.
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+In your Vercel Project Settings, set:
 
-```bash
-ng test
-```
+Build Command: npm run vercel-build
 
-## Running end-to-end tests
+Output Directory: dist/Beatovic/browser
 
-For end-to-end (e2e) testing, run:
+Install Command: npm install
 
-```bash
-ng e2e
-```
+Node.js Version: 20.19
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+The included vercel.json routes all requests to dist/Beatovic/server/server.mjs for SSR rendering.
 
-## Additional Resources
+🛠️ Project Structure
+src/app/shared/ui → shared UI components (navbar, hero slider, product card, discount slider, etc.)
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+src/app/features → domain-specific features (catalog, cart, account, etc.)
+
+src/styles.scss → global styles, resets, colors, and typography
+
+src/assets → images, icons, and media (banners, promo videos, etc.)
+
+🧪 Testing
+Run unit tests:
+
+bash
+Copy code
+npm test
+End-to-end (e2e) testing framework is not included in this repo (planned for Cypress/Playwright).
+
+📖 Tech Stack
+Angular 20 (standalone components, signals, SSR)
+
+NgOptimizedImage for image optimization
+
+SCSS with modern layout techniques (CSS Grid, Flexbox, clamp, aspect-ratio)
+
+Spring Boot backend API
+
+🔖 Version
+Current app version: 0.0.1
