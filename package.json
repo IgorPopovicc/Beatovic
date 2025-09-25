@@ -1,13 +1,16 @@
 {
   "name": "beatovic",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "start:ssr": "ng run Beatovic:serve-ssr",
+    "build": "ng build && ng run Beatovic:server",
+    "build:prod": "ng build --configuration production && ng run Beatovic:server:production",
+    "serve:ssr": "node dist/Beatovic/server/server.mjs",
+    "vercel-build": "npm run build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "serve:ssr:Beatovic": "node dist/Beatovic/server/server.mjs"
+    "test": "ng test"
   },
   "prettier": {
     "printWidth": 100,

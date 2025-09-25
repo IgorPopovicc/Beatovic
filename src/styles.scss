@@ -6,6 +6,14 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+*:focus {
+  outline: none !important;
+}
+*:focus-visible {
+  outline: none !important;
 }
 
 html, body {
@@ -16,6 +24,7 @@ html, body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 .page { padding-top: 98px; }
@@ -64,12 +73,23 @@ hr {
   padding: 0 1rem;
 }
 
+.container-fluid {
+  width: 100%;
+  margin: 0 20px;
+  padding: 0 1rem;
+}
+
 .product-grid {
   display: grid;
   gap: 26px;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 .product-grid app-product-card { height: 100%; }
+
+.hero .overlay,
+.promo-video .overlay {
+  pointer-events: none;   /* VEOMA bitno */
+}
 
 @media (max-width: 768px){
   .product-grid { grid-template-columns: repeat(2, 1fr); }

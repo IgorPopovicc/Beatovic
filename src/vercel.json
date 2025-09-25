@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "dist/Beatovic/server/server.mjs", "use": "@vercel/node" },
+    { "src": "dist/Beatovic/browser/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/assets/(.*)", "dest": "dist/Beatovic/browser/assets/$1" },
+    { "src": "/(.*)", "dest": "dist/Beatovic/server/server.mjs" }
+  ]
+}

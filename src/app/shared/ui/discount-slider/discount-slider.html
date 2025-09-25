@@ -1,0 +1,14 @@
+<section class="discount-slider" aria-label="Proizvodi na popustu">
+    <h2 class="title">Na popustu</h2>
+    <div class="viewport">
+        <div class="discount-products" #scroller>
+            @for (p of (products || []); track p.id) {
+                <div class="discount-item">
+                    <app-product-card [product]="p"></app-product-card>
+                </div>
+            } @empty {
+                <div class="empty">Nema proizvoda.</div>
+            }
+        </div>
+    </div>
+</section>

@@ -20,8 +20,8 @@ export class NewCollection {
     "price":3499,
     "currency":"RSD",
     "image":{
-      "desktop":"assets/images/products/test.webp",
-      "mobile":"assets/images/products/test.webp",
+      "desktop":"assets/images/products/test5.webp",
+      "mobile":"assets/images/products/test5.webp",
       "w":960,"h":1280,
       "alt":"Kappa Patike Marlon, plave, muške"
     },
@@ -36,8 +36,8 @@ export class NewCollection {
       "currency":"RSD",
       "discountLabel":"36%",
       "image":{
-        "desktop":"assets/images/products/test.webp",
-        "mobile":"assets/images/products/test.webp",
+        "desktop":"assets/images/products/test4.webp",
+        "mobile":"assets/images/products/test4.webp",
         "w":960,"h":1280,
         "alt":"Kappa Patike Marlon, plave, muške"
       }
