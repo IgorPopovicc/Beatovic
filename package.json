@@ -3,12 +3,12 @@
   "version": "0.0.1",
   "scripts": {
     "ng": "ng",
+
     "start": "ng serve",
-    "start:ssr": "ng run Beatovic:serve-ssr",
-    "build": "ng build --configuration production && ng run Beatovic:server:production",
-    "build:dev": "ng build && ng run Beatovic:server",
+    "build": "ng build",
+    "build:prod": "ng build --configuration production",
     "serve:ssr": "node dist/Beatovic/server/server.mjs",
-    "vercel-build": "npm run build",
+    "vercel-build": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "print:proj": "node -e \"console.log(Object.keys(require('./angular.json').projects))\""
