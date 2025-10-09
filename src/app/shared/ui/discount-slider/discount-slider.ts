@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, OnDestroy, ViewChild} from '@angular/core';
+import { Component } from '@angular/core';
 import {ProductCardComponent} from '../product-card/product-card';
 
 @Component({
@@ -9,67 +9,7 @@ import {ProductCardComponent} from '../product-card/product-card';
   templateUrl: './discount-slider.html',
   styleUrl: './discount-slider.scss'
 })
-export class DiscountSlider implements AfterViewInit, OnDestroy {
-
-  @ViewChild('scroller', { static: true }) scroller!: ElementRef<HTMLDivElement>;
-
-  private dragging = false;
-  private moved = false;
-  private startX = 0;
-  private startScroll = 0;
-  private THRESHOLD = 6;
-
-  private cleanup?: () => void;
-
-  ngAfterViewInit() {
-    const el = this.scroller.nativeElement;
-
-    const onDown = (e: PointerEvent) => {
-      this.dragging = true;
-      this.moved = false;
-      this.startX = e.clientX;
-      this.startScroll = el.scrollLeft;
-      el.setPointerCapture(e.pointerId);
-      el.classList.add('grabbing');
-    };
-
-    const onMove = (e: PointerEvent) => {
-      if (!this.dragging) return;
-      const dx = e.clientX - this.startX;
-      if (Math.abs(dx) > this.THRESHOLD) this.moved = true;
-      el.scrollLeft = this.startScroll - dx;
-    };
-
-    const onUp = (e: PointerEvent) => {
-      this.dragging = false;
-      try { el.releasePointerCapture(e.pointerId); } catch {}
-      el.classList.remove('grabbing');
-    };
-
-    el.addEventListener('pointerdown', onDown);
-    el.addEventListener('pointermove', onMove);
-    el.addEventListener('pointerup', onUp);
-    el.addEventListener('pointercancel', onUp);
-
-    const onClickCapture = (ev: Event) => {
-      if (this.moved) {
-        ev.preventDefault();
-        ev.stopPropagation();
-        queueMicrotask(() => (this.moved = false));
-      }
-    };
-    el.addEventListener('click', onClickCapture, true);
-
-    this.cleanup = () => {
-      el.removeEventListener('pointerdown', onDown);
-      el.removeEventListener('pointermove', onMove);
-      el.removeEventListener('pointerup', onUp);
-      el.removeEventListener('pointercancel', onUp);
-      el.removeEventListener('click', onClickCapture, true);
-    };
-  }
-
-  ngOnDestroy() { this.cleanup?.(); }
+export class DiscountSlider {
 
   products = [{
     "id":"1",
