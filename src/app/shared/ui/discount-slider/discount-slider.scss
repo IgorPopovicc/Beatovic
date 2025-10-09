@@ -7,13 +7,16 @@
   padding-inline: 12px;
 }
 
+.viewport {
+  overflow-x: scroll;
+  -webkit-overflow-scrolling: auto;
+  scroll-behavior: smooth;
+}
+
 .discount-products {
   display: flex;
   flex-direction: row;
   gap: 16px;
-  overflow-x: scroll;
-  -webkit-overflow-scrolling: auto;
-  scroll-behavior: smooth;
 }
 
 .discount-title {
