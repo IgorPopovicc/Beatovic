@@ -8,15 +8,18 @@
 }
 
 .viewport {
-  overflow-x: scroll;
-  -webkit-overflow-scrolling: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  touch-action: pan-x;
 }
 
 .discount-products {
-  display: flex;
-  flex-direction: row;
-  gap: 16px;
+  display: inline-flex;
+  gap: var(--gap);
+  padding-inline: var(--gutter);
 }
 
 .discount-title {
@@ -37,16 +40,17 @@
   }
 }
 
-.discount-item{
-  flex: 0 0 calc((100% - 5*16px)/6);
-  min-width: unset !important;
+.discount-item {
+  flex: 0 0 calc((100% - 5*var(--gap)) / 6);
+  scroll-snap-align: start;
 }
 
 @media (max-width: 1279px){
   .discount-products {
     gap: 24px;
   }
-  .discount-item { flex-basis: calc((100% - 2*16px)/3); }
+
+  .discount-item { flex-basis: calc((100% - 2*var(--gap)) / 3); }
 
   .discount-title {
     h2 {
@@ -66,7 +70,8 @@
   .discount-products {
     gap: 16px;
   }
-  .discount-item { flex-basis: calc((100% - 1*16px)/2); }
+
+  .discount-item { flex-basis: calc((100% - 1*var(--gap)) / 2); }
 
   .discount-title {
     h2 {
@@ -142,14 +147,3 @@
   user-drag: none;
   pointer-events: none;
 }
-
-@media (hover: hover){
-  .discount-products{ overflow-x: hidden; }
-  .discount-products:hover{ overflow-x: auto; }
-  .discount-products::-webkit-scrollbar{ height:8px; }
-  .discount-products::-webkit-scrollbar-thumb{
-    background: rgba(0,0,0,.25); border-radius: 4px;
-  }
-  .discount-products::-webkit-scrollbar-track{ background: transparent; }
-}
-
