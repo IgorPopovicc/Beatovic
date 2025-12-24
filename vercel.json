@@ -3,5 +3,14 @@
   "routes": [
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "dist/Beatovic/server/server.mjs" }
+  ],
+  "functions": {
+    "api/ssr.ts": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://euroleague-tiebreaker.com/api/$1" },
+    { "source": "/(.*)", "destination": "/api/ssr" }
   ]
 }
