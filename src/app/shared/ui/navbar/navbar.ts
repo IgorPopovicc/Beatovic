@@ -7,25 +7,32 @@ import {
   OnInit,
   PLATFORM_ID,
   signal,
-  ViewChild
+  ViewChild,
 } from '@angular/core';
 import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { CatalogApiService } from '../../../core/api/catalog-api.sevice';
+import { toLabel, toSlug } from '../../../core/api/catalog-slug';
+import {CartStore} from '../../../core/cart/cart.store';
 
 @Component({
   selector: 'app-navbar',
-  imports: [
-    RouterLink,
-    NgOptimizedImage
-  ],
+  imports: [RouterLink, NgOptimizedImage],
   templateUrl: './navbar.html',
-  styleUrl: './navbar.scss'
+  styleUrl: './navbar.scss',
 })
 export class Navbar implements OnInit {
   private platformId = inject(PLATFORM_ID);
+  private router = inject(Router);
+  private catalogApi = inject(CatalogApiService);
+  private cart = inject(CartStore);
+
+  cartCount = computed(() => this.cart.itemsCount());
+
   private _lastY = 0;
   private _threshold = 80;
-  private router = inject(Router);
+
   _hidden = signal(false);
   mobileOpen = false;
 
@@ -35,63 +42,95 @@ export class Navbar implements OnInit {
   @ViewChild('searchInputInline') searchInputInline?: ElementRef<HTMLInputElement>;
   @ViewChild('searchInputMobile') searchInputMobile?: ElementRef<HTMLInputElement>;
 
-  menu: MenuItem[] = [
-    { label: 'Home', link: '/' },
-    {
-      label: 'Shop',
-      children: [
-        { label: 'New In', link: '/catalog/new' },
-        { label: 'Bags', link: '/catalog/bags' },
-        { label: 'Accessories', link: '/catalog/accessories' },
-        { label: 'Sale', link: '/catalog/sale' },
-      ]
-    },
-    { label: 'About', link: '/about' },
-    { label: 'Account', link: '/account' }
-  ];
+  // Dinamički menu (signal)
+  menu = signal<MenuItem[]>([
+    { label: 'Početna', link: '/' },
+    // ostatak se puni iz API
+  ]);
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
       const mq = window.matchMedia('(max-width: 768px)');
       this.isMobile = mq.matches;
-      mq.addEventListener?.('change', e => this.isMobile = e.matches);
+      mq.addEventListener?.('change', (e) => (this.isMobile = e.matches));
     }
+
+    this.loadDynamicMenu();
+  }
+
+  private loadDynamicMenu() {
+    const pol$ = this.catalogApi.getCategoryIdByName('POL');
+    const kat$ = this.catalogApi.getCategoryIdByName('KATEGORIJA');
+
+    forkJoin([pol$, kat$]).subscribe(([polId, katId]) => {
+      if (!polId || !katId) return;
+
+      forkJoin([this.catalogApi.getCategoryValues(polId), this.catalogApi.getCategoryValues(katId)]).subscribe(
+        ([polValues, kategorije]) => {
+          const genderItems: MenuItem[] = polValues.map((g) => {
+            const genderSlug = toSlug(g.value);
+
+            const children = kategorije.map((k) => {
+              const categorySlug = toSlug(k.value);
+              return {
+                label: toLabel(k.value),
+                link: `/catalog/${genderSlug}/${categorySlug}`,
+              };
+            });
+
+            return {
+              label: toLabel(g.value),
+              children,
+            };
+          });
+
+          const base: MenuItem[] = [{ label: 'Početna', link: '/' }, ...genderItems, { label: 'Brendovi', link: '/brands' }];
+
+          this.menu.set(base);
+        }
+      );
+    });
   }
 
   toggleSearch() {
-    this.searchOpen.update(v => !v);
-    // fokusiraj odgovarajući input nakon sljedećeg tick-a
+    this.searchOpen.update((v) => !v);
+
     if (isPlatformBrowser(this.platformId)) {
       setTimeout(() => {
         (this.isMobile ? this.searchInputMobile : this.searchInputInline)?.nativeElement.focus();
       }, 0);
     }
   }
-  closeSearch() { this.searchOpen.set(false); }
+
+  closeSearch() {
+    this.searchOpen.set(false);
+  }
 
   activeParent = signal<number | null>(null);
 
   activeTitle = computed(() => {
     const idx = this.activeParent();
-    return idx === null ? '' : this.menu[idx].label;
+    const list = this.menu();
+    return idx === null ? '' : list[idx]?.label ?? '';
   });
 
   activeChildren = computed(() => {
     const idx = this.activeParent();
-    return idx === null ? [] : (this.menu[idx].children ?? []);
+    const list = this.menu();
+    return idx === null ? [] : list[idx]?.children ?? [];
   });
 
   openSub(i: number) {
-    if (this.menu[i]?.children) this.activeParent.set(i);
+    if (this.menu()[i]?.children) this.activeParent.set(i);
   }
+
   closeSub() {
     this.activeParent.set(null);
   }
 
-  // Ako želiš programatsku navigaciju za stavke bez linka:
   go(url: string) {
     this.closeMenu();
-    this.router.navigateByUrl(url).then(r => console.log(r));
+    this.router.navigateByUrl(url);
   }
 
   @HostListener('window:scroll')
@@ -99,15 +138,12 @@ export class Navbar implements OnInit {
     if (!isPlatformBrowser(this.platformId)) return;
     const y = window.scrollY || document.documentElement.scrollTop || 0;
 
-    // sakrij kad idemo naniže preko praga; prikaži kad idemo naviše ili smo blizu vrha
     const goingDown = y > this._lastY;
     const nearTop = y < this._threshold;
 
-    if (nearTop) {
-      this._hidden.set(false);
-    } else {
-      this._hidden.set(goingDown);
-    }
+    if (nearTop) this._hidden.set(false);
+    else this._hidden.set(goingDown);
+
     this._lastY = y;
   }
 
@@ -119,10 +155,14 @@ export class Navbar implements OnInit {
   closeMenu() {
     this.mobileOpen = false;
     this.lockBodyScroll(false);
+    this.closeSub();
   }
 
   @HostListener('document:keydown.escape')
-  onEsc() { this.closeMenu(); }
+  onEsc() {
+    this.closeMenu();
+    this.closeSearch();
+  }
 
   private lockBodyScroll(lock: boolean) {
     if (typeof window === 'undefined') return;

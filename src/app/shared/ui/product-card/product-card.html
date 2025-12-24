@@ -1,4 +1,9 @@
-<article class="card" [routerLink]="['/product', product.slug]" aria-label="{{ product.name }}">
+<article
+  class="card"
+  [routerLink]="['/product', product.slug]"
+  [state]="{ product: product }"
+  aria-label="{{ product.name }}"
+>
   <div class="media">
     @if (product.discountLabel || percentOff) {
       <span class="badge">

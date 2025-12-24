@@ -27,7 +27,16 @@ html, body {
   overflow-x: hidden;
 }
 
-.page { padding-top: 98px; }
+app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page {
+  padding-top: 98px;
+  flex: 1 1 auto;
+}
 
 a {
   text-decoration: none;

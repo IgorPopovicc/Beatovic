@@ -1,0 +1,150 @@
+<section class="pd" aria-label="Detalji proizvoda">
+  @if (loading()) {
+    <div class="state">Učitavanje...</div>
+  } @else if (notFound()) {
+    <div class="state">
+      <div class="state-title">Proizvod nije pronađen.</div>
+      <a routerLink="/" class="state-link">Nazad na početnu</a>
+    </div>
+  } @else {
+    @if (product(); as p) {
+      <div class="pd-grid">
+        <div class="gallery" aria-label="Galerija slika">
+          <div
+            class="stage"
+            (touchstart)="onTouchStart($event)"
+            (touchmove)="onTouchMove($event)"
+            (touchend)="onTouchEnd($event)"
+          >
+            @if (activeImage(); as img) {
+              <picture class="stage-img">
+                <source [srcset]="img.mobile" media="(max-width: 768px)" />
+                <img
+                  [ngSrc]="img.desktop"
+                  [alt]="img.alt"
+                  [width]="img.w"
+                  [height]="img.h"
+                  [sizes]="'(max-width: 768px) 92vw, 55vw'"
+                  priority
+                />
+              </picture>
+            }
+
+            <button class="nav prev" type="button" (click)="prev()" aria-label="Prethodna slika">‹</button>
+            <button class="nav next" type="button" (click)="next()" aria-label="Sledeća slika">›</button>
+
+            @if (hasDiscount()) {
+              <div class="badge">{{ percentOff() }}</div>
+            }
+          </div>
+
+          <div class="thumbs" aria-label="Thumbnails">
+            @for (img of gallery(); track img.desktop; let i = $index) {
+              <button
+                type="button"
+                class="thumb"
+                [class.active]="activeIndex() === i"
+                (click)="setActive(i)"
+                aria-label="Odaberi sliku {{ i + 1 }}"
+              >
+                <img
+                  [ngSrc]="img.mobile"
+                  [alt]="img.alt"
+                  width="90"
+                  height="90"
+                />
+              </button>
+            }
+          </div>
+        </div>
+
+        <aside class="buy">
+          <div class="buy-card">
+            @if (p.sku) {
+              <div class="sku">Šifra artikla <strong>{{ p.sku }}</strong></div>
+            }
+
+            <h1 class="title">{{ p.name }}</h1>
+
+            @if (p.subtitle) {
+              <div class="subtitle">{{ p.subtitle }}</div>
+            }
+
+            <div class="price">
+              <div class="current">{{ p.price | number:'1.0-0' }} {{ p.currency || 'RSD' }}</div>
+              @if (hasDiscount()) {
+                <div class="old">{{ p.oldPrice! | number:'1.0-0' }} {{ p.currency || 'RSD' }}</div>
+              }
+            </div>
+
+            <div class="meta">
+              <div class="meta-row">
+                <span class="meta-label">Brend</span>
+                <span class="meta-value">{{ p.brand }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Dostupnost</span>
+                <span class="meta-value" [class.ok]="p.inStock !== false" [class.no]="p.inStock === false">
+                  {{ p.inStock === false ? 'Nema na stanju' : 'Na stanju' }}
+                </span>
+              </div>
+            </div>
+
+            @if ((p.sizes?.length || 0) > 0) {
+              <div class="sizes">
+                <div class="sizes-head">
+                  <div class="sizes-title">Veličina</div>
+                  <div class="sizes-hint">Odaberi veličinu</div>
+                </div>
+
+                <div class="sizes-grid">
+                  @for (s of (p.sizes ?? []); track s) {
+                    <button
+                      type="button"
+                      class="size"
+                      [class.active]="selectedSize() === (''+s)"
+                      (click)="selectSize((''+s))"
+                    >
+                      {{ s }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="cta">
+              <button
+                type="button"
+                class="add"
+                (click)="addToCart()"
+                [disabled]="p.inStock === false || ((p.sizes?.length || 0) > 0 && !selectedSize())"
+              >
+                Dodaj u korpu
+              </button>
+
+              <button type="button" class="wish" aria-label="Dodaj u omiljene">♡</button>
+            </div>
+
+            @if (p.shortDescription) {
+              <div class="desc">
+                <div class="desc-title">Opis</div>
+                <p class="desc-text">{{ p.shortDescription }}</p>
+
+                <div class="brand-box">
+                  <span class="brand-label">Brend</span>
+
+                  <img
+                    class="brand-logo"
+                    [src]="'assets/images/brands/' + p.brand.toLowerCase() + '.svg'"
+                    [alt]="p.brand"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </aside>
+      </div>
+    }
+  }
+</section>

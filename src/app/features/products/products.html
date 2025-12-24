@@ -1,0 +1,182 @@
+<section class="catalog" aria-label="Pregled proizvoda">
+  <!-- MOBILE TOP BAR -->
+  <div class="catalog-topbar">
+    <button class="filters-btn" type="button" (click)="openFilters()">
+      Filteri
+    </button>
+
+    <div class="results">
+      {{ totalCount() }} proizvoda
+    </div>
+
+    <div class="sort">
+      <label class="sort-label">Sortiraj prema</label>
+      <select class="sort-select" [value]="sortKey()" (change)="setSort(($any($event.target)).value)">
+        <option value="novo">Novo</option>
+        <option value="cijena_rastuce">Cijena: rastuće</option>
+        <option value="cijena_opadajuce">Cijena: opadajuće</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="catalog-grid">
+    <aside class="filters" [class.open]="filtersOpen()">
+      <div class="filters-head">
+        <div class="filters-title">Filteri</div>
+        <button type="button" class="filters-close" (click)="closeFilters()" aria-label="Zatvori filtere">×</button>
+      </div>
+
+      <div class="filters-body">
+        <div class="filter-block">
+          <div class="filter-title">Sekcija</div>
+          <div class="muted">{{ heading() }}</div>
+        </div>
+
+        <div class="filter-block">
+          <div class="filter-title">Dostupno</div>
+          <label class="check">
+            <input type="checkbox" [checked]="onlyInStock()" (change)="setInStock(($any($event.target)).checked)" />
+            <span>Na stanju</span>
+          </label>
+        </div>
+
+        <div class="filter-block">
+          <div class="filter-title">Na popustu</div>
+          <label class="check">
+            <input type="checkbox" [checked]="onlySale()" (change)="setSale(($any($event.target)).checked)" />
+            <span>Na akciji</span>
+          </label>
+        </div>
+
+        <div class="filter-block">
+          <div class="filter-title">Brend</div>
+
+          <div class="brand-list">
+            @for (b of availableBrands(); track b.brand) {
+              <label class="check">
+                <input
+                  type="checkbox"
+                  [checked]="selectedBrands().has(b.brand)"
+                  (change)="toggleBrand(b.brand)"
+                />
+                <span>{{ b.brand }} ({{ b.count }})</span>
+              </label>
+            } @empty {
+              <div class="muted">Nema brendova.</div>
+            }
+          </div>
+        </div>
+
+        <div class="filter-block">
+          <div class="filter-title">Veličina</div>
+
+          <div class="sizes">
+            @for (s of availableSizes(); track s.size) {
+              <button
+                type="button"
+                class="size-pill"
+                [class.active]="selectedSizes().has(s.size)"
+                (click)="toggleSize(s.size)">
+                {{ s.size }}
+              </button>
+            } @empty {
+              <div class="muted">Nema veličina.</div>
+            }
+          </div>
+        </div>
+
+        <div class="filter-block">
+          <div class="filter-title">Cijena</div>
+
+          <div class="price-row">
+            <input class="price-input" type="number" [value]="minPrice() ?? ''" placeholder="Min" #minP />
+            <input class="price-input" type="number" [value]="maxPrice() ?? ''" placeholder="Max" #maxP />
+          </div>
+
+          <div class="price-actions">
+            <button type="button" class="btn" (click)="applyPrice(minP.value, maxP.value)">Primijeni</button>
+            <button
+              type="button"
+              class="btn ghost"
+              (click)="clearPrice(); minP.value=''; maxP.value=''">
+              Reset
+            </button>
+          </div>
+
+          <div class="muted">
+            Raspon: {{ priceBounds().min | number:'1.0-0' }} – {{ priceBounds().max | number:'1.0-0' }} RSD
+          </div>
+        </div>
+
+        <div class="filter-block">
+          <button type="button" class="btn full" (click)="resetFilters(false)">
+            Očisti filtere
+          </button>
+        </div>
+
+        <div class="filter-block mobile-only">
+          <button type="button" class="btn full" (click)="closeFilters()">
+            Primijeni i zatvori
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    @if (filtersOpen()) {
+      <div class="filters-backdrop" (click)="closeFilters()"></div>
+    }
+
+    <main class="results-area">
+      <div class="results-head">
+        <div class="left">
+          <div class="count">{{ totalCount() }} proizvoda</div>
+          <div class="sub">{{ heading() }}</div>
+        </div>
+
+        <div class="sort">
+          <label class="sort-label">Sortiraj prema</label>
+          <select class="sort-select" [value]="sortKey()" (change)="setSort(($any($event.target)).value)">
+            <option value="novo">Novo</option>
+            <option value="cijena_rastuce">Cijena: rastuće</option>
+            <option value="cijena_opadajuce">Cijena: opadajuće</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="products-grid">
+        @for (p of pagedProducts(); track p.id) {
+          <app-product-card [product]="p" ></app-product-card>
+        } @empty {
+          <div class="empty-state" role="status" aria-live="polite">
+            <div class="empty-card">
+              <div class="empty-icon" aria-hidden="true">🛍️</div>
+
+              <div class="empty-title">Nema proizvoda</div>
+              <div class="empty-text">
+                Trenutno nema proizvoda za izabrane filtere. Pokušaj da ukloniš neke filtere ili promijeniš sortiranje.
+              </div>
+
+              <button type="button" class="btn ghost empty-cta" (click)="resetFilters(false)">
+                Očisti filtere
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="pagination" *ngIf="totalCount() > 0">
+        <button class="page-btn" type="button" (click)="goPage(page() - 1)" [disabled]="page() === 1">
+          Prethodna
+        </button>
+
+        <div class="page-info">
+          Strana {{ page() }} / {{ totalPages() }}
+        </div>
+
+        <button class="page-btn" type="button" (click)="goPage(page() + 1)" [disabled]="page() === totalPages()">
+          Sledeća
+        </button>
+      </div>
+    </main>
+  </div>
+</section>

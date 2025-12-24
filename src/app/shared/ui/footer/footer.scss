@@ -1,0 +1,123 @@
+.footer {
+  background-color: #FAFAFA;
+  color: #010101;
+  font-family: 'Inter', sans-serif;
+
+  .footer-bar {
+    height: 6px;
+    width: 100%;
+    background-color: #ee2e24;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 40px;
+    max-width: 1200px;
+    margin: 40px auto 20px;
+    padding: 0 20px;
+    text-align: center;
+  }
+
+  .footer-section.logo {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .footer-section h4 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #010101;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .footer-section img {
+    width: 160px;
+  }
+
+  .footer-section a {
+    display: block;
+    margin: 6px 0;
+    color: #010101;
+    text-decoration: none;
+    font-size: 15px;
+    transition: color 0.3s;
+  }
+
+  .footer-section a:hover {
+    color: #3cd147;
+  }
+
+  .footer-section p {
+    font-size: 15px;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .icons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 10px;
+
+    .material-icons-outlined {
+      font-size: 28px;
+      color: #ee2e24;
+      transition: color 0.3s, transform 0.3s;
+    }
+
+    a:hover .material-icons-outlined {
+      color: #010101;
+      transform: scale(1.1);
+    }
+  }
+
+  .footer-bottom {
+    text-align: center;
+    padding: 20px 10px;
+    font-size: 14px;
+    background-color: #FAFAFA;
+    border-top: 1px solid #ee2e24;
+  }
+
+  @media (max-width: 600px) {
+    .footer-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.job-button {
+  margin-top: 12px;
+  display: inline-block;
+  background-color: #d5271d;
+  color: white !important;
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: #e04940;
+    color: black !important;
+  }
+}
+
+.footer-bottom a {
+  color: #ee2e24;
+  font-weight: 600;
+  text-decoration: underline;
+  transition: color 0.3s ease;
+}
+
+.footer-bottom a:hover {
+  color: #010101;
+  text-decoration: none;
+}
+

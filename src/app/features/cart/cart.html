@@ -1,0 +1,170 @@
+<section class="cart" aria-label="Korpa">
+  <div class="cart-header">
+    <h1>Korpa</h1>
+    @if (count() > 0) {
+      <div class="muted">{{ count() }} stavki</div>
+    }
+  </div>
+
+  @if (count() === 0) {
+    <div class="empty" role="status" aria-live="polite">
+      <div class="empty-card">
+        <div class="empty-top">
+          <div class="empty-icon" aria-hidden="true">🛒</div>
+          <div class="empty-badge">Korpa</div>
+        </div>
+
+        <div class="title">Korpa je prazna</div>
+        <div class="muted empty-text">
+          Dodaj proizvode iz kataloga i ovde će se pojaviti. Kada dodaš stavke, moći ćeš mijenjati količine i vidjeti ukupnu cijenu.
+        </div>
+
+        <div class="empty-actions">
+          <a class="btn primary" routerLink="/">Početna stranica</a>
+          <a class="btn ghost" routerLink="/brands">Brendovi</a>
+        </div>
+
+        <div class="empty-hints">
+          <div class="hint">
+            <div class="hint-ico" aria-hidden="true">🚚</div>
+            <div class="hint-txt">
+              <div class="hint-title">Dostava na adresu</div>
+              <div class="muted">u roku do 4 radna dana</div>
+            </div>
+          </div>
+
+          <div class="hint">
+            <div class="hint-ico" aria-hidden="true">🔁</div>
+            <div class="hint-txt">
+              <div class="hint-title">Zamjene i povrati</div>
+              <div class="muted">u roku od 14 dana</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="cart-grid">
+      <div class="table-card">
+        <div class="table-head">
+          <div>Proizvod</div>
+          <div class="right">Cijena</div>
+          <div class="center">Količina</div>
+          <div class="right">Ukupno</div>
+          <div class="icon-col"></div>
+        </div>
+
+        <div class="table-body">
+          @for (it of items(); track it.id) {
+            <div class="row">
+              <div class="product">
+                <div class="thumb">
+                  @if (it.image?.url) {
+                    <img [src]="it.image?.url" [alt]="it.image?.alt || it.name" loading="lazy" />
+                  } @else {
+                    <div class="thumb-ph"></div>
+                  }
+                </div>
+
+                <div class="meta">
+                  @if (it.sku) { <div class="sku">SKU {{ it.sku }}</div> }
+                  <div class="name">{{ it.name }}</div>
+                  @if (it.size) { <div class="muted">Veličina {{ it.size }}</div> }
+                </div>
+              </div>
+
+              <div class="right price">
+                {{ it.unitPrice.amount | number:'1.2-2' }} {{ it.unitPrice.currency }}
+              </div>
+
+              <div class="center qty">
+                <button class="qty-btn" type="button" (click)="cart.dec(it.id)" aria-label="Smanji">-</button>
+                <div class="qty-value">{{ it.qty }}</div>
+                <button class="qty-btn" type="button" (click)="cart.inc(it.id)" aria-label="Povećaj">+</button>
+              </div>
+
+              <div class="right total">
+                {{ (it.unitPrice.amount * it.qty) | number:'1.2-2' }} {{ it.unitPrice.currency }}
+              </div>
+
+              <div class="icon-col">
+                <button class="trash" type="button" (click)="cart.remove(it.id)" aria-label="Ukloni">
+                  🗑
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="table-foot">
+          <div class="sum-row">
+            <div class="label">UKUPNO:</div>
+            <div class="value">{{ subtotal().amount | number:'1.2-2' }} {{ subtotal().currency }}</div>
+          </div>
+
+          <div class="sum-row big">
+            <div class="label">UKUPNO SA PDV-OM:</div>
+            <div class="value">{{ total().amount | number:'1.2-2' }} {{ total().currency }}</div>
+          </div>
+
+          <div class="actions">
+            <a class="btn ghost" routerLink="/">NASTAVITE KUPOVATI</a>
+            <button class="btn primary" type="button">NAPLATA</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side-card">
+        <div class="free-ship">
+          <div class="free-title">
+            Za besplatnu dostavu nedostaje samo
+            <strong>{{ toFree().amount | number:'1.2-2' }} {{ toFree().currency }}</strong>
+          </div>
+
+          <div class="progress">
+            <div class="bar" [style.transform]="'scaleX(' + progress() + ')'"></div>
+          </div>
+
+          <div class="progress-labels">
+            <div>0</div>
+            <div>Besplatna dostava</div>
+          </div>
+        </div>
+
+        <div class="perks">
+          <div class="perk">
+            <div class="perk-ico">✅</div>
+            <div class="perk-txt">
+              <div class="perk-title">Dostava na adresi</div>
+              <div class="muted">u roku do 4 radna dana</div>
+            </div>
+          </div>
+
+          <div class="perk">
+            <div class="perk-ico">🚚</div>
+            <div class="perk-txt">
+              <div class="perk-title">Besplatna dostava</div>
+              <div class="muted">za porudžbine preko {{ cart.freeShippingThreshold().amount | number:'1.2-2' }}{{ cart.freeShippingThreshold().currency }}</div>
+            </div>
+          </div>
+
+          <div class="perk">
+            <div class="perk-ico">🔁</div>
+            <div class="perk-txt">
+              <div class="perk-title">Zamjene i povrati</div>
+              <div class="muted">u roku od 14 dana od prijema pošiljke</div>
+            </div>
+          </div>
+
+          <div class="perk">
+            <div class="perk-ico">🎟️</div>
+            <div class="perk-txt">
+              <div class="perk-title">Izvadi loyalty karticu</div>
+              <div class="muted">i uživaj u sakupljanju bodova</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  }
+</section>

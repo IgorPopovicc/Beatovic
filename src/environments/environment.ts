@@ -1,4 +1,5 @@
 export const environment = {
-  production: false,
-  apiBaseUrl: 'http://localhost:8080/api',
+  apiBaseUrl: 'https://euroleague-tiebreaker.com/api',
+  mediaProductBaseUrl: 'https://euroleague-tiebreaker.com/media/product/',
+  siteUrl: 'https://euroleague-tiebreaker.com/api',
 };

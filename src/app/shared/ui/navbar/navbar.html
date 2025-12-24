@@ -9,11 +9,10 @@
     </button>
 
     <div class="brand">
-      <img class="brand-logo" ngSrc="assets/images/logo/main-logo.png" alt="logo" height="72" width="232">
+      <img class="brand-logo" ngSrc="assets/images/logo/planets_text.png" alt="logo" height="72" width="232">
     </div>
 
     <div class="header-actions">
-      <!-- SEARCH WRAP (desktop/tablet inline) -->
       <div class="search" [class.open]="searchOpen()">
         <input
           #searchInputInline
@@ -32,13 +31,15 @@
         </button>
       </div>
 
-      <!-- CART (ne diramo) -->
       <a routerLink="/cart" class="cart-btn" aria-label="Cart">
         <img ngSrc="assets/images/icons/shopping-bag.png" alt="Cart" class="menu-icon" width="512" height="512"/>
+
+        @if (cartCount() > 0) {
+          <span class="cart-badge" aria-label="Broj stavki u korpi">{{ cartCount() }}</span>
+        }
       </a>
     </div>
 
-    <!-- MOBILE FULL-WIDTH SEARCH BAR (stalno u DOM-u; samo klasa mijenja stanje) -->
     <div class="search-mobile" [class.open]="searchOpen()">
       <input
         #searchInputMobile
@@ -48,23 +49,19 @@
         (keydown.escape)="closeSearch()"
       />
     </div>
-    <!-- backdrop samo za mob -->
     @if (searchOpen() && isMobile) {
       <div class="search-backdrop" (click)="closeSearch()"></div>
     }
   </div>
 
-  <!-- Backdrop -->
   @if (mobileOpen) {
     <div class="backdrop" (click)="closeMenu()"></div>
   }
 
-  <!-- Side menu (uvijek dostupno, na svim uređajima) -->
   <nav id="side-menu" class="mobile-menu" [class.open]="mobileOpen">
-    <!-- Lijevi panel: glavni meni -->
     <div class="menu-col main">
       <ul class="menu-list">
-        @for (item of menu; track item.label; let i = $index) {
+        @for (item of menu(); track item.label; let i = $index) {
           @if (!item.children) {
             <li>
               <a class="menu-item" [routerLink]="item.link" (click)="closeMenu()">
@@ -73,8 +70,12 @@
             </li>
           } @else {
             <li>
-              <button class="menu-item has-children" type="button"
-                      (click)="openSub(i)" [attr.aria-expanded]="activeParent() === i">
+              <button
+                class="menu-item has-children"
+                type="button"
+                (click)="openSub(i)"
+                [attr.aria-expanded]="activeParent() === i"
+              >
                 <span class="label">{{ item.label }}</span>
                 <span class="chev">›</span>
               </button>
@@ -82,9 +83,17 @@
           }
         }
       </ul>
+
+      <div class="menu-footer-logo">
+        <img
+          ngSrc="assets/images/logo/planets_just_logo.png"
+          alt="Planeta logo"
+          width="180"
+          height="56"
+        />
+      </div>
     </div>
 
-    <!-- Desni panel: podmeni -->
     <div class="menu-col sub" [class.open]="activeParent() !== null">
       <div class="submenu-header">
         <button class="back-btn" type="button" (click)="closeSub()" aria-label="Back">‹</button>
@@ -101,6 +110,15 @@
           </li>
         }
       </ul>
+
+      <div class="menu-footer-logo">
+        <img
+          ngSrc="assets/images/logo/planets_just_logo.png"
+          alt="Planeta logo"
+          width="180"
+          height="56"
+        />
+      </div>
     </div>
   </nav>
 </header>

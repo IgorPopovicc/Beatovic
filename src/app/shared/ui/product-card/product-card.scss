@@ -1,65 +1,128 @@
 .card{
-  display:flex; flex-direction:column; gap:12px;
-  text-decoration:none; color:#111; background:#fff !important;
-  border:1px solid #eee; border-radius:12px; overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  background:#fff !important;
+  border:1px solid #eee;
+  border-radius:12px;
+  overflow:hidden;
   transition: box-shadow .2s ease, transform .2s ease;
   height: 100%;
   padding: 5px;
+}
+
+.card:hover{
+  box-shadow:0 6px 18px rgba(0,0,0,.06);
+  transform: translateY(-2px);
+}
+
+/* Link koji prekriva cijelu karticu */
+.card-link{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  text-decoration:none;
+  color:#111;
+  height: 100%;
   cursor: pointer;
 }
 
-.card:hover{ box-shadow:0 6px 18px rgba(0,0,0,.06); transform: translateY(-2px); }
+/* Fokus za tastaturu (profesionalno i jasno) */
+.card-link:focus-visible{
+  outline: 3px solid rgba(0,0,0,.18);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
 
 .media{
   position:relative;
   aspect-ratio: 3 / 4;
   overflow: hidden;
 }
-.media img{ width:100%; height:100%; object-fit:contain; display:block; }
+
+.media img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
 
 .badge{
-  position:absolute; top:10px; left:10px;
-  background:#E53935; color:#fff; font-weight:700; font-size:.85rem;
-  padding:6px 8px; border-radius:8px;
+  position:absolute;
+  top:10px;
+  left:10px;
+  background:#E53935;
+  color:#fff;
+  font-weight:700;
+  font-size:.85rem;
+  padding:6px 8px;
+  border-radius:8px;
 }
 
 .body{
   padding:0 12px 14px;
-  display:flex; flex-direction:column;
+  display:flex;
+  flex-direction:column;
   flex: 1 1 auto;
 }
-.name{
-  font-size:1rem; font-weight:600; line-height:1.3; margin:0;
 
-  display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden;
+.name{
+  font-size:1rem;
+  font-weight:600;
+  line-height:1.3;
+  margin:0;
+
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
   -webkit-line-clamp: 2;
   min-height: calc(2 * 1.3em);
 }
-.subtitle{
-  font-size:.9rem; color:#555; margin:.35rem 0 0;
 
-  display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden;
+.subtitle{
+  font-size:.9rem;
+  color:#555;
+  margin:.35rem 0 0;
+
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
   -webkit-line-clamp: 2;
   min-height: calc(2 * 1.25em);
   line-height: 1.25;
 }
 
-.price-row{ display:flex; flex-direction: column; gap:4px; margin-top: auto;                       /* << ovo je trik: cena dole uvek */
-  min-height: 1.4em;  }
-.price{ font-weight:700; color:#C21F1F; }
-.old-price{ color:#888; text-decoration: line-through; margin-top: 1rem }
+.price-row{
+  display:flex;
+  flex-direction: column;
+  gap:4px;
+  margin-top: auto; /* cijena uvijek dole */
+  min-height: 1.4em;
+}
 
+.price{
+  font-weight:700;
+  color:#C21F1F;
+}
+
+.old-price{
+  color:#888;
+  text-decoration: line-through;
+  margin-top: 1rem;
+}
 
 :host-context(.product-grid){
   .card{ height:100%; }
 }
 
+/* Mobile tipografija */
 @media (max-width: 768px){
   .name{
     font-size:.95rem;
     -webkit-line-clamp: 3;
     min-height: calc(3 * 1.3em);
   }
+
   .subtitle{
     font-size:.85rem;
     -webkit-line-clamp: 2;

@@ -3,7 +3,6 @@
          aria-roledescription="carousel"
          aria-live="polite">
 
-  <!-- SLIDES -->
   <div class="slides">
     @for (s of slides; let i = $index; track i) {
       <div class="slide" [class.active]="i === index()"
@@ -25,11 +24,9 @@
     }
   </div>
 
-  <!-- KONTROLE -->
   <button class="ctrl prev" type="button" (click)="prev()" aria-label="Previous slide">‹</button>
   <button class="ctrl next" type="button" (click)="next()" aria-label="Next slide">›</button>
 
-  <!-- TAČKICE -->
   <div class="dots">
     @for (s of slides; let i = $index; track i) {
       <button type="button"

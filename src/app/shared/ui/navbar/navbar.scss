@@ -6,16 +6,27 @@
 }
 .nav-wrap.nav-hidden { transform: translateY(-100%); }
 
-.nav-inner { width: 100%; display: flex; align-items: center; justify-content: space-between; margin: 0 40px }
+.nav-inner {
+  width: 100%;
+  position: relative;           /* bitno za apsolutni brand */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 40px;
+  gap: 12px;
+}
 
-.brand {
+.brand{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 0;
+  pointer-events: none;         /* da klikovi ne smetaju (ako želiš) */
 }
 
-.brand-logo {
+.brand-logo{
   display: block;
   height: auto;
   width: 232px;
@@ -24,20 +35,54 @@
 }
 
 .menu-btn {
-  display: flex; width: 44px; height: 44px; border: none; background: none; cursor: pointer;
-  align-items: center; justify-content: center; border-radius: 8px;
+  position: relative;
+  z-index: 1;
 }
 .menu-line { width: 22px; height: 2px; background: #111; margin: 3px 0; }
 
 .cart-btn {
-  text-decoration: none;
-  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.header-actions { display: flex; align-items: center; gap: 12px; }
+.cart-badge {
+  position: absolute;
+
+  /* malo više “odmakni” od ikonice */
+  top: -10px;
+  right: -10px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 7px;
+  border-radius: 9999px;
+  background: #e01824;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fafafa;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  transform: translateZ(0);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.header-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 1 auto;
+}
 
 /* ============ DESKTOP/TABLET: inline input ============ */
-.search{ position: relative; display: flex; align-items: center; }
+.search{ position: relative; display: flex; align-items: center; min-width: 0; }
 .search-btn{ background: none; border: 0; cursor: pointer; padding: 0; }
 
 .search-input-inline{
@@ -160,6 +205,23 @@
 /* Ikonice */
 .menu-icon {
   width: 48px; height: 48px;
+}
+
+.menu-footer-logo{
+  margin-top: auto;              /* gura ga na dno */
+  padding: 16px 0 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.menu-footer-logo img{
+  max-width: 180px;
+  width: 30%;
+  height: auto;
+  object-fit: contain;
 }
 
 /* Malo veći touch-targeti na coarse pointerima */

@@ -1,4 +1,5 @@
 export const environment = {
-  production: true,
-  apiBaseUrl: 'https://beatovic-api.com/api',
+  apiBaseUrl: 'https://euroleague-tiebreaker.com/api',
+  mediaProductBaseUrl: 'https://euroleague-tiebreaker.com/media/product/',
+  siteUrl: 'https://euroleague-tiebreaker.com/api',
 };
