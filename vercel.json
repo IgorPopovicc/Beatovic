@@ -8,7 +8,6 @@
     "api/ssr.ts": { "runtime": "nodejs20.x" }
   },
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://euroleague-tiebreaker.com/api/:path*" },
-    { "source": "/:path*", "destination": "/api/ssr" }
+    { "source": "/api/:path*", "destination": "https://euroleague-tiebreaker.com/api/:path*" }
   ]
 }
