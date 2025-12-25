@@ -1,0 +1,84 @@
+<section class="admin-login">
+  <div class="card" role="region" aria-label="Admin prijava">
+    <div class="logo-wrap">
+      <img
+        class="logo"
+        ngSrc="assets/images/logo/planets_main_logo.png"
+        alt="PlanetSport"
+        width="280"
+        height="120"
+        priority
+      />
+      <div class="badge">ADMIN</div>
+    </div>
+
+    <h1 class="title">Admin prijava</h1>
+    <p class="sub">Pristup je namijenjen samo administratorima.</p>
+
+    <form
+      class="form"
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      novalidate
+    >
+      <!-- USERNAME / EMAIL -->
+      <div class="field">
+        <label class="label" for="username">
+          Email ili korisničko ime
+        </label>
+        <input
+          id="username"
+          class="input"
+          type="text"
+          formControlName="username"
+          autocomplete="username"
+          placeholder="admin@planetsport.com"
+        />
+      </div>
+
+      <!-- PASSWORD -->
+      <div class="field">
+        <label class="label" for="password">
+          Lozinka
+        </label>
+
+        <div class="password-wrap">
+          <input
+            id="password"
+            class="input"
+            [type]="passwordInputType()"
+            formControlName="password"
+            autocomplete="current-password"
+            placeholder="Unesite lozinku"
+          />
+
+          <button
+            type="button"
+            class="toggle"
+            (click)="togglePassword()"
+            [attr.aria-label]="
+              showPassword() ? 'Sakrij lozinku' : 'Prikaži lozinku'
+            "
+          >
+            {{ showPassword() ? 'Sakrij' : 'Prikaži' }}
+          </button>
+        </div>
+      </div>
+      <!-- ERROR (opciono, već spremno u TS-u) -->
+      @if (loginError()) {
+        <p class="error">
+          {{ loginError() }}
+        </p>
+      }
+
+      <!-- SUBMIT -->
+      <button
+        class="btn"
+        type="submit"
+        [disabled]="invalid()"
+      >
+        {{ loading() ? 'Provjera...' : 'Prijavi se' }}
+      </button>
+    </form>
+  </div>
+</section>

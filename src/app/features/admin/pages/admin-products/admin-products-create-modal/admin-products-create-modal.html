@@ -1,0 +1,154 @@
+<!-- admin-products-create-modal.html -->
+<div class="overlay" role="dialog" aria-modal="true" aria-label="Dodaj proizvod" (mousedown)="onOverlayMouseDown()">
+  <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
+    <header class="head">
+      <div class="title-wrap">
+        <h2 class="title">Dodaj proizvod</h2>
+        <p class="sub">Unesite osnovne podatke i izaberite kategorije.</p>
+      </div>
+
+      <button class="icon-btn" type="button" (click)="close()" aria-label="Zatvori">✕</button>
+    </header>
+
+    @if (loading()) {
+      <div class="state">Učitavanje opcija...</div>
+    } @else {
+      <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="grid">
+          <div class="field">
+            <label class="label">Naziv proizvoda</label>
+            <input class="input" type="text" formControlName="productName" placeholder="npr. Dječije papuče" />
+          </div>
+
+          <div class="field">
+            <label class="label">SKU</label>
+            <input class="input" type="text" formControlName="sku" placeholder="npr. PAPUCE-DECA" />
+          </div>
+
+          <div class="field full">
+            <label class="label">Opis</label>
+            <textarea class="textarea" rows="3" formControlName="productDescription" placeholder="Kratak opis proizvoda"></textarea>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <!-- BRAND single -->
+          <div class="field dd-wrap" (click)="$event.stopPropagation()">
+            <label class="label">Brend</label>
+
+            <button
+              class="dd"
+              type="button"
+              (click)="toggleDropdown('brand'); $event.stopPropagation()"
+              [attr.aria-expanded]="brandOpen()"
+              aria-haspopup="listbox"
+            >
+              <span class="dd-text">
+                @if (selectedBrandLabel(); as label) { {{ label }} } @else { Izaberi brend }
+              </span>
+              <span class="dd-caret" aria-hidden="true">▾</span>
+            </button>
+
+            @if (brandOpen()) {
+              <div class="dd-panel" (click)="$event.stopPropagation()">
+                <div class="dd-scroll" role="listbox">
+                  @for (o of brandOptions(); track o.id) {
+                    <button type="button" class="dd-item" (click)="selectSingle('brandValueId', o.id)">
+                      <span class="dd-label">{{ o.value }}</span>
+                      @if (form.controls.brandValueId.value === o.id) { <span class="dd-mark">✓</span> }
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (form.controls.brandValueId.touched && form.controls.brandValueId.invalid) {
+              <div class="field-err">Brend je obavezan.</div>
+            }
+          </div>
+
+          <!-- CATEGORY single (PROMIJENJENO) -->
+          <div class="field dd-wrap" (click)="$event.stopPropagation()">
+            <label class="label">Kategorija</label>
+
+            <button
+              class="dd"
+              type="button"
+              (click)="toggleDropdown('category'); $event.stopPropagation()"
+              [attr.aria-expanded]="categoryOpen()"
+              aria-haspopup="listbox"
+            >
+              <span class="dd-text">
+                @if (selectedCategoryLabel(); as label) { {{ label }} } @else { Izaberi kategoriju }
+              </span>
+              <span class="dd-caret" aria-hidden="true">▾</span>
+            </button>
+
+            @if (categoryOpen()) {
+              <div class="dd-panel" (click)="$event.stopPropagation()">
+                <div class="dd-scroll" role="listbox">
+                  @for (o of categoryOptions(); track o.id) {
+                    <button type="button" class="dd-item" (click)="selectSingleCategory(o.id)">
+                      <span class="dd-label">{{ o.value }}</span>
+                      @if (form.controls.categoryValueId.value === o.id) { <span class="dd-mark">✓</span> }
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (form.controls.categoryValueId.touched && form.controls.categoryValueId.invalid) {
+              <div class="field-err">Kategorija je obavezna.</div>
+            }
+          </div>
+
+          <!-- GENDER single -->
+          <div class="field dd-wrap" (click)="$event.stopPropagation()">
+            <label class="label">Pol</label>
+
+            <button
+              class="dd"
+              type="button"
+              (click)="toggleDropdown('gender'); $event.stopPropagation()"
+              [attr.aria-expanded]="genderOpen()"
+              aria-haspopup="listbox"
+            >
+              <span class="dd-text">
+                @if (selectedGenderLabel(); as label) { {{ label }} } @else { Izaberi pol }
+              </span>
+              <span class="dd-caret" aria-hidden="true">▾</span>
+            </button>
+
+            @if (genderOpen()) {
+              <div class="dd-panel" (click)="$event.stopPropagation()">
+                <div class="dd-scroll" role="listbox">
+                  @for (o of genderOptions(); track o.id) {
+                    <button type="button" class="dd-item" (click)="selectSingle('genderValueId', o.id)">
+                      <span class="dd-label">{{ o.value }}</span>
+                      @if (form.controls.genderValueId.value === o.id) { <span class="dd-mark">✓</span> }
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (form.controls.genderValueId.touched && form.controls.genderValueId.invalid) {
+              <div class="field-err">Pol je obavezan.</div>
+            }
+          </div>
+        </div>
+
+        @if (error()) {
+          <p class="error">{{ error() }}</p>
+        }
+
+        <footer class="actions">
+          <button class="btn ghost" type="button" (click)="close()">Otkaži</button>
+          <button class="btn" type="submit" [disabled]="invalid()">
+            {{ submitting() ? 'Kreiranje...' : 'Sačuvaj proizvod' }}
+          </button>
+        </footer>
+      </form>
+    }
+  </div>
+</div>

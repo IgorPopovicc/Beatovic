@@ -47,6 +47,7 @@ export interface Variant {
     attributeId: string;
     attributeName: string;
     attributeValueId: string;
+    quantity: number;
     value: string;
   }>;
 

@@ -36,6 +36,28 @@ export class ProductDetails {
   activeIndex = signal(0);
   selectedSize = signal<string | null>(null);
 
+  // NEW: map size->qty extracted from attributes (VELICINA)
+  private sizeQtyMap = signal<Record<string, number>>({});
+
+  // NEW: stock depends on selected size (if any), otherwise any size in stock
+  inStockUi = computed(() => {
+    const p: any = this.product();
+    if (!p) return false;
+
+    const sizes: string[] = (p.sizes ?? []).map((x: any) => String(x));
+    const map: Record<string, number> = this.sizeQtyMap();
+
+    if (sizes.length) {
+      const sel = this.selectedSize();
+      if (sel) return (map[sel] ?? 0) > 0;
+      return Object.values(map).some(q => q > 0);
+    }
+
+    // If no sizes are present, keep backward-compatible behavior.
+    // (If BE later adds a non-size stock signal, you can adjust here.)
+    return p.inStock !== false;
+  });
+
   hasDiscount = computed(() => {
     const p = this.product();
     if (!p?.oldPrice) return false;
@@ -57,6 +79,12 @@ export class ProductDetails {
     return g[i] ?? null;
   });
 
+  // NEW: convenience for template to disable out-of-stock sizes
+  sizeQty = (size: string | number) => {
+    const key = String(size);
+    return Number(this.sizeQtyMap()[key] ?? 0);
+  };
+
   constructor() {
     this.route.paramMap
       .pipe(
@@ -67,6 +95,7 @@ export class ProductDetails {
           this.product.set(null);
           this.activeIndex.set(0);
           this.selectedSize.set(null);
+          this.sizeQtyMap.set({});
 
           if (!id) return of(null);
 
@@ -111,9 +140,21 @@ export class ProductDetails {
     const gallery = images.length
       ? images.map((img: any) => {
         const u = mkImg(img?.url);
-        return { desktop: u, mobile: u, alt: dto?.productName ?? dto?.name ?? 'Proizvod', w: 1200, h: 1200 };
+        return {
+          desktop: u,
+          mobile: u,
+          alt: dto?.productName ?? dto?.name ?? 'Proizvod',
+          w: 1200,
+          h: 1200,
+        };
       })
-      : [{ desktop: main, mobile: main, alt: dto?.productName ?? dto?.name ?? 'Proizvod', w: 1200, h: 1200 }];
+      : [{
+        desktop: main,
+        mobile: main,
+        alt: dto?.productName ?? dto?.name ?? 'Proizvod',
+        w: 1200,
+        h: 1200,
+      }];
 
     const brand =
       dto?.brand ??
@@ -121,19 +162,37 @@ export class ProductDetails {
         ? (dto.categories.find((c: any) => (c?.categoryName ?? '').toUpperCase() === 'BREND')?.value ?? '')
         : '');
 
-    const sizes =
-      Array.isArray(dto?.sizes)
-        ? dto.sizes.map((x: any) => String(x))
-        : (Array.isArray(dto?.attributes)
-          ? dto.attributes
-            .filter((a: any) => (a?.attributeName ?? '').toUpperCase() === 'VELICINA')
-            .map((a: any) => String(a?.value))
-            .filter(Boolean)
-          : []);
+    // NEW: Build size->qty map from attributes (VELICINA)
+    const map: Record<string, number> = {};
+    if (Array.isArray(dto?.attributes)) {
+      for (const a of dto.attributes) {
+        if (String(a?.attributeName ?? '').toUpperCase() !== 'VELICINA') continue;
+        const key = String(a?.value ?? '').trim();
+        if (!key) continue;
+        map[key] = Number(a?.quantity ?? 0);
+      }
+    }
+    this.sizeQtyMap.set(map);
+
+    // NEW: sizes come from sizeQtyMap keys (keeps consistent & avoids duplicates)
+    const smartSizeCompare = (a: string, b: string) => {
+      const na = Number(a);
+      const nb = Number(b);
+      const aNum = !Number.isNaN(na);
+      const bNum = !Number.isNaN(nb);
+      if (aNum && bNum) return na - nb;
+      if (aNum) return -1;
+      if (bNum) return 1;
+      return a.localeCompare(b);
+    };
+    const sizes = Object.keys(map).sort(smartSizeCompare);
 
     const price = Number(dto?.finalPrice ?? dto?.price ?? 0);
     const original = Number(dto?.originalPrice ?? dto?.oldPrice ?? 0);
     const oldPrice = original > price ? original : null;
+
+    // NEW: inStock is derived from attributes quantities (not dto.quantity)
+    const inStock = Object.values(map).some(q => Number(q) > 0);
 
     return {
       id,
@@ -145,7 +204,7 @@ export class ProductDetails {
       oldPrice: oldPrice ?? undefined,
       currency: dto?.currency ?? 'RSD',
       brand: brand || '—',
-      inStock: (dto?.quantity ?? 0) > 0,
+      inStock,
       sizes,
       shortDescription: dto?.shortDescription ?? dto?.description ?? '',
       gallery,
@@ -198,9 +257,19 @@ export class ProductDetails {
 
     const size = this.selectedSize();
     const hasSizes = (p.sizes?.length ?? 0) > 0;
+
     if (hasSizes && !size) {
       return;
     }
+
+    // NEW: block add-to-cart if selected size is out of stock
+    if (hasSizes && size) {
+      const qty = Number(this.sizeQtyMap()[String(size)] ?? 0);
+      if (qty <= 0) return;
+    }
+
+    // NEW: also block if overall stock is not available (e.g. all sizes 0)
+    if (!this.inStockUi()) return;
 
     const img =
       p.gallery?.[0]?.mobile ||

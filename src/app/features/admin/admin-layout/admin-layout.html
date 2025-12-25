@@ -1,0 +1,50 @@
+<section class="admin-layout">
+  <div class="shell">
+    <header class="head" role="region" aria-label="Admin panel header">
+      <div class="left">
+        <div class="badge">ADMIN</div>
+
+        <div class="who">
+          <div class="label">Prijavljeni korisnik</div>
+          <div class="value">{{ username() }}</div>
+        </div>
+      </div>
+
+      <button class="btn-logout" type="button" (click)="logout()">
+        Odjavi se
+      </button>
+    </header>
+
+    <div class="body">
+      <nav class="nav" aria-label="Admin navigacija">
+        <a
+          routerLink="/admin/panel"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          Dashboard
+        </a>
+
+        <a routerLink="/admin/products" routerLinkActive="active">
+          Proizvodi
+        </a>
+
+        <a routerLink="/admin/orders" routerLinkActive="active">
+          Narudžbe
+        </a>
+
+        <a routerLink="/admin/discounts" routerLinkActive="active">
+          Popusti
+        </a>
+
+        <a routerLink="/admin/newsletter" routerLinkActive="active">
+          Newsletter
+        </a>
+      </nav>
+
+      <main class="content" role="region" aria-label="Admin sadržaj">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  </div>
+</section>

@@ -1,6 +1,5 @@
 <section class="cart" aria-label="Korpa">
   <div class="cart-header">
-    <h1>Korpa</h1>
     @if (count() > 0) {
       <div class="muted">{{ count() }} stavki</div>
     }
@@ -88,7 +87,7 @@
               </div>
 
               <div class="icon-col">
-                <button class="trash" type="button" (click)="cart.remove(it.id)" aria-label="Ukloni">
+                <button class="trash" type="button" (click)="askRemove(it.id, it.name)" aria-label="Ukloni">
                   🗑
                 </button>
               </div>
@@ -168,3 +167,15 @@
     </div>
   }
 </section>
+<app-confirm-dialog
+  [open]="confirmOpen()"
+  title="Ukloniti proizvod?"
+  [message]="confirmMessage()"
+  confirmText="Da"
+  cancelText="Ne"
+  variant="danger"
+  icon="🗑️"
+  (confirm)="confirmRemove()"
+  (cancel)="closeConfirm()"
+/>
+

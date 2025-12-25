@@ -1,0 +1,204 @@
+.admin-layout {
+  min-height: calc(100vh - 98px);
+  padding: 120px 16px 60px;
+  background: #eae5e5;
+}
+
+.shell {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+}
+
+.head {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 18px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
+  padding: 14px 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  min-width: 0;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.badge {
+  background: rgba(224, 24, 36, 0.12);
+  color: #e01824;
+  border: 1px solid rgba(224, 24, 36, 0.25);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 9999px;
+  flex: 0 0 auto;
+}
+
+.who {
+  min-width: 0;
+}
+
+.who .label {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(17, 17, 17, 0.65);
+}
+
+.who .value {
+  font-size: 16px;
+  font-weight: 900;
+  color: #111;
+
+  /* critical: da ne širi header u nedogled */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.btn-logout {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  border: 1px solid #e01824;
+  background: #e01824;
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 140ms ease, filter 140ms ease, opacity 140ms ease;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.btn-logout:hover { filter: brightness(0.96); }
+.btn-logout:active { transform: translateY(1px); }
+
+.body {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 14px;
+  align-items: start;
+  min-width: 0;
+}
+
+.nav {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 18px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
+  padding: 10px;
+
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 12px 14px;
+  border-radius: 9999px;
+  text-decoration: none;
+  color: #111;
+  font-weight: 900;
+
+  border: 1px solid transparent;
+  transition: background 140ms ease, transform 140ms ease, border-color 140ms ease;
+}
+
+.nav a:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.nav a.active {
+  background: rgba(224, 24, 36, 0.10);
+  border-color: rgba(224, 24, 36, 0.18);
+}
+
+.content {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+/* Tablet: nav gore kao horizontalni scroll */
+@media (max-width: 900px) {
+  .body {
+    grid-template-columns: 1fr;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px;
+
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+
+    /* da scrollbar ne "grize" visinu */
+    scrollbar-width: thin;
+  }
+
+  .nav a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    scroll-snap-align: start;
+  }
+}
+
+/* Mobile: header stack + logout full width + username wrap */
+@media (max-width: 520px) {
+  .admin-layout {
+    padding: 110px 12px 50px;
+  }
+
+  .head {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .left {
+    align-items: flex-start;
+  }
+
+  .who .value {
+    /* critical: na telefonu nemoj ellipsis u 1 liniji, nego 2 reda */
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: initial;
+    word-break: break-word;
+    line-height: 1.15;
+    max-width: 100%;
+  }
+
+  .btn-logout {
+    width: 100%;
+    height: 46px;
+  }
+
+  .nav {
+    padding: 10px;
+  }
+
+  .nav a {
+    padding: 10px 14px;
+  }
+}

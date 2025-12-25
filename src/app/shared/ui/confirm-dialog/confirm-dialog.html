@@ -1,0 +1,29 @@
+@if (open) {
+  <div class="cd-backdrop" (click)="onBackdropClick()" aria-hidden="true"></div>
+
+  <div class="cd-wrap" role="dialog" aria-modal="true" [attr.aria-label]="title">
+    <div class="cd-card" [class.danger]="variant === 'danger'">
+      <div class="cd-topline" aria-hidden="true"></div>
+
+      <div class="cd-head">
+        @if (icon) {
+          <div class="cd-icon" aria-hidden="true">{{ icon }}</div>
+        }
+
+        <div class="cd-titles">
+          <div class="cd-title">{{ title }}</div>
+          <div class="cd-text">{{ message }}</div>
+        </div>
+      </div>
+
+      <div class="cd-actions">
+        <button type="button" class="cd-btn primary cd-confirm" (click)="onConfirm()" [disabled]="busy">
+          {{ confirmText }}
+        </button>
+        <button type="button" class="cd-btn ghost" (click)="onCancel()" [disabled]="busy">
+          {{ cancelText }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

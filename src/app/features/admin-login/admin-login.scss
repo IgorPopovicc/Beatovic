@@ -1,0 +1,152 @@
+.admin-login {
+  min-height: calc(100vh - 98px);
+  padding-top: 120px;
+  padding-bottom: 60px;
+
+  display: grid;
+  place-items: start center;
+
+  background: #fafafa;
+}
+
+.card {
+  width: min(520px, calc(100vw - 24px));
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 18px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
+  padding: 22px 18px 18px;
+}
+
+.logo-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 6px 6px 10px;
+}
+
+.logo {
+  width: min(320px, 70vw);
+  height: auto;
+  object-fit: contain;
+}
+
+.badge {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  background: rgba(224, 24, 36, 0.12);
+  color: #e01824;
+  border: 1px solid rgba(224, 24, 36, 0.25);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 9999px;
+}
+
+.title {
+  margin: 8px 0 4px;
+  font-size: 22px;
+  font-weight: 900;
+  color: #111;
+  text-align: center;
+}
+
+.sub {
+  margin: 0 0 14px;
+  text-align: center;
+  color: rgba(17, 17, 17, 0.65);
+  font-size: 14px;
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(17, 17, 17, 0.85);
+}
+
+.input {
+  height: 46px;
+  width: 100%;
+  border-radius: 9999px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  color: #111;
+  padding: 0 14px;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.input:focus {
+  border-color: #bfa888;
+  box-shadow: 0 0 0 3px rgba(191, 168, 136, 0.22);
+}
+
+.password-wrap {
+  position: relative;
+  display: grid;
+}
+
+.toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 800;
+  color: rgba(17, 17, 17, 0.7);
+  padding: 8px 10px;
+  border-radius: 9999px;
+}
+
+.toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.btn {
+  height: 46px;
+  border-radius: 9999px;
+  border: 1px solid #e01824;
+  background: #e01824;
+  color: #fff;
+  font-weight: 900;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 140ms ease, filter 140ms ease, opacity 140ms ease;
+  margin-top: 6px;
+}
+
+.btn:hover {
+  filter: brightness(0.96);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .admin-login {
+    padding-top: 110px;
+  }
+  .card {
+    border-radius: 16px;
+  }
+}

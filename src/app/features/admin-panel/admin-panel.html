@@ -1,0 +1,51 @@
+<section class="admin-panel">
+  <div class="shell">
+    <header class="head" role="region" aria-label="Admin panel header">
+      <div class="left">
+        <div class="badge">ADMIN</div>
+
+        <div class="who">
+          <div class="label">Prijavljeni korisnik</div>
+          <div class="value">{{ username() }}</div>
+        </div>
+      </div>
+
+      <button class="btn-logout" type="button" (click)="logout()">
+        Odjavi se
+      </button>
+    </header>
+
+    <main class="grid" role="region" aria-label="Admin content">
+      <section class="card">
+        <h1 class="title">Admin panel</h1>
+        <p class="sub">
+          Ovdje ćemo dodati dodavanje, brisanje i editovanje proizvoda.
+        </p>
+
+        @if (!isAdmin()) {
+          <p class="warn">
+            Token nema ADMIN rolu. Provjeri Keycloak role u realm_access.roles.
+          </p>
+        }
+      </section>
+
+      <section class="card subtle">
+        <h2 class="title2">Status</h2>
+
+        <div class="kv">
+          <div class="k">Rola</div>
+          <div class="v">{{ isAdmin() ? 'ADMIN' : 'NEMA ADMIN' }}</div>
+        </div>
+
+        <div class="kv">
+          <div class="k">Korisnik</div>
+          <div class="v">{{ username() }}</div>
+        </div>
+
+        <p class="note">
+          Ovo je placeholder panel. Sljedeći korak: CRUD proizvoda + tabele + forme.
+        </p>
+      </section>
+    </main>
+  </div>
+</section>

@@ -2,9 +2,23 @@
   @if (loading()) {
     <div class="state">Učitavanje...</div>
   } @else if (notFound()) {
-    <div class="state">
-      <div class="state-title">Proizvod nije pronađen.</div>
-      <a routerLink="/" class="state-link">Nazad na početnu</a>
+    <div class="nf" role="status" aria-live="polite">
+      <div class="nf-card">
+        <div class="nf-badge">PlanetSport</div>
+
+        <div class="nf-icon" aria-hidden="true">🧾</div>
+
+        <h2 class="nf-title">Proizvod nije dostupan</h2>
+        <p class="nf-text">
+          Izgleda da ovaj proizvod više ne postoji ili je trenutno uklonjen iz ponude.
+          Možeš se vratiti nazad ili nastaviti kupovinu kroz katalog.
+        </p>
+
+        <div class="nf-actions">
+          <a class="nf-btn primary" routerLink="/">Početna</a>
+          <a class="nf-btn ghost" routerLink="/catalog/muskarci/obuca">Katalog</a>
+        </div>
+      </div>
     </div>
   } @else {
     @if (product(); as p) {
@@ -82,10 +96,11 @@
                 <span class="meta-label">Brend</span>
                 <span class="meta-value">{{ p.brand }}</span>
               </div>
+
               <div class="meta-row">
                 <span class="meta-label">Dostupnost</span>
-                <span class="meta-value" [class.ok]="p.inStock !== false" [class.no]="p.inStock === false">
-                  {{ p.inStock === false ? 'Nema na stanju' : 'Na stanju' }}
+                <span class="meta-value" [class.ok]="inStockUi()" [class.no]="!inStockUi()">
+                  {{ inStockUi() ? 'Na stanju' : 'Nema na stanju' }}
                 </span>
               </div>
             </div>
@@ -103,6 +118,8 @@
                       type="button"
                       class="size"
                       [class.active]="selectedSize() === (''+s)"
+                      [disabled]="sizeQty(s) <= 0"
+                      [attr.aria-disabled]="sizeQty(s) <= 0"
                       (click)="selectSize((''+s))"
                     >
                       {{ s }}
@@ -117,7 +134,7 @@
                 type="button"
                 class="add"
                 (click)="addToCart()"
-                [disabled]="p.inStock === false || ((p.sizes?.length || 0) > 0 && !selectedSize())"
+                [disabled]="!inStockUi() || ((p.sizes?.length || 0) > 0 && !selectedSize())"
               >
                 Dodaj u korpu
               </button>

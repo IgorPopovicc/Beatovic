@@ -1,0 +1,203 @@
+<!-- admin-products.html -->
+<section class="card">
+  <section class="admin-products">
+    <!-- Tabs bar -->
+    <div class="tabs-bar">
+      <div class="tabs" role="tablist" aria-label="Pogledi">
+        <button
+          type="button"
+          class="tab"
+          role="tab"
+          [class.active]="activeTab() === 'models'"
+          [attr.aria-selected]="activeTab() === 'models'"
+          (click)="setTab('models')"
+        >
+          Modeli
+        </button>
+
+        <button
+          type="button"
+          class="tab"
+          role="tab"
+          [class.active]="activeTab() === 'products'"
+          [attr.aria-selected]="activeTab() === 'products'"
+          (click)="setTab('products')"
+        >
+          Proizvodi
+        </button>
+      </div>
+
+      <div class="tabs-actions">
+        @if (activeTab() === 'products') {
+          <button class="btn-add" type="button" (click)="addProduct()">
+            <span class="plus">+</span>
+            <span>Dodaj proizvod</span>
+          </button>
+        } @else {
+          <button class="btn-add ghost" type="button" (click)="addModel()" disabled>
+            <span class="plus">+</span>
+            <span>Dodaj model</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Header + Search -->
+    <div class="card head">
+      <div class="top">
+        <div class="title-wrap">
+          <h1 class="title">
+            @if (activeTab() === 'models') { Modeli } @else { Proizvodi }
+          </h1>
+          <p class="sub">
+            @if (activeTab() === 'models') {
+              Pretraga i upravljanje modelima (varijantama).
+            } @else {
+              Pretraga i upravljanje proizvodima.
+            }
+          </p>
+        </div>
+      </div>
+
+      <div class="search">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 4a6 6 0 1 0 3.75 10.7l4.78 4.79a1 1 0 0 0 1.42-1.42l-4.79-4.78A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8a4 4 0 0 1 0-8Z"/>
+        </svg>
+
+        <input
+          class="input"
+          type="text"
+          [formControl]="search"
+          placeholder="Unesite najmanje 3 slova (npr. nike)..."
+          autocomplete="off"
+        />
+
+        @if (loading()) {
+          <div class="spinner" aria-label="Učitavanje"></div>
+        }
+      </div>
+
+      <div class="meta">
+        @if (!canSearch()) {
+          <div class="hint">Unesite najmanje 3 slova da pokrenete pretragu.</div>
+        } @else {
+          <div class="count">
+            Rezultati:
+            @if (activeTab() === 'models') {
+              <strong>{{ totalVariants() }}</strong>
+            } @else {
+              <strong>{{ totalProducts() }}</strong>
+            }
+          </div>
+        }
+
+        @if (error()) {
+          <div class="error">{{ error() }}</div>
+        }
+      </div>
+    </div>
+
+    <!-- List -->
+    <div class="card list">
+      @if (!canSearch()) {
+        <div class="empty">Lista je prazna dok ne unesete pretragu.</div>
+      } @else if (loading()) {
+        <div class="empty">Učitavanje rezultata...</div>
+      } @else {
+
+        <!-- MODELI -->
+        @if (activeTab() === 'models') {
+          @if (!hasVariantResults()) {
+            <div class="empty">Nema rezultata za “{{ query() }}”.</div>
+          } @else {
+            <div class="rows" role="list">
+              @for (v of variants(); track trackByVariantId($index, v)) {
+                <div class="row" role="listitem">
+                  <div class="img">
+                    @if (imageUrlVariant(v)) {
+                      <img class="thumb" [ngSrc]="imageUrlVariant(v)!" width="64" height="64" alt="" />
+                    } @else {
+                      <div class="thumb ph" aria-hidden="true">IMG</div>
+                    }
+                  </div>
+
+                  <div class="main">
+                    <div class="name">{{ v.productName }}</div>
+                    <div class="id">ID: <span>{{ v.productId }}</span></div>
+                    <div class="sku">SKU: <span>{{ v.sku }}</span></div>
+                  </div>
+
+                  <div class="price">
+                    <div class="label">Cijena</div>
+                    <div class="value">{{ formatPrice(v.finalPrice) }} RSD</div>
+                  </div>
+
+                  <div class="actions">
+                    <button type="button" class="icon-btn" aria-label="Edit" (click)="editVariant(v)">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 17.25V21h3.75L17.8 9.95l-3.75-3.75L3 17.25Zm2.92 2.33H5v-.92l8.9-8.9.92.92-8.9 8.9ZM20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/>
+                      </svg>
+                    </button>
+
+                    <button type="button" class="icon-btn danger" aria-label="Delete" (click)="deleteVariant(v)">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 7h12l-1 14H7L6 7Zm3-3h6l1 2H8l1-2Zm-3 2h12v2H6V6Z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        }
+
+        <!-- PROIZVODI -->
+        @else {
+          @if (!hasProductResults()) {
+            <div class="empty">Nema rezultata za “{{ query() }}”.</div>
+          } @else {
+            <div class="rows" role="list">
+              @for (p of products(); track trackByProductId($index, p)) {
+                <div class="row" role="listitem">
+                  <!-- nema slika za proizvode -->
+                  <div class="img">
+                    <div class="thumb ph" aria-hidden="true">PROD</div>
+                  </div>
+
+                  <div class="main">
+                    <div class="name">{{ p.productName }}</div>
+                    <div class="id">ID: <span>{{ p.id }}</span></div>
+                    <div class="sku">SKU: <span>{{ p.productSku }}</span></div>
+                  </div>
+
+                  <div class="price">
+                    <div class="label">Tip</div>
+                    <div class="value">Proizvod</div>
+                  </div>
+
+                  <div class="actions">
+                    <button type="button" class="icon-btn" aria-label="Edit" (click)="editProduct(p)">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 17.25V21h3.75L17.8 9.95l-3.75-3.75L3 17.25Zm2.92 2.33H5v-.92l8.9-8.9.92.92-8.9 8.9ZM20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/>
+                      </svg>
+                    </button>
+
+                    <button type="button" class="icon-btn danger" aria-label="Delete" (click)="deleteProduct(p)">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 7h12l-1 14H7L6 7Zm3-3h6l1 2H8l1-2Zm-3 2h12v2H6V6Z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        }
+      }
+    </div>
+  </section>
+</section>
+
+@if (createOpen()) {
+  <app-admin-product-create-modal (closed)="closeCreate()" (created)="onCreated()" />
+}

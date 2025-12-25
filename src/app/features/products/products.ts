@@ -105,7 +105,7 @@ export class Products implements OnInit {
     for (const p of this.allProducts()) {
       const v = byId.get(p.id);
       if (!v) continue;
-      const sizes = this.getAttributeValues(v, 'VELICINA');
+      const sizes = this.getSizeValuesInStock(v);
       for (const s of sizes) map.set(s, (map.get(s) ?? 0) + 1);
     }
     return [...map.entries()]
@@ -128,7 +128,7 @@ export class Products implements OnInit {
     const byId = this.variantById();
 
     if (this.onlyInStock()) {
-      list = list.filter(p => (byId.get(p.id)?.quantity ?? 0) > 0);
+      list = list.filter(p => this.getVariantStockQty(byId.get(p.id)) > 0);
     }
 
     if (this.onlySale()) {
@@ -153,7 +153,7 @@ export class Products implements OnInit {
       list = list.filter(p => {
         const v = byId.get(p.id);
         if (!v) return false;
-        const vsizes = this.getAttributeValues(v, 'VELICINA');
+        const vsizes = this.getSizeValuesInStock(v); // samo veličine koje imaju qty > 0
         return vsizes.some(s => sizes.has(s));
       });
     }
@@ -317,6 +317,33 @@ export class Products implements OnInit {
   goPage(p: number) {
     const max = this.totalPages();
     this.page.set(Math.min(Math.max(1, p), max));
+  }
+
+  private getVariantStockQty(v: Variant | undefined | null): number {
+    if (!v) return 0;
+
+    const attrs = Array.isArray(v.attributes) ? v.attributes : [];
+
+    const sizeAttrs = attrs.filter(a => String(a?.attributeName ?? '').toUpperCase() === 'VELICINA');
+    if (sizeAttrs.length) {
+      return sizeAttrs.reduce((sum, a) => sum + Number(a?.quantity ?? 0), 0);
+    }
+
+    const hasAnyAttrQty = attrs.some(a => a?.quantity != null);
+    if (hasAnyAttrQty) {
+      return attrs.reduce((sum, a) => sum + Number(a?.quantity ?? 0), 0);
+    }
+
+    return 0;
+  }
+
+  private getSizeValuesInStock(v: Variant): string[] {
+    const attrs = Array.isArray(v.attributes) ? v.attributes : [];
+    return attrs
+      .filter(a => String(a?.attributeName ?? '').toUpperCase() === 'VELICINA')
+      .filter(a => Number(a?.quantity ?? 0) > 0)
+      .map(a => String(a?.value ?? '').trim())
+      .filter(Boolean);
   }
 
   private mapVariantToProductCard(v: Variant): ProductCard {
