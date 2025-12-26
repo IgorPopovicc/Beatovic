@@ -1,10 +1,18 @@
-<!-- admin-products-create-modal.html -->
-<div class="overlay" role="dialog" aria-modal="true" aria-label="Dodaj proizvod" (mousedown)="onOverlayMouseDown()">
+<div
+  class="overlay"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="isEdit() ? 'Izmijeni proizvod' : 'Dodaj proizvod'"
+  (mousedown)="onOverlayMouseDown()"
+>
   <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <header class="head">
       <div class="title-wrap">
-        <h2 class="title">Dodaj proizvod</h2>
-        <p class="sub">Unesite osnovne podatke i izaberite kategorije.</p>
+        <h2 class="title">@if (isEdit()) { Izmijeni proizvod } @else { Dodaj proizvod }</h2>
+        <p class="sub">
+          @if (isEdit()) { Izmijenite osnovne podatke i sačuvajte promjene. }
+          @else { Unesite osnovne podatke i izaberite kategorije. }
+        </p>
       </div>
 
       <button class="icon-btn" type="button" (click)="close()" aria-label="Zatvori">✕</button>
@@ -22,7 +30,7 @@
 
           <div class="field">
             <label class="label">SKU</label>
-            <input class="input" type="text" formControlName="sku" placeholder="npr. PAPUCE-DECA" />
+            <input class="input" type="text" formControlName="sku" placeholder="npr. PAPUCE-DECA"/>
           </div>
 
           <div class="field full">
@@ -67,7 +75,7 @@
             }
           </div>
 
-          <!-- CATEGORY single (PROMIJENJENO) -->
+          <!-- CATEGORY single -->
           <div class="field dd-wrap" (click)="$event.stopPropagation()">
             <label class="label">Kategorija</label>
 
@@ -145,7 +153,11 @@
         <footer class="actions">
           <button class="btn ghost" type="button" (click)="close()">Otkaži</button>
           <button class="btn" type="submit" [disabled]="invalid()">
-            {{ submitting() ? 'Kreiranje...' : 'Sačuvaj proizvod' }}
+            @if (submitting()) {
+              @if (isEdit()) { Snimanje... } @else { Kreiranje... }
+            } @else {
+              @if (isEdit()) { Sačuvaj izmjene } @else { Sačuvaj proizvod }
+            }
           </button>
         </footer>
       </form>

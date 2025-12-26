@@ -84,16 +84,24 @@ export interface SearchProductRequest {
   searchQuery: string;
 }
 
-export interface SearchProductResponse {
-  foundProducts: Product[];
-  totalResults: number;
-}
-
 export interface Product {
   id: string;
   productName: string;
   productDescription: string;
   productSku: string;
   categories: ProductCategory[];
+}
+
+export interface UpdateProductRequest {
+  id: string;
+  productName: string;
+  productDescription: string;
+  productSku: string;
+  categories: Array<{
+    categoryId: string;
+    categoryName: string;
+    categoryValueId: string;
+    value: string;
+  }>;
 }
 

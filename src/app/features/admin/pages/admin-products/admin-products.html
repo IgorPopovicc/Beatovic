@@ -1,4 +1,3 @@
-<!-- admin-products.html -->
 <section class="card">
   <section class="admin-products">
     <!-- Tabs bar -->
@@ -150,8 +149,6 @@
             </div>
           }
         }
-
-        <!-- PROIZVODI -->
         @else {
           @if (!hasProductResults()) {
             <div class="empty">Nema rezultata za “{{ query() }}”.</div>
@@ -159,7 +156,6 @@
             <div class="rows" role="list">
               @for (p of products(); track trackByProductId($index, p)) {
                 <div class="row" role="listitem">
-                  <!-- nema slika za proizvode -->
                   <div class="img">
                     <div class="thumb ph" aria-hidden="true">PROD</div>
                   </div>
@@ -183,7 +179,7 @@
                     </button>
 
                     <button type="button" class="icon-btn danger" aria-label="Delete" (click)="deleteProduct(p)">
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M6 7h12l-1 14H7L6 7Zm3-3h6l1 2H8l1-2Zm-3 2h12v2H6V6Z"/>
                       </svg>
                     </button>
@@ -201,3 +197,25 @@
 @if (createOpen()) {
   <app-admin-product-create-modal (closed)="closeCreate()" (created)="onCreated()" />
 }
+
+@if (editOpen()) {
+  <app-admin-product-create-modal
+    [product]="editingProduct()"
+    (closed)="closeEdit()"
+    (created)="onEdited()"
+  />
+}
+
+<app-confirm-dialog
+  [open]="deleteOpen()"
+  title="Brisanje proizvoda"
+  [message]="deleteTarget() ? ('Da li želite da obrišete proizvod “' + deleteTarget()!.productName + '”?') : ''"
+  confirmText="Da"
+  cancelText="Ne"
+  variant="danger"
+  icon="🗑"
+  [busy]="deleteBusy()"
+  (confirm)="confirmDelete()"
+  (cancel)="cancelDelete()"
+/>
+

@@ -5,10 +5,10 @@ import { AuthService } from '../auth/auth.service';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import {
-  CreateProductRequest,
+  CreateProductRequest, Product,
   SearchMainRequest,
   SearchMainResponse,
-  SearchProductRequest, SearchProductResponse
+  SearchProductRequest, UpdateProductRequest
 } from './admin-products.models';
 
 @Injectable({ providedIn: 'root' })
@@ -39,11 +39,13 @@ export class AdminProductsApi {
     );
   }
 
-  searchProduct(searchQuery: string): Observable<SearchProductResponse> {
+  searchProduct(searchQuery: string): Observable<Product[]> {
     const url = `${environment.apiBaseUrl}/products/search-product`;
 
     const token = this.auth.accessToken();
-    if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+    if (!token) {
+      return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+    }
 
     const headers = new HttpHeaders({
       Authorization: `Bearer ${token}`,
@@ -52,7 +54,7 @@ export class AdminProductsApi {
 
     const body: SearchProductRequest = { searchQuery };
 
-    return this.http.post<SearchProductResponse>(url, body, { headers }).pipe(
+    return this.http.post<Product[]>(url, body, { headers }).pipe(
       catchError((err) => {
         console.error('[AdminProductsApi] searchProduct failed:', err);
         return throwError(() => err);
@@ -72,4 +74,36 @@ export class AdminProductsApi {
     });
     return this.http.post(`${environment.apiBaseUrl}/products/admin`, body, { headers });
   }
+
+  updateProduct(body: UpdateProductRequest): Observable<unknown> {
+    const token = this.auth.accessToken();
+    if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    });
+
+    return this.http.put(`${environment.apiBaseUrl}/products/admin`, body, { headers });
+  }
+
+  deleteProduct(id: string): Observable<unknown> {
+    const token = this.auth.accessToken();
+    if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    });
+
+    return this.http
+      .delete(`${environment.apiBaseUrl}/products/admin/${encodeURIComponent(id)}`, { headers })
+      .pipe(
+        catchError((err) => {
+          console.error('[AdminProductsApi] deleteProduct failed:', err);
+          return throwError(() => err);
+        }),
+      );
+  }
+
 }

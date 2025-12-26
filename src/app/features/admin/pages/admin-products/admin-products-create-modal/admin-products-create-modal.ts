@@ -1,10 +1,10 @@
-// admin-products-create-modal.ts
 import { CommonModule } from '@angular/common';
 import {
   Component,
   EventEmitter,
   HostListener,
   Output,
+  Input,
   computed,
   inject,
   signal,
@@ -21,7 +21,12 @@ import { catchError, startWith } from 'rxjs/operators';
 import { CatalogApiService } from '../../../../../core/api/catalog-api.sevice';
 import { AdminProductsApi } from '../../../../../core/admin-api/admin-products-api';
 import { ApiCategoryValue } from '../../../../../core/api/catalog.models';
-import { CreateProductRequest } from '../../../../../core/admin-api/admin-products.models';
+import {
+  CreateProductRequest,
+  UpdateProductRequest,
+  Product,
+  ProductCategory,
+} from '../../../../../core/admin-api/admin-products.models';
 
 type SelectOption = { id: string; value: string };
 
@@ -45,8 +50,11 @@ export class AdminProductCreateModal {
   private readonly catalogApi = inject(CatalogApiService);
   private readonly api = inject(AdminProductsApi);
 
+  // ✅ Ako je prosleđen product -> EDIT (PUT) + prefill
+  @Input() product: Product | null = null;
+
   @Output() closed = new EventEmitter<void>();
-  @Output() created = new EventEmitter<void>();
+  @Output() created = new EventEmitter<void>(); // zadrži naziv da ne puca parent
 
   readonly loading = signal(false);
   readonly submitting = signal(false);
@@ -61,7 +69,12 @@ export class AdminProductCreateModal {
   readonly categoryOpen = signal(false);
   readonly genderOpen = signal(false);
 
-  // FORM (category is SINGLE now)
+  // ✅ čuvamo originalne kategorije (npr. SPORT...) da ih ne obrišemo na PUT-u
+  private readonly originalCategories = signal<ProductCategory[]>([]);
+
+  readonly isEdit = computed(() => !!this.product?.id);
+
+  // FORM (category is SINGLE)
   readonly form = this.fb.group({
     productName: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
     productDescription: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(4)]),
@@ -72,44 +85,66 @@ export class AdminProductCreateModal {
     genderValueId: this.fb.control<string | null>(null, [Validators.required]),
   });
 
-  // --- Bridge Reactive Forms -> Signals (da computed radi kako treba) ---
+  // --- Bridge Reactive Forms -> Signals (da computed radi stabilno) ---
   private readonly formStatusSig = toSignal(
     this.form.statusChanges.pipe(startWith(this.form.status)),
-    { initialValue: this.form.status }
+    { initialValue: this.form.status },
   );
 
   private readonly brandIdSig = toSignal(
     this.form.controls.brandValueId.valueChanges.pipe(startWith(this.form.controls.brandValueId.value)),
-    { initialValue: this.form.controls.brandValueId.value }
+    { initialValue: this.form.controls.brandValueId.value },
   );
 
   private readonly categoryIdSig = toSignal(
     this.form.controls.categoryValueId.valueChanges.pipe(startWith(this.form.controls.categoryValueId.value)),
-    { initialValue: this.form.controls.categoryValueId.value }
+    { initialValue: this.form.controls.categoryValueId.value },
   );
 
   private readonly genderIdSig = toSignal(
     this.form.controls.genderValueId.valueChanges.pipe(startWith(this.form.controls.genderValueId.value)),
-    { initialValue: this.form.controls.genderValueId.value }
+    { initialValue: this.form.controls.genderValueId.value },
   );
 
   readonly invalid = computed(() => this.formStatusSig() === 'INVALID' || this.submitting());
 
   // labels (za prikaz u triggeru)
   readonly selectedBrandLabel = computed(() =>
-    this.findLabel(this.brandOptions(), this.brandIdSig())
+    this.findLabel(this.brandOptions(), this.brandIdSig()),
   );
 
   readonly selectedCategoryLabel = computed(() =>
-    this.findLabel(this.categoryOptions(), this.categoryIdSig())
+    this.findLabel(this.categoryOptions(), this.categoryIdSig()),
   );
 
   readonly selectedGenderLabel = computed(() =>
-    this.findLabel(this.genderOptions(), this.genderIdSig())
+    this.findLabel(this.genderOptions(), this.genderIdSig()),
   );
 
   ngOnInit(): void {
     this.loadOptions();
+    this.prefillIfEdit();
+    this.syncSkuState();
+  }
+
+  private prefillIfEdit(): void {
+    if (!this.product) return;
+
+    const cats = this.product.categories ?? [];
+    this.originalCategories.set(cats);
+
+    const brandId = cats.find((c) => c.categoryId === CATEGORY_IDS.BRAND)?.categoryValueId ?? null;
+    const categoryId = cats.find((c) => c.categoryId === CATEGORY_IDS.CATEGORY)?.categoryValueId ?? null;
+    const genderId = cats.find((c) => c.categoryId === CATEGORY_IDS.GENDER)?.categoryValueId ?? null;
+
+    this.form.patchValue({
+      productName: this.product.productName ?? '',
+      productDescription: this.product.productDescription ?? '',
+      sku: this.product.productSku ?? '',
+      brandValueId: brandId,
+      categoryValueId: categoryId,
+      genderValueId: genderId,
+    });
   }
 
   private loadOptions(): void {
@@ -123,13 +158,13 @@ export class AdminProductCreateModal {
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe(({ brands, categories, genders }) => {
-        this.brandOptions.set(brands.map(v => ({ id: v.id, value: v.value })));
-        this.categoryOptions.set(categories.map(v => ({ id: v.id, value: v.value })));
-        this.genderOptions.set(genders.map(v => ({ id: v.id, value: v.value })));
+        this.brandOptions.set(brands.map((v) => ({ id: v.id, value: v.value })));
+        this.categoryOptions.set(categories.map((v) => ({ id: v.id, value: v.value })));
+        this.genderOptions.set(genders.map((v) => ({ id: v.id, value: v.value })));
       });
   }
 
-  // overlay click closes modal (clicks inside modal should not bubble)
+  // overlay click closes modal
   onOverlayMouseDown(): void {
     this.close();
   }
@@ -151,14 +186,13 @@ export class AdminProductCreateModal {
   }
 
   toggleDropdown(key: DropdownKey): void {
-    // close others
     if (key !== 'brand') this.brandOpen.set(false);
     if (key !== 'category') this.categoryOpen.set(false);
     if (key !== 'gender') this.genderOpen.set(false);
 
-    if (key === 'brand') this.brandOpen.update(v => !v);
-    if (key === 'category') this.categoryOpen.update(v => !v);
-    if (key === 'gender') this.genderOpen.update(v => !v);
+    if (key === 'brand') this.brandOpen.update((v) => !v);
+    if (key === 'category') this.categoryOpen.update((v) => !v);
+    if (key === 'gender') this.genderOpen.update((v) => !v);
   }
 
   // SINGLE select (brand / gender)
@@ -194,20 +228,65 @@ export class AdminProductCreateModal {
 
     const v = this.form.getRawValue();
 
-    const categoriesPayload: CreateProductRequest['categories'] = [
+    // ✅ Preserve all categories that are NOT BREND/KATEGORIJA/POL (e.g. SPORT, etc.)
+    const preserved = (this.originalCategories() ?? []).filter(
+      (c) =>
+        c.categoryId !== CATEGORY_IDS.BRAND &&
+        c.categoryId !== CATEGORY_IDS.CATEGORY &&
+        c.categoryId !== CATEGORY_IDS.GENDER,
+    );
+
+    // ✅ Rebuild our three categories from form
+    const rebuilt = [
       ...this.buildCategoryEntrySingle('BREND', CATEGORY_IDS.BRAND, v.brandValueId, this.brandOptions()),
       ...this.buildCategoryEntrySingle('KATEGORIJA', CATEGORY_IDS.CATEGORY, v.categoryValueId, this.categoryOptions()),
       ...this.buildCategoryEntrySingle('POL', CATEGORY_IDS.GENDER, v.genderValueId, this.genderOptions()),
     ];
 
-    const body: CreateProductRequest = {
+    const categoriesPayload = [
+      ...preserved.map((c) => ({
+        categoryId: c.categoryId,
+        categoryName: c.categoryName,
+        categoryValueId: c.categoryValueId,
+        value: c.value,
+      })),
+      ...rebuilt,
+    ];
+
+    // CREATE (POST)
+    if (!this.isEdit()) {
+      const body: CreateProductRequest = {
+        productName: v.productName.trim(),
+        productDescription: v.productDescription.trim(),
+        sku: v.sku.trim(),
+        categories: categoriesPayload,
+      };
+
+      this.api.createProduct(body)
+        .pipe(finalize(() => this.submitting.set(false)))
+        .subscribe({
+          next: () => {
+            this.created.emit();
+            this.close();
+          },
+          error: () => {
+            this.error.set('Greška pri kreiranju proizvoda. Pokušajte ponovo.');
+          },
+        });
+
+      return;
+    }
+
+    // EDIT (PUT)
+    const body: UpdateProductRequest = {
+      id: this.product!.id,
       productName: v.productName.trim(),
       productDescription: v.productDescription.trim(),
-      sku: v.sku.trim(),
+      productSku: v.sku.trim(),
       categories: categoriesPayload,
     };
 
-    this.api.createProduct(body)
+    this.api.updateProduct(body)
       .pipe(finalize(() => this.submitting.set(false)))
       .subscribe({
         next: () => {
@@ -215,18 +294,17 @@ export class AdminProductCreateModal {
           this.close();
         },
         error: () => {
-          this.error.set('Greška pri kreiranju proizvoda. Pokušajte ponovo.');
+          this.error.set('Greška pri izmjeni proizvoda. Pokušajte ponovo.');
         },
       });
   }
 
-  // helpers
   private buildCategoryEntrySingle(
     categoryName: string,
     categoryId: string,
     selectedValueId: string | null,
     options: SelectOption[],
-  ): CreateProductRequest['categories'] {
+  ): Array<{ categoryId: string; categoryName: string; categoryValueId: string; value: string }> {
     if (!selectedValueId) return [];
     const label = this.findLabel(options, selectedValueId);
     if (!label) return [];
@@ -240,7 +318,7 @@ export class AdminProductCreateModal {
 
   private findLabel(options: SelectOption[], id: string | null | undefined): string | null {
     if (!id) return null;
-    const found = options.find(o => o.id === id);
+    const found = options.find((o) => o.id === id);
     return found?.value ?? null;
   }
 
@@ -253,4 +331,15 @@ export class AdminProductCreateModal {
     }
     this.close();
   }
+
+  private syncSkuState(): void {
+    const skuCtrl = this.form.controls.sku;
+
+    if (this.isEdit()) {
+      skuCtrl.disable({ emitEvent: false });
+    } else {
+      skuCtrl.enable({ emitEvent: false });
+    }
+  }
+
 }

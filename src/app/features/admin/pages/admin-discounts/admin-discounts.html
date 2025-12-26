@@ -1,4 +1,89 @@
 <section class="card">
-  <h1 class="title">Discount</h1>
-  <p class="sub">Ovdje ćemo upravljati sa dicount.</p>
+  <div class="head">
+    <div class="head-left">
+      <h1 class="title">Popusti</h1>
+      <p class="sub">Upravljanje popustima (create / edit / delete).</p>
+    </div>
+
+    <div class="head-right">
+      <button class="btn-add" type="button" (click)="add()">
+        <span class="plus">+</span>
+        <span>Dodaj popust</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="meta">
+    @if (error()) {
+      <div class="error">{{ error() }}</div>
+    } @else {
+      @if (loading()) {
+        <div class="hint">Učitavanje popusta...</div>
+      } @else if (hasDiscounts()) {
+        <div class="count">Rezultati: <strong>{{ discounts().length }}</strong></div>
+      } @else {
+        <div class="hint">Nema popusta. Kliknite “Dodaj popust”.</div>
+      }
+    }
+  </div>
+
+  <div class="list">
+    @if (loading()) {
+      <div class="empty">Učitavanje...</div>
+    } @else if (!hasDiscounts()) {
+      <div class="empty">Lista je prazna.</div>
+    } @else {
+      <div class="rows" role="list">
+        @for (d of discounts(); track trackById($index, d)) {
+          <div class="row" role="listitem">
+            <div class="main">
+              <div class="name">{{ valueLabel(d) }} · <span class="type">{{ typeLabel(d.type) }}</span></div>
+              <div class="id">ID: <span>{{ d.id }}</span></div>
+              <div class="desc" title="{{ d.description }}">{{ d.description }}</div>
+              <div class="period">
+                <span>Start:</span> <strong>{{ formatDate(d.startDate) }}</strong>
+                <span class="sep">·</span>
+                <span>End:</span> <strong>{{ formatDate(d.endDate) }}</strong>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="button" class="icon-btn" aria-label="Edit" (click)="edit(d)">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M3 17.25V21h3.75L17.8 9.95l-3.75-3.75L3 17.25Zm2.92 2.33H5v-.92l8.9-8.9.92.92-8.9 8.9ZM20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/>
+                </svg>
+              </button>
+
+              <button type="button" class="icon-btn danger" aria-label="Delete" (click)="askDelete(d)">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 7h12l-1 14H7L6 7Zm3-3h6l1 2H8l1-2Zm-3 2h12v2H6V6Z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
 </section>
+
+@if (upsertOpen()) {
+  <app-admin-discount-upsert-modal
+    [discount]="editing()"
+    (closed)="closeUpsert()"
+    (saved)="onSaved()"
+  />
+}
+
+<app-confirm-dialog
+  [open]="confirmOpen()"
+  [title]="'Brisanje popusta'"
+  [message]="'Da li ste sigurni da želite obrisati ovaj popust?'"
+  [confirmText]="'Da'"
+  [cancelText]="'Ne'"
+  [variant]="'danger'"
+  [icon]="'⚠'"
+  [busy]="confirmBusy()"
+  (confirm)="confirmDelete()"
+  (cancel)="cancelDelete()"
+/>

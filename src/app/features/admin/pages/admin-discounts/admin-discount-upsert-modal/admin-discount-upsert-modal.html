@@ -1,0 +1,115 @@
+<div class="overlay" role="dialog" aria-modal="true" [attr.aria-label]="isEdit() ? 'Uredi popust' : 'Dodaj popust'" (mousedown)="onOverlayMouseDown()">
+  <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
+    <header class="head">
+      <div class="title-wrap">
+        <h2 class="title">
+          @if (isEdit()) { Uredi popust } @else { Dodaj popust }
+        </h2>
+        <p class="sub">Unesite tip, vrijednost i period važenja.</p>
+      </div>
+
+      <button class="icon-btn" type="button" (click)="close()" aria-label="Zatvori">✕</button>
+    </header>
+
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="grid2">
+        <!-- TYPE dropdown -->
+        <div class="field dd-wrap" (click)="$event.stopPropagation()">
+          <label class="label">Tip</label>
+
+          <button
+            class="dd"
+            type="button"
+            (click)="toggleDropdown(); $event.stopPropagation()"
+            [attr.aria-expanded]="typeOpen()"
+            aria-haspopup="listbox"
+          >
+            <span class="dd-text">{{ selectedTypeLabel() }}</span>
+            <span class="dd-caret" aria-hidden="true">▾</span>
+          </button>
+
+          @if (typeOpen()) {
+            <!-- IMPORTANT: panel is positioned fixed (see scss) so it overlays everything -->
+            <div class="dd-panel" (click)="$event.stopPropagation()">
+              <div class="dd-scroll" role="listbox">
+                @for (o of typeOptions(); track o.id) {
+                  <button type="button" class="dd-item" (click)="selectType(o.id)">
+                    <span class="dd-label">{{ o.label }}</span>
+                    @if (form.controls.type.value === o.id) { <span class="dd-mark">✓</span> }
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (form.controls.type.touched && form.controls.type.invalid) {
+            <div class="field-err">Tip je obavezan.</div>
+          }
+        </div>
+
+        <!-- VALUE -->
+        <div class="field">
+          <label class="label">
+            Vrijednost
+            @if (isPercentage()) { <span class="hint-inline">(1–100)</span> }
+            @else { <span class="hint-inline">(RSD)</span> }
+          </label>
+
+          <input
+            class="input"
+            type="number"
+            formControlName="value"
+            [attr.min]="1"
+            [attr.max]="isPercentage() ? 100 : null"
+            [attr.placeholder]="isPercentage() ? 'npr. 10' : 'npr. 1100'"
+          />
+
+          @if (form.controls.value.touched && form.controls.value.invalid) {
+            <div class="field-err">
+              @if (isPercentage()) { Vrijednost mora biti od 1 do 100. }
+              @else { Vrijednost mora biti najmanje 1. }
+            </div>
+          }
+        </div>
+
+        <!-- START -->
+        <div class="field">
+          <label class="label">Start</label>
+          <input class="input" type="datetime-local" formControlName="startDateLocal" />
+        </div>
+
+        <!-- END -->
+        <div class="field">
+          <label class="label">End</label>
+          <input class="input" type="datetime-local" formControlName="endDateLocal" />
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="field full">
+          <label class="label">Opis</label>
+          <textarea class="textarea" rows="3" formControlName="description" placeholder="Kratak opis popusta"></textarea>
+          @if (form.controls.description.touched && form.controls.description.invalid) {
+            <div class="field-err">Opis je obavezan (min 4 karaktera).</div>
+          }
+        </div>
+      </div>
+
+      <div class="meta">
+        @if (showRangeError()) {
+          <div class="error">Start datum mora biti manji od end datuma.</div>
+        }
+
+        @if (error()) {
+          <div class="error">{{ error() }}</div>
+        }
+      </div>
+
+      <footer class="actions">
+        <button class="btn ghost" type="button" (click)="close()" [disabled]="submitting()">Otkaži</button>
+        <button class="btn" type="submit" [disabled]="invalid()">
+          {{ submitting() ? 'Čuvanje...' : 'Sačuvaj' }}
+        </button>
+      </footer>
+    </form>
+  </div>
+</div>

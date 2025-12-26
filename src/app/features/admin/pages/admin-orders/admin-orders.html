@@ -1,4 +1,144 @@
 <section class="card">
-  <h1 class="title">Narudžbe</h1>
-  <p class="sub">Pregled svih ordera + detalji narudžbe dolaze ovdje.</p>
+  <div class="head">
+    <div class="head-left">
+      <h1 class="title">Narudžbine</h1>
+      <p class="sub">Izaberite period i kliknite Pretraži.</p>
+    </div>
+
+    <div class="filters">
+      <div class="f">
+        <label class="lbl">Start</label>
+        <input class="input" type="datetime-local" [formControl]="startDate" />
+      </div>
+
+      <div class="f">
+        <label class="lbl">End</label>
+        <input class="input" type="datetime-local" [formControl]="endDate" />
+      </div>
+
+      <div class="f actions">
+        <label class="lbl ghost">.</label>
+        <button class="btn-search" type="button" (click)="onSearch()" [disabled]="!canSearch()">
+          {{ loading() ? 'Učitavanje...' : 'Pretraži' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="meta">
+    @if (showRangeError()) {
+      <div class="error">Start datum mora biti manji od end datuma.</div>
+    }@else {
+      @if (orders().length > 0) {
+        <div class="count">Rezultati: <strong>{{ orders().length }}</strong></div>
+      } @else {
+        <div class="hint">Nakon pretrage, rezultati će se prikazati ovdje.</div>
+      }
+    }
+
+    @if (error()) {
+      <div class="error">{{ error() }}</div>
+    }
+  </div>
+
+  <div class="list">
+    @if (orders().length === 0) {
+      <div class="empty">
+        @if (loading()) { Učitavanje narudžbi... }
+        @else { Nema podataka (još niste pretražili ili nema narudžbi za period). }
+      </div>
+    } @else {
+      <div class="rows" role="list">
+        @for (o of orders(); track trackByOrderId($index, o)) {
+          <div class="row" role="listitem">
+            <div class="main">
+              <div class="name">{{ o.userDetails.fullName }}</div>
+              <div class="id">Order ID: <span>{{ o.orderId }}</span></div>
+              <div class="desc" title="{{ o.description }}">{{ o.description }}</div>
+            </div>
+
+            <div class="price">
+              <div class="label">Ukupno</div>
+              <div class="value">{{ formatPrice(o.totalPrice) }} RSD</div>
+            </div>
+
+            <div class="status" [class]="o.status.toLowerCase()">
+              {{ o.status }}
+            </div>
+
+            <div class="actions">
+              @if (o.status === 'PENDING') {
+                <button class="icon-btn ok" type="button" (click)="completeOrder(o)" aria-label="Complete">✓</button>
+                <button class="icon-btn danger" type="button" (click)="cancelOrder(o)" aria-label="Cancel">✕</button>
+              } @else if (o.status === 'COMPLETED') {
+                <button class="icon-btn" type="button" (click)="returnOrder(o)" aria-label="Return">↩</button>
+              }
+
+              <button
+                class="icon-btn"
+                type="button"
+                (click)="toggleExpand(o.orderId)"
+                aria-label="Detalji"
+              >
+                {{ isExpanded(o.orderId) ? '▴' : '▾' }}
+              </button>
+            </div>
+          </div>
+
+          @if (isExpanded(o.orderId)) {
+            <div class="details">
+              <div class="dcol">
+                <div class="dtitle">Kupac</div>
+                <div class="dline"><span>Ime:</span> <strong>{{ o.userDetails.fullName }}</strong></div>
+                <div class="dline"><span>Email:</span> <strong>{{ o.userDetails.email }}</strong></div>
+                <div class="dline"><span>Telefon:</span> <strong>{{ o.userDetails.phoneNumber }}</strong></div>
+              </div>
+
+              <div class="dcol">
+                <div class="dtitle">Adresa</div>
+                <div class="dline"><span>Adresa:</span> <strong>{{ o.userDetails.address }}</strong></div>
+                <div class="dline"><span>Opština:</span> <strong>{{ o.userDetails.municipality }}</strong></div>
+                <div class="dline"><span>Poštanski:</span> <strong>{{ o.userDetails.postalCode }}</strong></div>
+              </div>
+
+              <div class="dcol full">
+                <div class="dtitle">Stavke</div>
+
+                <div class="items">
+                  @for (i of o.items; track trackByItemSku($index, i)) {
+                    <div class="item">
+                      <div class="it-left">
+                        <div class="it-name">{{ i.productName }}</div>
+                        <div class="it-meta">
+                          SKU: <span>{{ i.productSku }}</span> · Veličina: <span>{{ i.sizeVariantAttributeValue }}</span>
+                        </div>
+                      </div>
+
+                      <div class="it-right">
+                        <div class="it-qty">x{{ i.quantity }}</div>
+                        <div class="it-price">{{ formatPrice(i.totalItemPrice) }} RSD</div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              @if (o.couponCode) {
+                <div class="dcol full coupon">
+                  <div class="dtitle">Kupon</div>
+                  <div class="dline">
+                    <span>Kod:</span> <strong>{{ o.couponCode }}</strong>
+                    <span class="sep">·</span>
+                    <span>Tip:</span> <strong>{{ o.couponType }}</strong>
+                    <span class="sep">·</span>
+                    <span>Vrijednost:</span> <strong>{{ o.couponValue }}</strong>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
 </section>

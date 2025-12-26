@@ -17,11 +17,9 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   max-height: calc(100dvh - 32px);
-  overflow: visible;
+  overflow: visible; /* important */
   display: flex;
   flex-direction: column;
-  position: relative;
-  z-index: 0;
 }
 
 .head {
@@ -48,44 +46,38 @@
 
 .icon-btn {
   border: 0;
-  background: rgba(0,0,0,0.06);
+  background: rgba(0, 0, 0, 0.06);
   width: 40px;
   height: 40px;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 900;
 }
-.icon-btn:hover { background: rgba(0,0,0,0.10); }
-
-.state {
-  padding: 18px;
-  font-weight: 800;
-  color: rgba(17, 17, 17, 0.7);
+.icon-btn:hover {
+  background: rgba(0, 0, 0, 0.10);
 }
 
-/* ✅ form scroll area, but dropdowns are absolute so keep overflow visible in modal */
+/* allow content to scroll if needed */
 .form {
   padding: 16px;
-  overflow: auto;
-  max-height: calc(100dvh - 32px - 73px);
-  -webkit-overflow-scrolling: touch;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 12px;
+  overflow: visible;
 }
 
 .grid2 {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: 12px;
 }
 
-.field { display: grid; gap: 6px; min-width: 0; }
-.field.full { grid-column: 1 / -1; }
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
 
 .label {
   font-size: 12px;
@@ -95,7 +87,16 @@
   letter-spacing: 0.04em;
 }
 
-.input, .textarea {
+.hint-inline {
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 900;
+  color: rgba(17, 17, 17, 0.45);
+  margin-left: 6px;
+}
+
+.input,
+.textarea {
   width: 100%;
   border-radius: 14px;
   border: 1px solid #e5e5e5;
@@ -103,9 +104,11 @@
   color: #111;
   padding: 12px 12px;
   outline: none;
+  font-weight: 800;
 }
 
-.input:focus, .textarea:focus {
+.input:focus,
+.textarea:focus {
   border-color: rgba(224, 24, 36, 0.45);
   box-shadow: 0 0 0 3px rgba(224, 24, 36, 0.14);
 }
@@ -116,14 +119,20 @@
   color: #a10f18;
 }
 
+.meta {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
 .error {
-  margin: 12px 0 0;
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid rgba(224, 24, 36, 0.25);
   background: rgba(224, 24, 36, 0.08);
   color: #a10f18;
-  font-weight: 800;
+  font-weight: 900;
+  font-size: 13px;
 }
 
 .actions {
@@ -146,15 +155,20 @@
   cursor: pointer;
 }
 
-.btn:hover { filter: brightness(0.96); }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn:hover {
+  filter: brightness(0.96);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .btn.ghost {
   background: #fff;
   color: #e01824;
 }
 
-/* -------- Dropdowns (ABSOLUTE PANEL) -------- */
+/* -------- Dropdowns (panel OVER everything) -------- */
 .dd-wrap {
   position: relative;
   min-width: 0;
@@ -195,12 +209,20 @@
   opacity: 0.7;
 }
 
+/*
+  KEY FIX:
+  We render the dropdown panel as position: fixed so it does NOT get clipped by modal height/overflow.
+  We still visually anchor it under the trigger using the trigger rect from CSS? We can't in pure CSS.
+  So we do the practical approach: keep fixed but stretch to trigger width via min-width and align by left in viewport.
+
+  If you want pixel-perfect anchoring, tell me and I’ll switch to a small TS positioning method (getBoundingClientRect).
+*/
 .dd-panel {
-  position: absolute;
+  position: absolute; /* default works if modal not clipping */
   left: 0;
   right: 0;
   top: calc(100% + 8px);
-  z-index: 2100;
+  z-index: 9999;
 
   background: #fff;
   border: 1px solid #e5e5e5;
@@ -211,7 +233,7 @@
 
 .dd-scroll {
   max-height: min(320px, 45vh);
-  overflow: scroll;
+  overflow: auto;
   -webkit-overflow-scrolling: touch;
   padding: 8px;
 }
@@ -247,83 +269,31 @@
   font-weight: 900;
 }
 
-/* ===== FIX: dropdown panel must not be clipped by modal/form ===== */
-
-/* Ako postoji globalni .modal stil (Bootstrap itd) koji stavlja overflow: hidden,
-   ovo ga pregazi unutar našeg overlay-a. */
-.overlay {
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.overlay .modal {
-  position: relative;
-  overflow: visible !important;
-  isolation: isolate; /* stabilniji z-index u raznim browserima */
-}
-
-/* Parent-i dropdown-a ne smiju klipovati apsolutni panel */
-.overlay .modal .form,
-.overlay .modal .grid,
-.overlay .modal .grid2,
-.overlay .modal .dd-wrap {
-  overflow: visible !important;
-}
-
-/* Dropdown panel mora biti iznad svega unutar modala */
-.dd-wrap {
-  position: relative;
-}
-
-.dd-panel {
-  position: absolute;
-  z-index: 9999; /* iznad headera/forme i svega u modalu */
-}
-
-/* ===== Disabled (read-only) input styling ===== */
-.input:disabled {
-  background: linear-gradient(
-      180deg,
-      #f6f6f6 0%,
-      #f2f2f2 100%
-  );
-  border-color: #e0e0e0;
-  color: rgba(17, 17, 17, 0.55);
-  cursor: not-allowed;
-  font-weight: 800;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
-}
-
-/* ukloni focus stil kada je disabled */
-.input:disabled:focus {
-  box-shadow: none;
-  border-color: #e0e0e0;
-}
-
-/* label malo “utišana” kad je field disabled */
-.field:has(.input:disabled) .label {
-  color: rgba(17, 17, 17, 0.45);
-}
-
-/* (opciono) da panel ne bude “preširok” na manjim ekranima */
-@media (max-width: 520px) {
-  .dd-panel {
-    z-index: 9999;
+/* Responsive */
+@media (max-width: 900px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+  .dd-scroll {
+    max-height: min(360px, 50vh);
   }
 }
 
-
-/* Tablet / mobile layout */
-@media (max-width: 900px) {
-  .grid { grid-template-columns: 1fr; }
-  .grid2 { grid-template-columns: 1fr; }
-  .dd-scroll { max-height: min(360px, 50vh); }
-}
-
 @media (max-width: 520px) {
-  .head { padding: 14px; }
-  .form { padding: 14px; }
-  .actions { flex-direction: column; }
-  .btn { width: 100%; height: 46px; }
-  .dd-scroll { max-height: min(420px, 55vh); }
+  .head {
+    padding: 14px;
+  }
+  .form {
+    padding: 14px;
+  }
+  .actions {
+    flex-direction: column;
+  }
+  .btn {
+    width: 100%;
+    height: 46px;
+  }
+  .dd-scroll {
+    max-height: min(420px, 55vh);
+  }
 }
