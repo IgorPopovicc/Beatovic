@@ -6,6 +6,7 @@ import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 import { CreateDiscountRequest, DiscountListItem, UpdateDiscountRequest } from './admin-discount.model';
+import {DiscountDTO} from './admin-products.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminDiscountsApi {
@@ -92,5 +93,21 @@ export class AdminDiscountsApi {
         return throwError(() => err);
       }),
     );
+  }
+
+  getActiveDiscounts(): Observable<DiscountDTO[]> {
+    const token = this.auth.accessToken();
+    if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+
+    return this.http
+      .get<DiscountDTO[]>(`${environment.apiBaseUrl}/discounts/admin`, { headers })
+      .pipe(
+        catchError((err) => {
+          console.error('[AdminDiscountsApi] getActiveDiscounts failed:', err);
+          return throwError(() => err);
+        }),
+      );
   }
 }

@@ -1,0 +1,123 @@
+.or {
+  padding: 26px 16px 70px;
+  max-width: 980px;
+  margin: 0 auto;
+  min-height: calc(100vh - 120px);
+  display: grid;
+  place-items: center;
+}
+
+.muted { opacity: .65; }
+
+.card {
+  width: min(760px, 100%);
+  text-align: center;
+  padding: clamp(18px, 3vw, 30px);
+  background:
+    radial-gradient(1200px 600px at 20% 0%, rgba(224,24,36,.10), transparent 55%),
+    radial-gradient(900px 500px at 90% 40%, rgba(0,0,0,.05), transparent 55%),
+    #fff;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 18px;
+  box-shadow: 0 18px 55px rgba(0,0,0,.10);
+}
+
+.badge {
+  display: inline-block;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(0,0,0,.03);
+}
+
+.badge.ok {
+  border-color: rgba(0,0,0,.10);
+}
+
+.badge.err {
+  border-color: rgba(224,24,36,.25);
+  background: rgba(224,24,36,.06);
+}
+
+.icon {
+  margin: 12px auto 10px;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(0,0,0,.10);
+  background: #fff;
+  font-size: 26px;
+}
+
+.icon.ok {
+  background: rgba(0,0,0,.02);
+}
+
+.icon.err {
+  background: rgba(224,24,36,.06);
+  border-color: rgba(224,24,36,.18);
+}
+
+h1 {
+  margin: 10px 0 8px;
+  font-size: clamp(22px, 3vw, 34px);
+  letter-spacing: -0.02em;
+}
+
+.detail {
+  margin: 14px auto 0;
+  text-align: left;
+  width: min(620px, 100%);
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(0,0,0,.02);
+
+  .dtitle {
+    font-weight: 900;
+    margin-bottom: 6px;
+  }
+
+  .dmsg {
+    font-weight: 700;
+    opacity: .85;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+}
+
+.actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.16);
+  background: #fff;
+  font-weight: 900;
+  letter-spacing: .02em;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn.primary {
+  background: #e01824;
+  border-color: #e01824;
+  color: #fff;
+}
+.btn.ghost { background: transparent; }

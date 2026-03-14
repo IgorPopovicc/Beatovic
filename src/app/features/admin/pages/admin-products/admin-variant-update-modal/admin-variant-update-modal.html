@@ -1,0 +1,348 @@
+<div class="overlay" role="dialog" aria-modal="true" aria-label="Edit model" (mousedown)="close()">
+  <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
+    <header class="head">
+      <div class="title-wrap">
+        <h2 class="title">Edit model</h2>
+        <p class="sub">Update varijante: cijena, boja, veličine/količine, popusti, slike.</p>
+      </div>
+      <button class="icon-btn" type="button" (click)="close()" aria-label="Zatvori">✕</button>
+    </header>
+
+    <div class="body">
+      @if (loading()) {
+        <div class="state">Učitavanje...</div>
+      } @else if (error()) {
+        <div class="error">{{ error() }}</div>
+      } @else {
+        <section class="cardish">
+          <div class="section-title">Osnovno</div>
+
+          <div class="grid2">
+            <div class="field">
+              <label class="label">SKU</label>
+              <input class="input" [value]="sku()" disabled />
+            </div>
+
+            <div class="field dd-wrap" (click)="$event.stopPropagation()">
+              <label class="label">BOJA</label>
+
+              <button
+                class="dd"
+                type="button"
+                (click)="toggleColorsDropdown(); $event.stopPropagation()"
+                [attr.aria-expanded]="colorsOpen()"
+                aria-haspopup="listbox"
+                [disabled]="formLoading()"
+              >
+                <span class="dd-text">
+                  <span class="dd-label color">
+                    <span class="swatch" [style.background]="selectedColorSwatch()"></span>
+                    <span class="text">{{ selectedColorLabel() }}</span>
+                  </span>
+                </span>
+                <span class="dd-caret" aria-hidden="true">▾</span>
+              </button>
+
+              @if (colorsOpen()) {
+                <div class="dd-panel" (click)="$event.stopPropagation()">
+                  <div class="dd-scroll" role="listbox">
+                    @if (colorOptions().length === 0) {
+                      <div class="dd-empty">Nema boja.</div>
+                    } @else {
+                      @for (c of colorOptions(); track c.id) {
+                        <button
+                          type="button"
+                          class="dd-opt"
+                          (click)="selectColor(c.id)"
+                          [class.active]="selectedColorValueId() === c.id"
+                        >
+                          <span class="dd-label color">
+                            <span class="swatch" [style.background]="colorSwatch(c.value)"></span>
+                            <span class="text">{{ colorLabel(c.value) }}</span>
+                          </span>
+
+                          @if (selectedColorValueId() === c.id) {
+                            <span class="dd-opt-badge">✓</span>
+                          }
+                        </button>
+                      }
+                    }
+                  </div>
+
+                  <div class="dd-actions">
+                    <button type="button" class="mini" (click)="colorsOpen.set(false)">OK</button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div class="grid2">
+              <div class="field">
+                <label class="label">CIJENA</label>
+                <input class="input" type="number" formControlName="price" min="0" step="0.01" />
+                @if (form.controls.price.touched && form.controls.price.invalid) {
+                  <div class="field-err">Cijena je obavezna.</div>
+                }
+              </div>
+
+              <div class="field dd-wrap" (click)="$event.stopPropagation()">
+                <label class="label">AKTIVNI POPUSTI (multi-select)</label>
+
+                <button
+                  class="dd"
+                  type="button"
+                  (click)="toggleDiscountsDropdown(); $event.stopPropagation()"
+                  [attr.aria-expanded]="discountsOpen()"
+                  aria-haspopup="listbox"
+                  [disabled]="discountsLoading()"
+                >
+                  <span class="dd-text">
+                    @if (discountsLoading()) { Učitavanje... } @else { {{ selectedDiscountLabel() }} }
+                  </span>
+                  <span class="dd-caret" aria-hidden="true">▾</span>
+                </button>
+
+                @if (discountsError()) {
+                  <div class="error">{{ discountsError() }}</div>
+                }
+
+                @if (discountsOpen()) {
+                  <div class="dd-panel" (click)="$event.stopPropagation()">
+                    <div class="dd-scroll" role="listbox">
+                      @if (discounts().length === 0) {
+                        <div class="dd-empty">Nema aktivnih popusta.</div>
+                      } @else {
+                        @for (disc of discounts(); track disc.id) {
+                          <label class="dd-check">
+                            <input
+                              type="checkbox"
+                              [checked]="isDiscountSelected(disc.id)"
+                              (change)="toggleDiscount(disc.id, $any($event.target).checked)"
+                            />
+                            <span class="dd-check-text">{{ discountLabel(disc) }}</span>
+                          </label>
+                        }
+                      }
+                    </div>
+
+                    <div class="dd-actions">
+                      <button type="button" class="mini ghost" (click)="clearDiscounts()">Očisti</button>
+                      <button type="button" class="mini" (click)="discountsOpen.set(false)">OK</button>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div class="field inline">
+                <label class="label">NOVO</label>
+                <label class="toggle">
+                  <input type="checkbox" formControlName="isNew" />
+                  <span class="pill"></span>
+                  <span class="t">isNew</span>
+                </label>
+              </div>
+
+              <div class="field inline">
+                <label class="label">OUTLET</label>
+                <label class="toggle">
+                  <input type="checkbox" formControlName="isOutlet" />
+                  <span class="pill"></span>
+                  <span class="t">isOutlet</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="sizes">
+              <div class="section-title small">Veličine + količina</div>
+
+              <div class="add-size-row">
+                <div class="field dd-wrap" (click)="$event.stopPropagation()">
+                  <label class="label">Izaberi veličinu</label>
+
+                  <button
+                    class="dd"
+                    type="button"
+                    (click)="toggleAddSizeDropdown(); $event.stopPropagation()"
+                    [attr.aria-expanded]="addSizeOpen()"
+                    aria-haspopup="listbox"
+                    [disabled]="formLoading()"
+                  >
+                    <span class="dd-text">{{ addSizePickedLabel() }}</span>
+                    <span class="dd-caret" aria-hidden="true">▾</span>
+                  </button>
+
+                  @if (addSizeOpen()) {
+                    <div class="dd-panel" (click)="$event.stopPropagation()">
+                      <div class="dd-scroll" role="listbox">
+                        @if (sizeOptions().length === 0) {
+                          <div class="dd-empty">Nema veličina.</div>
+                        } @else {
+                          @for (s of sizeOptions(); track s.id) {
+                            <button
+                              type="button"
+                              class="dd-opt"
+                              (click)="pickSizeToAdd(s.id)"
+                              [class.active]="selectedAddSizeValueId() === s.id"
+                            >
+                              <span class="dd-opt-main">{{ s.value }}</span>
+                              @if (selectedAddSizeValueId() === s.id) { <span class="dd-opt-badge">✓</span> }
+                            </button>
+                          }
+                        }
+                      </div>
+
+                      <div class="dd-actions">
+                        <button type="button" class="mini" (click)="addSizeOpen.set(false)">OK</button>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  class="add-variant-btn"
+                  (click)="confirmAddPickedSize()"
+                  [disabled]="!selectedAddSizeValueId() || !!selectedSizes()[selectedAddSizeValueId()]"
+                >
+                  <span class="plus">+</span>
+                  <span>Dodaj</span>
+                </button>
+              </div>
+
+              <div class="sizes-grid">
+                @for (entry of (selectedSizes() | keyvalue); track entry.key) {
+                  <div class="size-item">
+                    <div class="size-top">
+                      <div class="lbl">Veličina: <strong>{{ entry.value.value }}</strong></div>
+                      <button type="button" class="rm-size" (click)="removeSize(entry.key)" aria-label="Ukloni">✕</button>
+                    </div>
+
+                    <input
+                      class="qty"
+                      type="number"
+                      min="0"
+                      step="1"
+                      [value]="entry.value.qty"
+                      (input)="setSizeQty(entry.key, $any($event.target).value)"
+                      aria-label="Količina"
+                    />
+                  </div>
+                }
+              </div>
+
+              @if (sizesInvalid()) {
+                <div class="field-err">Mora postojati bar jedna veličina i količina mora biti 0 ili više.</div>
+              }
+            </div>
+
+            <div class="images">
+              <div class="section-title small">Postojeće slike (čekiraj za brisanje)</div>
+
+              @if (existingImages().length === 0) {
+                <div class="hint">Nema postojećih slika.</div>
+              } @else {
+                <div class="img-grid">
+                  @for (img of existingImages(); track img.id) {
+                    <label class="img-card">
+                      <input
+                        type="checkbox"
+                        [checked]="isImageMarkedForRemoval(img.id)"
+                        (change)="toggleRemoveImage(img.id)"
+                      />
+                      <span class="thumb">
+                        <img [src]="img.url" alt="image" />
+                      </span>
+                      <span class="meta">
+                        <span class="id">{{ img.id }}</span>
+                        @if (img.displayed) { <span class="badge-mini">display</span> }
+                      </span>
+                    </label>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="images">
+              <div class="section-title small">Dodaj nove slike</div>
+
+              <div class="img-actions">
+                <label class="file-btn">
+                  <input
+                    type="file"
+                    accept=".webp,.jpg,.jpeg,image/webp,image/jpeg"
+                    multiple
+                    (change)="onFilesSelected($event)"
+                  />
+                  <span>Dodaj slike</span>
+                </label>
+
+                <div class="hint">Dodate slike će biti poslate u "images".</div>
+              </div>
+
+              @if (fileError()) {
+                <div class="error">{{ fileError() }}</div>
+              }
+
+              @if (files().length > 0) {
+                <div class="previews">
+                  @for (f of files(); track f._id) {
+                    <div class="prev">
+                      <div class="prev-top">
+                        <div class="fn">{{ f.file.name }}</div>
+                        <button type="button" class="rm" (click)="removeFile(f._id)" aria-label="Ukloni">✕</button>
+                      </div>
+                      <div class="meta">({{ f.file.type || 'file' }})</div>
+                    </div>
+                  }
+                </div>
+
+                <div class="display-pick">
+                  <div class="section-title small">Početna slika (samo iz NOVIH slika)</div>
+
+                  <div class="grid2">
+                    <div class="field">
+                      <label class="label">displayImageName</label>
+
+                      <select
+                        class="select"
+                        [value]="form.controls.displayImageName.value"
+                        (change)="setDisplayImageName($any($event.target).value)"
+                      >
+                        <option value="">Ne mijenjaj početnu sliku</option>
+                        @for (name of newImageNameOptions(); track name) {
+                          <option [value]="name">{{ name }}</option>
+                        }
+                      </select>
+
+                      <div class="hint">Popuni samo ako želiš da neka od NOVIH slika bude početna.</div>
+                    </div>
+
+                    <div class="field inline">
+                      <label class="label">Očisti</label>
+                      <button type="button" class="mini ghost" (click)="clearDisplayImageName()">Reset</button>
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <div class="hint">Nema novih slika. displayImageName ostavi prazno.</div>
+              }
+            </div>
+
+            @if (error()) {
+              <div class="error">{{ error() }}</div>
+            }
+
+            <footer class="actions">
+              <button class="btn ghost" type="button" (click)="close()" [disabled]="saving()">Otkaži</button>
+              <button class="btn" type="submit" [disabled]="invalid()">
+                @if (saving()) { Snimanje... } @else { Sačuvaj izmjene }
+              </button>
+            </footer>
+          </form>
+        </section>
+      }
+    </div>
+  </div>
+</div>

@@ -1,8 +1,9 @@
+// src/app/pages/cart/cart.ts
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CartStore } from '../../core/cart/cart.store';
-import {ConfirmDialog} from '../../shared/ui/confirm-dialog/confirm-dialog';
+import { ConfirmDialog } from '../../shared/ui/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-cart',
@@ -13,6 +14,7 @@ import {ConfirmDialog} from '../../shared/ui/confirm-dialog/confirm-dialog';
 })
 export class CartComponent {
   cart = inject(CartStore);
+  private router = inject(Router);
 
   items = this.cart.items;
   count = this.cart.itemsCount;
@@ -26,6 +28,10 @@ export class CartComponent {
   confirmOpen = signal(false);
   private pendingRemoveId = signal<string | null>(null);
   confirmMessage = signal('Da li želite da uklonite ovaj proizvod iz korpe?');
+
+  goCheckout() {
+    this.router.navigateByUrl('/checkout');
+  }
 
   askRemove(id: string, name?: string) {
     this.pendingRemoveId.set(id);

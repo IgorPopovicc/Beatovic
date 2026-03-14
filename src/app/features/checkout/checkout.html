@@ -1,0 +1,189 @@
+<section class="co" aria-label="Naplata">
+  <header class="co-head">
+    <div class="left">
+      <a class="back" (click)="goBack()" role="button" tabindex="0" aria-label="Nazad na korpu">← Nazad</a>
+      <h1>Naplata</h1>
+      <p class="muted">Popuni podatke za isporuku i potvrdi porudžbinu.</p>
+    </div>
+
+    <div class="right">
+      <a class="ghost" routerLink="/cart">Korpa</a>
+      <a class="ghost" routerLink="/">Početna</a>
+    </div>
+  </header>
+
+  @if (count() === 0) {
+    <div class="state">
+      <div class="state-card">
+        <div class="badge">Naplata</div>
+        <div class="icon" aria-hidden="true">🛒</div>
+        <h2>Korpa je prazna</h2>
+        <p class="muted">Dodaj proizvode iz kataloga i vrati se na naplatu.</p>
+        <div class="state-actions">
+          <a class="btn primary" routerLink="/">Katalog</a>
+          <a class="btn ghost" routerLink="/cart">Nazad na korpu</a>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="co-grid">
+      <section class="card form-card" aria-label="Podaci za porudžbinu">
+        <div class="card-head">
+          <div class="title">Podaci kupca</div>
+          <div class="hint">Sva polja su obavezna.</div>
+        </div>
+
+        @if (errorMsg()) {
+          <div class="alert" role="alert">{{ errorMsg() }}</div>
+        }
+
+        <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+          <div class="row2">
+            <div class="field">
+              <label>Ime i prezime</label>
+              <input type="text" formControlName="fullName" placeholder="npr. Petar Petrović" autocomplete="name" />
+              @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
+                <div class="err">Unesi ispravno ime i prezime.</div>
+              }
+            </div>
+
+            <div class="field">
+              <label>E-mail</label>
+              <input type="email" formControlName="email" placeholder="customer@example.com" autocomplete="email" />
+              @if (form.controls.email.touched && form.controls.email.invalid) {
+                <div class="err">Unesi ispravan e-mail.</div>
+              }
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Telefon</label>
+              <input type="tel" formControlName="phoneNumber" placeholder="+381601234567" autocomplete="tel" />
+              @if (form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid) {
+                <div class="err">Unesi ispravan broj telefona.</div>
+              }
+            </div>
+
+            <div class="field">
+              <label>Opština</label>
+              <input type="text" formControlName="municipality" placeholder="npr. Vračar" autocomplete="address-level2" />
+              @if (form.controls.municipality.touched && form.controls.municipality.invalid) {
+                <div class="err">Opština je obavezna.</div>
+              }
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field wide">
+              <label>Adresa</label>
+              <input type="text" formControlName="address" placeholder="Ulica i broj" autocomplete="street-address" />
+              @if (form.controls.address.touched && form.controls.address.invalid) {
+                <div class="err">Adresa je obavezna.</div>
+              }
+            </div>
+
+            <div class="field">
+              <label>Poštanski broj</label>
+              <input type="text" formControlName="postalCode" placeholder="11000" autocomplete="postal-code" />
+              @if (form.controls.postalCode.touched && form.controls.postalCode.invalid) {
+                <div class="err">Poštanski broj je obavezan.</div>
+              }
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Kupon</label>
+              <input type="text" formControlName="couponCode" placeholder="npr. 1000DINPOPUST" />
+              @if (form.controls.couponCode.touched && form.controls.couponCode.invalid) {
+                <div class="err">Kupon je obavezan.</div>
+              }
+            </div>
+
+            <div class="field">
+              <label>Napomena</label>
+              <input type="text" formControlName="description" placeholder="npr. Da dođe što pre" />
+              @if (form.controls.description.touched && form.controls.description.invalid) {
+                <div class="err">Napomena je obavezna.</div>
+              }
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn ghost" type="button" [disabled]="submitting()" (click)="goBack()">Nazad</button>
+
+            <button class="btn primary" type="submit" [disabled]="!canSubmit()">
+              @if (submitting()) {
+                <span class="spinner" aria-hidden="true"></span>
+                <span>Slanje...</span>
+              } @else {
+                <span>Poruči</span>
+              }
+            </button>
+          </div>
+
+          <div class="micro muted">
+            Klikom na “Poruči” potvrđuješ da su podaci tačni. Detalji porudžbine stižu na e-mail.
+          </div>
+        </form>
+      </section>
+
+      <aside class="card sum-card" aria-label="Pregled porudžbine">
+        <div class="card-head">
+          <div class="title">Pregled</div>
+          <div class="pill">{{ count() }} stavki</div>
+        </div>
+
+        <div class="sum-list">
+          @for (it of items(); track it.id) {
+            <div class="sum-row">
+              <div class="sum-left">
+                <div class="thumb">
+                  @if (it.image?.url) {
+                    <img [src]="it.image?.url" [alt]="it.image?.alt || it.name" loading="lazy" />
+                  } @else {
+                    <div class="ph"></div>
+                  }
+                </div>
+
+                <div class="meta">
+                  <div class="name">{{ it.name }}</div>
+                  @if (it.size) { <div class="muted sm">Veličina: {{ it.size }}</div> }
+                  <div class="muted sm">Količina: {{ it.qty }}</div>
+                </div>
+              </div>
+
+              <div class="sum-right">
+                <div class="price">
+                  {{ (it.unitPrice.amount * it.qty) | number:'1.2-2' }} {{ it.unitPrice.currency }}
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="totals">
+          <div class="trow">
+            <div class="muted">Međuzbir</div>
+            <div class="val">{{ subtotal().amount | number:'1.2-2' }} {{ subtotal().currency }}</div>
+          </div>
+
+          <div class="trow big">
+            <div>Ukupno</div>
+            <div class="val">{{ total().amount | number:'1.2-2' }} {{ total().currency }}</div>
+          </div>
+        </div>
+
+        <div class="note">
+          <div class="ico" aria-hidden="true">📧</div>
+          <div class="txt">
+            Nakon poručivanja, provjeri e-mail za detalje porudžbine.
+          </div>
+        </div>
+      </aside>
+    </div>
+  }
+</section>

@@ -292,6 +292,12 @@
   margin-bottom: 8px;
 }
 
+.actions .btn.disabled {
+  pointer-events: none;
+  opacity: .55;
+  filter: grayscale(.2);
+}
+
 .empty-icon {
   width: 46px;
   height: 46px;

@@ -1,3 +1,4 @@
+// src/app/core/cart/cart.store.ts
 import { Injectable, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
@@ -12,8 +13,19 @@ export interface CartImage {
 }
 
 export interface CartItem {
+  /**
+   * Cart line id (unique per item in cart). We store it as:
+   *   `${sizeVariantAttributeId}::${sizeValue}`
+   * so we can merge quantities per selected size.
+   */
   id: string;
+
+  /**
+   * ProductVariant id (the model id you open on details page).
+   * Useful for navigation back to details, but NOT used for order payload.
+   */
   productId?: string;
+
   name: string;
   sku?: string;
   size?: string | null;
@@ -21,6 +33,8 @@ export interface CartItem {
 
   unitPrice: CartMoney;
   qty: number;
+
+  // optional for routing
   slug?: string;
 }
 
@@ -54,7 +68,7 @@ export class CartStore {
   amountToFreeShipping = computed(() => {
     const t = this.freeShippingThreshold();
     const s = this.subtotal();
-    if (t.currency !== s.currency) return { amount: t.amount, currency: t.currency }; // fallback
+    if (t.currency !== s.currency) return { amount: t.amount, currency: t.currency };
     return { amount: Math.max(0, t.amount - s.amount), currency: t.currency };
   });
 

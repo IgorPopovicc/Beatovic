@@ -1,3 +1,4 @@
+// src/app/pages/product-details/product-details.ts
 import {
   Component,
   computed,
@@ -36,10 +37,12 @@ export class ProductDetails {
   activeIndex = signal(0);
   selectedSize = signal<string | null>(null);
 
-  // NEW: map size->qty extracted from attributes (VELICINA)
+  // sizeValue -> qty (from dto.attributes where attributeName == VELICINA)
   private sizeQtyMap = signal<Record<string, number>>({});
 
-  // NEW: stock depends on selected size (if any), otherwise any size in stock
+  // sizeValue -> attributeElementId (THIS is what BE expects in order payload)
+  private sizeAttrElementIdMap = signal<Record<string, string>>({});
+
   inStockUi = computed(() => {
     const p: any = this.product();
     if (!p) return false;
@@ -53,8 +56,6 @@ export class ProductDetails {
       return Object.values(map).some(q => q > 0);
     }
 
-    // If no sizes are present, keep backward-compatible behavior.
-    // (If BE later adds a non-size stock signal, you can adjust here.)
     return p.inStock !== false;
   });
 
@@ -79,7 +80,6 @@ export class ProductDetails {
     return g[i] ?? null;
   });
 
-  // NEW: convenience for template to disable out-of-stock sizes
   sizeQty = (size: string | number) => {
     const key = String(size);
     return Number(this.sizeQtyMap()[key] ?? 0);
@@ -96,6 +96,7 @@ export class ProductDetails {
           this.activeIndex.set(0);
           this.selectedSize.set(null);
           this.sizeQtyMap.set({});
+          this.sizeAttrElementIdMap.set({});
 
           if (!id) return of(null);
 
@@ -162,19 +163,27 @@ export class ProductDetails {
         ? (dto.categories.find((c: any) => (c?.categoryName ?? '').toUpperCase() === 'BREND')?.value ?? '')
         : '');
 
-    // NEW: Build size->qty map from attributes (VELICINA)
-    const map: Record<string, number> = {};
+    // Build size maps from dto.attributes
+    const qtyMap: Record<string, number> = {};
+    const idMap: Record<string, string> = {};
+
     if (Array.isArray(dto?.attributes)) {
       for (const a of dto.attributes) {
         if (String(a?.attributeName ?? '').toUpperCase() !== 'VELICINA') continue;
-        const key = String(a?.value ?? '').trim();
-        if (!key) continue;
-        map[key] = Number(a?.quantity ?? 0);
+
+        const sizeValue = String(a?.value ?? '').trim(); // e.g. "M"
+        const elementId = String(a?.id ?? '').trim();    // e.g. "edce8ea8-..."
+
+        if (!sizeValue || !elementId) continue;
+
+        qtyMap[sizeValue] = Number(a?.quantity ?? 0);
+        idMap[sizeValue] = elementId;
       }
     }
-    this.sizeQtyMap.set(map);
 
-    // NEW: sizes come from sizeQtyMap keys (keeps consistent & avoids duplicates)
+    this.sizeQtyMap.set(qtyMap);
+    this.sizeAttrElementIdMap.set(idMap);
+
     const smartSizeCompare = (a: string, b: string) => {
       const na = Number(a);
       const nb = Number(b);
@@ -185,14 +194,14 @@ export class ProductDetails {
       if (bNum) return 1;
       return a.localeCompare(b);
     };
-    const sizes = Object.keys(map).sort(smartSizeCompare);
+
+    const sizes = Object.keys(qtyMap).sort(smartSizeCompare);
 
     const price = Number(dto?.finalPrice ?? dto?.price ?? 0);
     const original = Number(dto?.originalPrice ?? dto?.oldPrice ?? 0);
     const oldPrice = original > price ? original : null;
 
-    // NEW: inStock is derived from attributes quantities (not dto.quantity)
-    const inStock = Object.values(map).some(q => Number(q) > 0);
+    const inStock = Object.values(qtyMap).some(q => Number(q) > 0);
 
     return {
       id,
@@ -258,36 +267,38 @@ export class ProductDetails {
     const size = this.selectedSize();
     const hasSizes = (p.sizes?.length ?? 0) > 0;
 
-    if (hasSizes && !size) {
-      return;
-    }
+    if (hasSizes && !size) return;
 
-    // NEW: block add-to-cart if selected size is out of stock
-    if (hasSizes && size) {
-      const qty = Number(this.sizeQtyMap()[String(size)] ?? 0);
-      if (qty <= 0) return;
-    }
-
-    // NEW: also block if overall stock is not available (e.g. all sizes 0)
+    // block if overall stock not available
     if (!this.inStockUi()) return;
+
+    // require size attribute element id (the BE expects this)
+    const sizeValue = hasSizes ? String(size) : '';
+    const sizeAttrElementId = hasSizes ? this.sizeAttrElementIdMap()[sizeValue] : '';
+
+    if (hasSizes) {
+      const qty = Number(this.sizeQtyMap()[sizeValue] ?? 0);
+      if (qty <= 0) return;
+      if (!sizeAttrElementId) return; // without this id you cannot order
+    }
 
     const img =
       p.gallery?.[0]?.mobile ||
       p.gallery?.[0]?.desktop ||
       '';
 
-    const lineId = hasSizes ? `${p.id}::${size}` : p.id;
+    // IMPORTANT:
+    // Cart line id must start with size attribute element id, not product/variant id.
+    const lineId = hasSizes ? `${sizeAttrElementId}::${sizeValue}` : p.id;
 
     this.cart.add({
       id: lineId,
-      productId: p.id,
+      productId: p.id, // variant id for navigation; NOT used in order payload
       name: p.name,
       sku: p.sku,
-      size: hasSizes ? size! : null,
+      size: hasSizes ? sizeValue : null,
 
-      image: img
-        ? { url: img, alt: p.name }
-        : null,
+      image: img ? { url: img, alt: p.name } : null,
 
       unitPrice: {
         amount: Number(p.price ?? 0),
@@ -295,9 +306,6 @@ export class ProductDetails {
       },
 
       qty: 1,
-
-      // optional: ako želiš poslije link iz korpe ka detaljima
-      // slug: p.id
     });
   }
 

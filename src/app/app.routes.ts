@@ -4,6 +4,8 @@ import { Products } from './features/products/products';
 import { CartComponent } from './features/cart/cart';
 
 import { adminOnlyGuard } from './core/auth/admin.guard';
+import {OrderResultComponent} from './features/order-result/order-result';
+import {CheckoutComponent} from './features/checkout/checkout';
 
 export const routes: Routes = [
   { path: '', component: HomePage, pathMatch: 'full' },
@@ -57,6 +59,7 @@ export const routes: Routes = [
       },
     ],
   },
-
+  { path: 'checkout', component: CheckoutComponent },
+  { path: 'order-result', component: OrderResultComponent },
   { path: '**', redirectTo: '' },
 ];

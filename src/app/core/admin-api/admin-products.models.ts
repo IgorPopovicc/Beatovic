@@ -105,3 +105,67 @@ export interface UpdateProductRequest {
   }>;
 }
 
+/**
+ * ===========================
+ * DODATO ZA "DODAJ MODEL"
+ * (ne mijenja postojeće tipove)
+ * ===========================
+ */
+
+export interface AttributeDTO {
+  id: string;
+  name: string;
+}
+
+export interface AttributeValueDTO {
+  id: string;
+  value: string;
+}
+
+/**
+ * DTO koji šalješ backendu za atribut u varijanti
+ * (namjerno je isto kao ProductAttribute shape, ali ime je jasnije za create)
+ */
+export interface CreateProductVariantAttributeDTO {
+  id: string;
+  attributeId: string;
+  attributeName: string;
+  attributeValueId: string;
+  value: string;
+  quantity: number;
+}
+
+/**
+ * DTO za kreiranje varijante (modela)
+ * Pokriva: productId, sku, price, isNew, isOutlet, attributes, discountIds?, displayImageName?
+ */
+export interface CreateProductVariantDTO {
+  productId: string;
+  sku: string;
+  price: number;
+  isNew: boolean;
+  isOutlet: boolean;
+  attributes: CreateProductVariantAttributeDTO[];
+  discountIds?: string[];
+  displayImageName?: string;
+}
+
+export interface UpdateProductVariantDTO {
+  id: string;
+  price: number;
+  attributes: ProductAttribute[];
+  isNew?: boolean;
+  isOutlet?: boolean;
+  discountIds?: string[];
+  imageIdsToRemove?: string[];
+  displayImageName?: string;
+}
+
+export interface DiscountDTO {
+  id: string;
+  type: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  value: number;
+  startDate: string; // ISO
+  endDate: string;   // ISO
+  description: string;
+}

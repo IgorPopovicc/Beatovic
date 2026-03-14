@@ -1,0 +1,37 @@
+<section class="or" aria-label="Status porudžbine">
+  <div class="card">
+    @if (status() === 'success') {
+      <div class="badge ok">Porudžbina</div>
+      <div class="icon ok" aria-hidden="true">✅</div>
+      <h1>Uspješno ste poručili</h1>
+      <p class="muted">
+        Porudžbina je uspješno poslata. Potvrdu porudžbine ćete dobiti na e-mail čim neko iz radnje odobri porudžbinu na
+        @if (email()) { <strong>{{ email() }}</strong> }
+      </p>
+
+      <div class="actions">
+        <a class="btn primary" routerLink="/">Nazad na početnu</a>
+        <a class="btn ghost" routerLink="/brands">Nastavi kupovinu</a>
+      </div>
+    } @else {
+      <div class="badge err">Porudžbina</div>
+      <div class="icon err" aria-hidden="true">⚠️</div>
+      <h1>Porudžbina nije uspješna</h1>
+      <p class="muted">
+        Došlo je do greške prilikom slanja porudžbine. Pokušajte ponovo.
+      </p>
+
+      @if (error()) {
+        <div class="detail" role="status">
+          <div class="dtitle">Detalj greške</div>
+          <div class="dmsg">{{ error() }}</div>
+        </div>
+      }
+
+      <div class="actions">
+        <a class="btn primary" routerLink="/checkout">Pokušaj ponovo</a>
+        <a class="btn ghost" routerLink="/cart">Nazad na korpu</a>
+      </div>
+    }
+  </div>
+</section>

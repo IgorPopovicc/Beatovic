@@ -19,7 +19,10 @@
           type="text"
           class="search-input-inline"
           placeholder="Pretražite ovde"
+          [formControl]="search"
+          autocomplete="off"
           (keydown.escape)="closeSearch()"
+          (focus)="searchOpen.set(true)"
         />
         <button
           type="button"
@@ -29,11 +32,64 @@
           (click)="toggleSearch()">
           <img ngSrc="assets/images/icons/search.png" alt="" class="menu-icon" width="512" height="512"/>
         </button>
+
+        @if (showResults()) {
+          <div class="search-results" role="listbox" aria-label="Rezultati pretrage">
+            <div class="sr-head">
+              <div class="sr-title">
+                @if (loadingSearch()) { <span class="sr-spinner" aria-hidden="true"></span> }
+                <span>Rezultati</span>
+              </div>
+              <div class="sr-meta">
+                @if (totalVariants() > 0) { <span class="sr-count">{{ totalVariants() }}</span> }
+              </div>
+            </div>
+
+            @if (searchError()) {
+              <div class="sr-state err">{{ searchError() }}</div>
+            } @else if (!loadingSearch() && shownVariants().length === 0) {
+              <div class="sr-state">Nema rezultata za “{{ query() }}”.</div>
+            } @else {
+              <div class="sr-list" role="presentation">
+                @for (v of shownVariants(); track v.id) {
+                  <button type="button" class="sr-item" (click)="goToProduct(v)" role="option">
+                    <div class="sr-media">
+                      @if (getBadge(v)) { <span class="sr-badge">{{ getBadge(v) }}</span> }
+                      <img class="sr-img"
+                           [ngSrc]="pickImageUrl(v)"
+                           [width]="72"
+                           [height]="72"
+                           [alt]="v.productName" />
+                    </div>
+
+                    <div class="sr-body">
+                      <div class="sr-name">{{ v.productName }}</div>
+                      <div class="sr-sub">{{ pickMetaLine(v) }}</div>
+
+                      <div class="sr-price">
+                        @if (hasDiscount(v)) {
+                          <span class="sr-old">{{ (v.originalPrice || 0) | number:'1.0-0' }} RSD</span>
+                        }
+                        <span class="sr-new">{{ formatPrice(v) | number:'1.0-0' }} RSD</span>
+                      </div>
+                    </div>
+
+                    <div class="sr-arrow" aria-hidden="true">›</div>
+                  </button>
+                }
+              </div>
+
+              <div class="sr-actions">
+                <button type="button" class="sr-btn ghost" (click)="showMoreInDropdown()">Prikaži više</button>
+                <button type="button" class="sr-btn primary" (click)="viewAllResults()">Pregledaj sve</button>
+              </div>
+            }
+          </div>
+        }
       </div>
 
       <a routerLink="/cart" class="cart-btn" aria-label="Cart">
         <img ngSrc="assets/images/icons/shopping-bag.png" alt="Cart" class="menu-icon" width="512" height="512"/>
-
         @if (cartCount() > 0) {
           <span class="cart-badge" aria-label="Broj stavki u korpi">{{ cartCount() }}</span>
         }
@@ -45,18 +101,74 @@
         #searchInputMobile
         type="text"
         class="search-input-mobile"
-        placeholder="Pretražite ovde"
+        placeholder="Unesite najmanje 3 slova..."
+        [formControl]="search"
+        autocomplete="off"
         (keydown.escape)="closeSearch()"
+        (focus)="searchOpen.set(true)"
       />
+
+      @if (showResults()) {
+        <div class="search-results mobile" role="listbox" aria-label="Rezultati pretrage (mobile)">
+          <div class="sr-head">
+            <div class="sr-title">
+              @if (loadingSearch()) { <span class="sr-spinner" aria-hidden="true"></span> }
+              <span>Rezultati</span>
+            </div>
+            <div class="sr-meta">
+              @if (totalVariants() > 0) { <span class="sr-count">{{ totalVariants() }}</span> }
+            </div>
+          </div>
+
+          @if (searchError()) {
+            <div class="sr-state err">{{ searchError() }}</div>
+          } @else if (!loadingSearch() && shownVariants().length === 0) {
+            <div class="sr-state">Nema rezultata za “{{ query() }}”.</div>
+          } @else {
+            <div class="sr-list" role="presentation">
+              @for (v of shownVariants(); track v.id) {
+                <button type="button" class="sr-item" (click)="goToProduct(v)" role="option">
+                  <div class="sr-media">
+                    @if (getBadge(v)) { <span class="sr-badge">{{ getBadge(v) }}</span> }
+                    <img class="sr-img"
+                         [ngSrc]="pickImageUrl(v)"
+                         [width]="72"
+                         [height]="72"
+                         [alt]="v.productName" />
+                  </div>
+
+                  <div class="sr-body">
+                    <div class="sr-name">{{ v.productName }}</div>
+                    <div class="sr-sub">{{ pickMetaLine(v) }}</div>
+
+                    <div class="sr-price">
+                      @if (hasDiscount(v)) {
+                        <span class="sr-old">{{ (v.originalPrice || 0) | number:'1.0-0' }} RSD</span>
+                      }
+                      <span class="sr-new">{{ formatPrice(v) | number:'1.0-0' }} RSD</span>
+                    </div>
+                  </div>
+
+                  <div class="sr-arrow" aria-hidden="true">›</div>
+                </button>
+              }
+            </div>
+
+            <div class="sr-actions">
+              <button type="button" class="sr-btn ghost" (click)="showMoreInDropdown()">Prikaži više</button>
+              <button type="button" class="sr-btn primary" (click)="viewAllResults()">Pregledaj sve</button>
+            </div>
+          }
+        </div>
+      }
     </div>
+
     @if (searchOpen() && isMobile) {
       <div class="search-backdrop" (click)="closeSearch()"></div>
     }
   </div>
 
-  @if (mobileOpen) {
-    <div class="backdrop" (click)="closeMenu()"></div>
-  }
+  @if (mobileOpen) { <div class="backdrop" (click)="closeMenu()"></div> }
 
   <nav id="side-menu" class="mobile-menu" [class.open]="mobileOpen">
     <div class="menu-col main">
@@ -70,12 +182,8 @@
             </li>
           } @else {
             <li>
-              <button
-                class="menu-item has-children"
-                type="button"
-                (click)="openSub(i)"
-                [attr.aria-expanded]="activeParent() === i"
-              >
+              <button class="menu-item has-children" type="button"
+                      (click)="openSub(i)" [attr.aria-expanded]="activeParent() === i">
                 <span class="label">{{ item.label }}</span>
                 <span class="chev">›</span>
               </button>
@@ -85,12 +193,7 @@
       </ul>
 
       <div class="menu-footer-logo">
-        <img
-          ngSrc="assets/images/logo/planets_just_logo.png"
-          alt="Planeta logo"
-          width="180"
-          height="56"
-        />
+        <img ngSrc="assets/images/logo/planets_just_logo.png" alt="Planeta logo" width="180" height="56"/>
       </div>
     </div>
 
@@ -112,12 +215,7 @@
       </ul>
 
       <div class="menu-footer-logo">
-        <img
-          ngSrc="assets/images/logo/planets_just_logo.png"
-          alt="Planeta logo"
-          width="180"
-          height="56"
-        />
+        <img ngSrc="assets/images/logo/planets_just_logo.png" alt="Planeta logo" width="180" height="56"/>
       </div>
     </div>
   </nav>

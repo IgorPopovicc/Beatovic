@@ -1,3 +1,4 @@
+// admin-products.ts
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
@@ -18,62 +19,75 @@ import { AdminProductCreateModal } from './admin-products-create-modal/admin-pro
 import { ProductVariant, Product } from '../../../../core/admin-api/admin-products.models';
 import { environment } from '../../../../../environments/environment';
 import { ConfirmDialog } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
+import { AdminVariantCreateModal } from './admin-variant-create-modal/admin-variant-create-modal';
+import { AdminVariantUpdateModal } from './admin-variant-update-modal/admin-variant-update-modal';
 
 type TabKey = 'models' | 'products';
+
+type DeleteType = 'product' | 'variant';
+
+type DeleteState =
+  | { type: DeleteType; id: string; name: string }
+  | null;
 
 @Component({
   selector: 'app-admin-products',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgOptimizedImage, AdminProductCreateModal, ConfirmDialog],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    NgOptimizedImage,
+    AdminProductCreateModal,
+    ConfirmDialog,
+    AdminVariantCreateModal,
+    AdminVariantUpdateModal,
+  ],
   templateUrl: './admin-products.html',
   styleUrl: './admin-products.scss',
 })
 export class AdminProducts {
   private readonly api = inject(AdminProductsApi);
 
-  // --- Delete dialog (products only) ---
-  readonly deleteOpen = signal(false);
-  readonly deleteBusy = signal(false);
-  readonly deleteTarget = signal<Product | null>(null);
-
-  // Tabs
   readonly activeTab = signal<TabKey>('models');
 
-  setTab(tab: TabKey): void {
-    this.activeTab.set(tab);
-    this.error.set(null);
-
-    // zatvori modale pri promjeni taba (sigurno ponašanje)
-    this.createOpen.set(false);
-    this.editOpen.set(false);
-    this.editingProduct.set(null);
-
-    const q = this.query();
-    if (q.length >= 3) this.refresh();
-  }
-
-  // Shared search
   readonly search = new FormControl<string>('', { nonNullable: true });
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
-  // MODELS
   readonly variants = signal<ProductVariant[]>([]);
   readonly totalVariants = signal<number>(0);
 
-  // PRODUCTS (API vraća Product[] direktno)
   readonly products = signal<Product[]>([]);
   readonly totalProducts = signal<number>(0);
 
-  // CREATE modal
   readonly createOpen = signal(false);
 
-  // EDIT modal
   readonly editOpen = signal(false);
   readonly editingProduct = signal<Product | null>(null);
 
-  // query for UI
+  readonly variantCreateOpen = signal(false);
+
+  readonly updateOpen = signal(false);
+  readonly updateVariantId = signal<string | null>(null);
+
+  // ===== DELETE (shared for product + variant) =====
+  readonly deleteOpen = signal(false);
+  readonly deleteBusy = signal(false);
+  readonly deleteState = signal<DeleteState>(null);
+
+  readonly deleteTitle = computed(() =>
+    this.deleteState()?.type === 'variant' ? 'Brisanje modela' : 'Brisanje proizvoda',
+  );
+
+  readonly deleteMessage = computed(() => {
+    const st = this.deleteState();
+    if (!st) return '';
+    return st.type === 'variant'
+      ? `Da li želite da obrišete model “${st.name}”?`
+      : `Da li želite da obrišete proizvod “${st.name}”?`;
+  });
+
   readonly query = toSignal(
     this.search.valueChanges.pipe(
       startWith(this.search.value),
@@ -88,7 +102,6 @@ export class AdminProducts {
   readonly hasVariantResults = computed(() => this.variants().length > 0);
   readonly hasProductResults = computed(() => this.products().length > 0);
 
-  // fetch (reacts to search changes)
   readonly _fetch = toSignal(
     this.search.valueChanges.pipe(
       startWith(this.search.value),
@@ -117,7 +130,6 @@ export class AdminProducts {
               this.variants.set(res.foundVariants ?? []);
               this.totalVariants.set(res.totalResults ?? 0);
 
-              // ensure products cleared
               this.products.set([]);
               this.totalProducts.set(0);
 
@@ -146,7 +158,6 @@ export class AdminProducts {
             this.products.set(safe);
             this.totalProducts.set(safe.length);
 
-            // ensure variants cleared
             this.variants.set([]);
             this.totalVariants.set(0);
 
@@ -172,7 +183,40 @@ export class AdminProducts {
     { initialValue: null },
   );
 
-  // images: ONLY for models/variants
+  setTab(tab: TabKey): void {
+    this.activeTab.set(tab);
+    this.error.set(null);
+
+    this.createOpen.set(false);
+    this.editOpen.set(false);
+    this.editingProduct.set(null);
+
+    this.variantCreateOpen.set(false);
+
+    this.closeUpdate();
+
+    // zatvori delete modal ako je otvoren (da ne ostane "staro" stanje)
+    this.cancelDelete();
+
+    const q = this.query();
+    if (q.length >= 3) this.refresh();
+  }
+
+  onVariantUpdated(_variant: ProductVariant): void {
+    this.closeUpdate();
+    this.refresh();
+  }
+
+  openUpdate(variantId: string): void {
+    this.updateVariantId.set(variantId);
+    this.updateOpen.set(true);
+  }
+
+  closeUpdate(): void {
+    this.updateOpen.set(false);
+    this.updateVariantId.set(null);
+  }
+
   imageUrlVariant(v: ProductVariant): string | null {
     const img = (v.images ?? []).find((x) => x.displayed) ?? (v.images ?? [])[0];
     if (!img?.url) return null;
@@ -187,7 +231,6 @@ export class AdminProducts {
     }).format(value);
   }
 
-  // Actions
   addProduct(): void {
     this.editOpen.set(false);
     this.editingProduct.set(null);
@@ -195,15 +238,28 @@ export class AdminProducts {
   }
 
   addModel(): void {
-    // placeholder
+    if (this.activeTab() !== 'models') return;
+
+    this.createOpen.set(false);
+    this.editOpen.set(false);
+    this.editingProduct.set(null);
+
+    this.variantCreateOpen.set(true);
   }
 
-  // CREATE close
+  closeVariantCreate(): void {
+    this.variantCreateOpen.set(false);
+  }
+
+  onVariantCreated(): void {
+    this.variantCreateOpen.set(false);
+    this.refresh();
+  }
+
   closeCreate(): void {
     this.createOpen.set(false);
   }
 
-  // EDIT open
   editProduct(p: Product): void {
     this.createOpen.set(false);
     this.editingProduct.set(p);
@@ -215,7 +271,6 @@ export class AdminProducts {
     this.editingProduct.set(null);
   }
 
-  // after create/update
   onCreated(): void {
     this.createOpen.set(false);
     this.refresh();
@@ -235,20 +290,54 @@ export class AdminProducts {
     this.error.set(null);
 
     if (this.activeTab() === 'models') {
-      this.api.searchMain(q).pipe(
-        tap((res) => {
-          this.variants.set(res.foundVariants ?? []);
-          this.totalVariants.set(res.totalResults ?? 0);
+      this.api
+        .searchMain(q)
+        .pipe(
+          tap((res) => {
+            this.variants.set(res.foundVariants ?? []);
+            this.totalVariants.set(res.totalResults ?? 0);
 
-          this.products.set([]);
-          this.totalProducts.set(0);
+            this.products.set([]);
+            this.totalProducts.set(0);
+
+            this.loading.set(false);
+          }),
+          catchError((err) => {
+            this.loading.set(false);
+            this.variants.set([]);
+            this.totalVariants.set(0);
+
+            const msg =
+              err?.status === 401 || err?.status === 403
+                ? 'Nemate dozvolu (provjeri admin token / role).'
+                : 'Greška pri pretrazi. Pokušajte ponovo.';
+            this.error.set(msg);
+
+            return of(null);
+          }),
+        )
+        .subscribe();
+
+      return;
+    }
+
+    this.api
+      .searchProduct(q)
+      .pipe(
+        tap((list) => {
+          const safe = list ?? [];
+          this.products.set(safe);
+          this.totalProducts.set(safe.length);
+
+          this.variants.set([]);
+          this.totalVariants.set(0);
 
           this.loading.set(false);
         }),
         catchError((err) => {
           this.loading.set(false);
-          this.variants.set([]);
-          this.totalVariants.set(0);
+          this.products.set([]);
+          this.totalProducts.set(0);
 
           const msg =
             err?.status === 401 || err?.status === 403
@@ -258,46 +347,15 @@ export class AdminProducts {
 
           return of(null);
         }),
-      ).subscribe();
-
-      return;
-    }
-
-    this.api.searchProduct(q).pipe(
-      tap((list) => {
-        const safe = list ?? [];
-        this.products.set(safe);
-        this.totalProducts.set(safe.length);
-
-        this.variants.set([]);
-        this.totalVariants.set(0);
-
-        this.loading.set(false);
-      }),
-      catchError((err) => {
-        this.loading.set(false);
-        this.products.set([]);
-        this.totalProducts.set(0);
-
-        const msg =
-          err?.status === 401 || err?.status === 403
-            ? 'Nemate dozvolu (provjeri admin token / role).'
-            : 'Greška pri pretrazi. Pokušajte ponovo.';
-        this.error.set(msg);
-
-        return of(null);
-      }),
-    ).subscribe();
+      )
+      .subscribe();
   }
 
-  editVariant(_v: ProductVariant): void {}
-  deleteVariant(_v: ProductVariant): void {}
-
-  deleteProduct(p: Product): void {
-    if (this.activeTab() !== 'products') return;
-    this.openDeleteProduct(p);
+  editVariant(v: ProductVariant): void {
+    this.openUpdate(v.id);
   }
 
+  // ===== TrackBy =====
   trackByVariantId(_: number, v: ProductVariant): string {
     return v.id;
   }
@@ -306,37 +364,57 @@ export class AdminProducts {
     return p.id;
   }
 
-  openDeleteProduct(p: Product): void {
-    this.deleteTarget.set(p);
+  // ===== Delete openers =====
+  deleteProduct(p: Product): void {
+    if (this.activeTab() !== 'products') return;
+    if (!p?.id) return;
+
+    this.deleteState.set({ type: 'product', id: p.id, name: p.productName ?? 'Proizvod' });
+    this.deleteOpen.set(true);
+  }
+
+  deleteVariant(v: ProductVariant): void {
+    if (this.activeTab() !== 'models') return;
+    if (!v?.id) return;
+
+    // Za naziv u dialogu koristimo productName (po tvom prikazu u listi)
+    this.deleteState.set({ type: 'variant', id: v.id, name: v.productName ?? 'Model' });
     this.deleteOpen.set(true);
   }
 
   cancelDelete(): void {
     if (this.deleteBusy()) return;
     this.deleteOpen.set(false);
-    this.deleteTarget.set(null);
+    this.deleteState.set(null);
   }
 
   confirmDelete(): void {
-    const target = this.deleteTarget();
-    if (!target?.id || this.deleteBusy()) return;
+    const st = this.deleteState();
+    if (!st?.id || this.deleteBusy()) return;
 
     this.deleteBusy.set(true);
     this.error.set(null);
 
-    this.api.deleteProduct(target.id).subscribe({
+    const req$ =
+      st.type === 'variant'
+        ? this.api.deleteVariant(st.id)
+        : this.api.deleteProduct(st.id);
+
+    req$.subscribe({
       next: () => {
-        // Najčistije: lokalno ukloni iz liste + update counter
-        const updated = this.products().filter((x) => x.id !== target.id);
-        this.products.set(updated);
-        this.totalProducts.set(updated.length);
+        if (st.type === 'variant') {
+          const updated = this.variants().filter((x) => x.id !== st.id);
+          this.variants.set(updated);
+          this.totalVariants.set(updated.length);
+        } else {
+          const updated = this.products().filter((x) => x.id !== st.id);
+          this.products.set(updated);
+          this.totalProducts.set(updated.length);
+        }
 
         this.deleteBusy.set(false);
         this.deleteOpen.set(false);
-        this.deleteTarget.set(null);
-
-        // Ako želiš uvek server truth:
-        // this.refresh();
+        this.deleteState.set(null);
       },
       error: (err) => {
         this.deleteBusy.set(false);
@@ -344,10 +422,11 @@ export class AdminProducts {
         const msg =
           err?.status === 401 || err?.status === 403
             ? 'Nemate dozvolu (provjeri admin token / role).'
-            : 'Greška pri brisanju proizvoda. Pokušajte ponovo.';
+            : st.type === 'variant'
+              ? 'Greška pri brisanju modela. Pokušajte ponovo.'
+              : 'Greška pri brisanju proizvoda. Pokušajte ponovo.';
         this.error.set(msg);
       },
     });
   }
-
 }

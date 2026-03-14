@@ -1,0 +1,328 @@
+<div
+  class="overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Dodaj model"
+  (mousedown)="onOverlayMouseDown()"
+>
+  <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
+    <header class="head">
+      <div class="title-wrap">
+        <h2 class="title">Dodaj model</h2>
+        <p class="sub">Prvo izaberite proizvod, zatim dodajte novi model (varijantu) sa atributima i slikama.</p>
+      </div>
+
+      <button class="icon-btn" type="button" (click)="close()" aria-label="Zatvori">✕</button>
+    </header>
+
+    <div class="body">
+      <section class="cardish">
+        <div class="section-title">1) Odabir proizvoda</div>
+
+        <div class="search">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 4a6 6 0 1 0 3.75 10.7l4.78 4.79a1 1 0 0 0 1.42-1.42l-4.79-4.78A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8a4 4 0 0 1 0-8Z"/>
+          </svg>
+
+          <input
+            class="input"
+            type="text"
+            [formControl]="productSearch"
+            placeholder="Pretraži po nazivu ili SKU (min 3 slova)..."
+            autocomplete="off"
+          />
+
+          @if (productLoading()) {
+            <div class="spinner" aria-label="Učitavanje"></div>
+          }
+        </div>
+
+        @if (productError()) {
+          <div class="error">{{ productError() }}</div>
+        }
+
+        @if (canProductSearch()) {
+          <div class="results">
+            @if (!hasProductResults()) {
+              <div class="empty">Nema rezultata za “{{ productQuery() }}”.</div>
+            } @else {
+              <div class="rows" role="list">
+                @for (p of productResults(); track p.id) {
+                  <button type="button" class="row" role="listitem" (click)="selectProduct(p)">
+                    <div class="main">
+                      <div class="name">{{ p.productName }}</div>
+                      <div class="meta">ID: <span>{{ p.id }}</span></div>
+                      <div class="meta">SKU: <span>{{ p.productSku }}</span></div>
+                    </div>
+
+                    <div class="pick">
+                      @if (selectedProduct()?.id === p.id) {
+                        <span class="badge">Izabrano</span>
+                      } @else {
+                        <span class="badge ghost">Izaberi</span>
+                      }
+                    </div>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="hint">Unesite najmanje 3 slova da pokrenete pretragu.</div>
+        }
+
+        @if (selectedProduct(); as sp) {
+          <div class="selected">
+            <div class="section-title">Odabrani proizvod</div>
+
+            <div class="grid3">
+              <div class="field">
+                <label class="label">Naziv</label>
+                <input class="input" [value]="sp.productName" disabled />
+              </div>
+
+              <div class="field">
+                <label class="label">SKU</label>
+                <input class="input" [value]="sp.productSku" disabled />
+              </div>
+
+              <div class="field">
+                <label class="label">ID</label>
+                <input class="input" [value]="sp.id" disabled />
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+
+      @if (selectedProduct(); as sp2) {
+        <section class="cardish">
+          <div class="section-title row-between">
+            <span>2) Postojeći modeli za proizvod</span>
+
+            <button type="button" class="add-variant-btn" (click)="openCreateForm()">
+              <span class="plus">+</span>
+              <span>Dodaj novi model</span>
+            </button>
+          </div>
+
+          @if (variantsLoading()) {
+            <div class="state">Učitavanje modela...</div>
+          } @else if (variantsError()) {
+            <div class="error">{{ variantsError() }}</div>
+          } @else {
+            @if (variants().length === 0) {
+              <div class="empty">Još nema modela za ovaj proizvod.</div>
+            } @else {
+              <div class="variant-list" role="list">
+                @for (v of variants(); track v.id) {
+                  <div class="variant-row" role="listitem">
+                    <div class="v-main">
+                      <div class="v-name">{{ v.sku }}</div>
+                      <div class="v-meta">Cijena: <strong>{{ formatPrice(v.finalPrice) }}</strong> RSD</div>
+                      <div class="v-meta">
+                        Atributi:
+                        <span class="chips">
+                          @for (a of v.attributes; track a.id) {
+                            <span class="chip">{{ a.attributeName }}: {{ a.value }}</span>
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
+        </section>
+
+        @if (createFormOpen()) {
+          <section class="cardish form-card">
+            <div class="section-title row-between">
+              <span>3) Kreiranje novog modela</span>
+              <button type="button" class="x" (click)="closeCreateForm()" aria-label="Zatvori formu">✕</button>
+            </div>
+
+            @if (formLoading()) {
+              <div class="state">Učitavanje atributa...</div>
+            } @else {
+              <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+                <div class="grid2">
+                  <div class="field">
+                    <label class="label">SKU modela</label>
+                    <input class="input" type="text" formControlName="sku" placeholder="npr. TSHIRT-BLACK-M" />
+                    @if (form.controls.sku.touched && form.controls.sku.invalid) {
+                      <div class="field-err">SKU je obavezan.</div>
+                    }
+                  </div>
+
+                  <div class="field">
+                    <label class="label">Cijena</label>
+                    <input class="input" type="number" formControlName="price" min="0" step="0.01" placeholder="npr. 2499.99" />
+                    @if (form.controls.price.touched && form.controls.price.invalid) {
+                      <div class="field-err">Cijena je obavezna.</div>
+                    }
+                  </div>
+
+                  <div class="field inline">
+                    <label class="label">Novo</label>
+                    <label class="toggle">
+                      <input type="checkbox" formControlName="isNew" />
+                      <span class="pill"></span>
+                      <span class="t">isNew</span>
+                    </label>
+                  </div>
+
+                  <div class="field inline">
+                    <label class="label">Outlet</label>
+                    <label class="toggle">
+                      <input type="checkbox" formControlName="isOutlet" />
+                      <span class="pill"></span>
+                      <span class="t">isOutlet</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="grid2">
+                  <div class="field dd-wrap" (click)="$event.stopPropagation()">
+                    <label class="label">Boja</label>
+
+                    <button
+                      class="dd"
+                      type="button"
+                      (click)="toggleDropdown('color'); $event.stopPropagation()"
+                      [attr.aria-expanded]="colorOpen()"
+                      aria-haspopup="listbox"
+                    >
+                      <span class="dd-text">
+                        @if (selectedColorLabel(); as label) { {{ label }} } @else { Izaberi boju }
+                      </span>
+                      <span class="dd-caret" aria-hidden="true">▾</span>
+                    </button>
+
+                    @if (colorOpen()) {
+                      <div class="dd-panel" (click)="$event.stopPropagation()">
+                        <div class="dd-scroll" role="listbox">
+                          @for (o of colorOptions(); track o.id) {
+                            <button type="button" class="dd-item" (click)="selectColor(o.id)">
+                              <span class="dd-label color">
+                                @if (isHexColor(o.value)) {
+                                  <span class="swatch" [style.background]="toCssHex(o.value)"></span>
+                                  <span class="text">{{ colorLabel(o.value) }}</span>
+                                } @else {
+                                  <span class="text">{{ o.value }}</span>
+                                }
+                              </span>
+                              @if (form.controls.colorValueId.value === o.id) { <span class="dd-mark">✓</span> }
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                    @if (form.controls.colorValueId.touched && form.controls.colorValueId.invalid) {
+                      <div class="field-err">Boja je obavezna.</div>
+                    }
+                  </div>
+
+                  <div class="field">
+                    <label class="label">Display slika (naziv fajla)</label>
+                    <input class="input" type="text" formControlName="displayImageName" placeholder="npr. tshirt-black-front.webp" />
+                  </div>
+                </div>
+
+                <div class="sizes">
+                  <div class="section-title small">Veličine (multi-select) + količina po veličini</div>
+
+                  @if (sizeOptions().length === 0) {
+                    <div class="hint">Nema učitanih veličina.</div>
+                  } @else {
+                    <div class="sizes-grid">
+                      @for (s of sizeOptions(); track s.id) {
+                        <div class="size-item">
+                          <label class="chk">
+                            <input
+                              type="checkbox"
+                              [checked]="isSizeSelected(s.id)"
+                              (change)="toggleSize(s.id, s.value, $any($event.target).checked)"
+                            />
+                            <span class="lbl">{{ s.value }}</span>
+                          </label>
+
+                          @if (isSizeSelected(s.id)) {
+                            <input
+                              class="qty"
+                              type="number"
+                              min="0"
+                              step="1"
+                              [value]="getSizeQty(s.id)"
+                              (input)="setSizeQty(s.id, $any($event.target).value)"
+                              aria-label="Količina"
+                            />
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    @if (sizesInvalid()) {
+                      <div class="field-err">Izaberite bar jednu veličinu i unesite količinu (0 ili više).</div>
+                    }
+                  }
+                </div>
+
+                <div class="images">
+                  <div class="section-title small">Slike (webp/jpg/jpeg)</div>
+
+                  <div class="img-actions">
+                    <label class="file-btn">
+                      <input
+                        type="file"
+                        accept=".webp,.jpg,.jpeg,image/webp,image/jpeg"
+                        multiple
+                        (change)="onFilesSelected($event)"
+                      />
+                      <span>Dodaj slike</span>
+                    </label>
+
+                    <div class="hint">Možete dodati više slika. Nevalidne ekstenzije se ignorišu.</div>
+                  </div>
+
+                  @if (fileError()) {
+                    <div class="error">{{ fileError() }}</div>
+                  }
+
+                  @if (files().length > 0) {
+                    <div class="previews">
+                      @for (f of files(); track f._id) {
+                        <div class="prev">
+                          <div class="prev-top">
+                            <div class="fn">{{ f.file.name }}</div>
+                            <button type="button" class="rm" (click)="removeFile(f._id)" aria-label="Ukloni">✕</button>
+                          </div>
+                          <div class="meta">({{ f.file.type || 'file' }})</div>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <div class="empty">Nema dodatih slika.</div>
+                  }
+                </div>
+
+                @if (submitError()) {
+                  <div class="error">{{ submitError() }}</div>
+                }
+
+                <footer class="actions">
+                  <button class="btn ghost" type="button" (click)="closeCreateForm()" [disabled]="submitting()">Otkaži</button>
+                  <button class="btn" type="submit" [disabled]="invalid()">
+                    @if (submitting()) { Snimanje... } @else { Sačuvaj }
+                  </button>
+                </footer>
+              </form>
+            }
+          </section>
+        }
+      }
+    </div>
+  </div>
+</div>

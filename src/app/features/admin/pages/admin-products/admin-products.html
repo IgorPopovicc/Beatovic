@@ -1,6 +1,6 @@
+<!-- admin-products.html -->
 <section class="card">
   <section class="admin-products">
-    <!-- Tabs bar -->
     <div class="tabs-bar">
       <div class="tabs" role="tablist" aria-label="Pogledi">
         <button
@@ -33,7 +33,7 @@
             <span>Dodaj proizvod</span>
           </button>
         } @else {
-          <button class="btn-add ghost" type="button" (click)="addModel()" disabled>
+          <button class="btn-add" type="button" (click)="addModel()">
             <span class="plus">+</span>
             <span>Dodaj model</span>
           </button>
@@ -41,7 +41,6 @@
       </div>
     </div>
 
-    <!-- Header + Search -->
     <div class="card head">
       <div class="top">
         <div class="title-wrap">
@@ -67,7 +66,7 @@
           class="input"
           type="text"
           [formControl]="search"
-          placeholder="Unesite najmanje 3 slova (npr. nike)..."
+          placeholder="Unesite najmanje 3 slova (npr. nike) ili sku..."
           autocomplete="off"
         />
 
@@ -96,7 +95,6 @@
       </div>
     </div>
 
-    <!-- List -->
     <div class="card list">
       @if (!canSearch()) {
         <div class="empty">Lista je prazna dok ne unesete pretragu.</div>
@@ -104,7 +102,6 @@
         <div class="empty">Učitavanje rezultata...</div>
       } @else {
 
-        <!-- MODELI -->
         @if (activeTab() === 'models') {
           @if (!hasVariantResults()) {
             <div class="empty">Nema rezultata za “{{ query() }}”.</div>
@@ -179,7 +176,7 @@
                     </button>
 
                     <button type="button" class="icon-btn danger" aria-label="Delete" (click)="deleteProduct(p)">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M6 7h12l-1 14H7L6 7Zm3-3h6l1 2H8l1-2Zm-3 2h12v2H6V6Z"/>
                       </svg>
                     </button>
@@ -206,10 +203,17 @@
   />
 }
 
+@if (variantCreateOpen()) {
+  <app-admin-variant-create-modal
+    (closed)="closeVariantCreate()"
+    (created)="onVariantCreated()"
+  />
+}
+
 <app-confirm-dialog
   [open]="deleteOpen()"
-  title="Brisanje proizvoda"
-  [message]="deleteTarget() ? ('Da li želite da obrišete proizvod “' + deleteTarget()!.productName + '”?') : ''"
+  [title]="deleteTitle()"
+  [message]="deleteMessage()"
   confirmText="Da"
   cancelText="Ne"
   variant="danger"
@@ -219,3 +223,10 @@
   (cancel)="cancelDelete()"
 />
 
+@if (updateOpen() && updateVariantId(); as vid) {
+  <app-admin-variant-update-modal
+    [variantId]="vid"
+    (closed)="closeUpdate()"
+    (updated)="onVariantUpdated($event)"
+  />
+}

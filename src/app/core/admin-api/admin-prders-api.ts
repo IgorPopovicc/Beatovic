@@ -4,7 +4,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { AdminOrder } from './admin-orders.models';
+import { AdminOrder, UnregisteredOrderRequest, UnregisteredOrderResponse } from './admin-orders.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminOrdersApi {
@@ -33,8 +33,19 @@ export class AdminOrdersApi {
     );
   }
 
-  // Placeholder endpoints for later (ako ih budeš imao)
-  // completeOrder(orderId: string): Observable<unknown> { ... }
-  // cancelOrder(orderId: string): Observable<unknown> { ... }
-  // returnOrder(orderId: string): Observable<unknown> { ... }
+  createUnregisteredOrder(payload: UnregisteredOrderRequest): Observable<UnregisteredOrderResponse> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+
+    const url = `${environment.apiBaseUrl}/orders/unregistered`;
+
+    return this.http.post<UnregisteredOrderResponse>(url, payload, { headers }).pipe(
+      catchError((err) => {
+        console.error('[AdminOrdersApi] createUnregisteredOrder failed:', err);
+        return throwError(() => err);
+      }),
+    );
+  }
+
 }
