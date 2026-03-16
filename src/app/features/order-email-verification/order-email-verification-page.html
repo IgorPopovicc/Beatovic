@@ -1,0 +1,16 @@
+@if (view(); as vm) {
+  <app-status-page
+    badge="Porudžbina"
+    [loading]="state() === 'loading'"
+    loadingText="Provjeravamo potvrdu porudžbine..."
+    [tone]="vm.tone"
+    [icon]="vm.icon"
+    [title]="vm.title"
+    [message]="vm.message"
+    [details]="vm.details"
+    [primaryCtaText]="vm.primaryText"
+    [primaryCtaLink]="vm.primaryLink"
+    [secondaryCtaText]="vm.secondaryText"
+    [secondaryCtaLink]="vm.secondaryLink"
+  />
+}

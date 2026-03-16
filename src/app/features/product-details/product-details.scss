@@ -64,7 +64,7 @@
   overflow: hidden;
 
   padding: 18px;
-  min-height: 0;      /* KLJUČ */
+  min-height: 0; /* KLJUČ */
   height: 100%;
 
   display: grid;
@@ -90,7 +90,7 @@
   position: absolute;
   top: 14px;
   left: 14px;
-  background: #E53935;
+  background: #e53935;
   color: #fff;
   font-weight: 900;
   border-radius: 10px;
@@ -118,8 +118,12 @@
   user-select: none;
 }
 
-.nav.prev { left: 12px; }
-.nav.next { right: 12px; }
+.nav.prev {
+  left: 12px;
+}
+.nav.next {
+  right: 12px;
+}
 
 .nav:hover {
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
@@ -212,7 +216,7 @@
 .price .current {
   font-size: 1.6rem;
   font-weight: 950;
-  color: #C21F1F;
+  color: #c21f1f;
 }
 
 .price .old {
@@ -245,8 +249,12 @@
   font-weight: 950;
 }
 
-.meta-value.ok { color: #0B7A2A; }
-.meta-value.no { color: #C21F1F; }
+.meta-value.ok {
+  color: #0b7a2a;
+}
+.meta-value.no {
+  color: #c21f1f;
+}
 
 .sizes {
   padding: 14px 0 8px;
@@ -301,8 +309,8 @@
 .add {
   height: 46px;
   border-radius: 12px;
-  border: 1px solid #C21F1F;
-  background: #C21F1F;
+  border: 1px solid #c21f1f;
+  background: #c21f1f;
   color: #fff;
   font-weight: 950;
   cursor: pointer;
@@ -362,12 +370,18 @@
   letter-spacing: 0.4px;
 }
 
-.brand-logo {
-  height: 26px;
-  max-width: 110px;
-  object-fit: contain;
-  filter: grayscale(100%);
-  opacity: 0.85;
+.brand-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  border: 1px solid #e4e4e4;
+  background: #fafafa;
+  color: #222;
+  font-weight: 900;
+  font-size: 0.86rem;
 }
 
 /* NOT FOUND (responsive, safe on all devices) */
@@ -384,7 +398,7 @@
   border: 1px solid #eee;
   border-radius: 18px;
   padding: clamp(14px, 3vw, 22px);
-  box-shadow: 0 18px 45px rgba(0,0,0,.06);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.06);
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -394,11 +408,11 @@
 }
 
 .nf-card::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0 0 auto 0;
   height: 6px;
-  background: #E53935;
+  background: #e53935;
 }
 
 .nf-badge {
@@ -409,9 +423,9 @@
   border-radius: 999px;
   font-weight: 900;
   font-size: 12px;
-  letter-spacing: .3px;
+  letter-spacing: 0.3px;
   color: #111;
-  background: #F6F6F6;
+  background: #f6f6f6;
   margin-top: 10px;
   max-width: 100%;
 }
@@ -458,13 +472,13 @@
   align-items: center;
   justify-content: center;
   font-weight: 900;
-  letter-spacing: .2px;
+  letter-spacing: 0.2px;
   white-space: nowrap;
 }
 
 .nf-btn.primary {
-  background: #E53935;
-  border-color: #E53935;
+  background: #e53935;
+  border-color: #e53935;
   color: #fff;
 }
 
@@ -515,7 +529,7 @@
   }
 
   .nf-card {
-    box-shadow: 0 24px 70px rgba(0,0,0,.08);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.08);
   }
 
   .pd-grid {

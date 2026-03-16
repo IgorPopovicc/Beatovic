@@ -45,7 +45,11 @@
       <div class="top">
         <div class="title-wrap">
           <h1 class="title">
-            @if (activeTab() === 'models') { Modeli } @else { Proizvodi }
+            @if (activeTab() === 'models') {
+              Modeli
+            } @else {
+              Proizvodi
+            }
           </h1>
           <p class="sub">
             @if (activeTab() === 'models') {
@@ -59,7 +63,9 @@
 
       <div class="search">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M10 4a6 6 0 1 0 3.75 10.7l4.78 4.79a1 1 0 0 0 1.42-1.42l-4.79-4.78A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8a4 4 0 0 1 0-8Z"/>
+          <path
+            d="M10 4a6 6 0 1 0 3.75 10.7l4.78 4.79a1 1 0 0 0 1.42-1.42l-4.79-4.78A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8a4 4 0 0 1 0-8Z"
+          />
         </svg>
 
         <input
@@ -101,7 +107,6 @@
       } @else if (loading()) {
         <div class="empty">Učitavanje rezultata...</div>
       } @else {
-
         @if (activeTab() === 'models') {
           @if (!hasVariantResults()) {
             <div class="empty">Nema rezultata za “{{ query() }}”.</div>
@@ -111,7 +116,13 @@
                 <div class="row" role="listitem">
                   <div class="img">
                     @if (imageUrlVariant(v)) {
-                      <img class="thumb" [ngSrc]="imageUrlVariant(v)!" width="64" height="64" alt="" />
+                      <img
+                        class="thumb"
+                        [ngSrc]="imageUrlVariant(v)!"
+                        width="64"
+                        height="64"
+                        alt=""
+                      />
                     } @else {
                       <div class="thumb ph" aria-hidden="true">IMG</div>
                     }
@@ -119,8 +130,12 @@
 
                   <div class="main">
                     <div class="name">{{ v.productName }}</div>
-                    <div class="id">ID: <span>{{ v.productId }}</span></div>
-                    <div class="sku">SKU: <span>{{ v.sku }}</span></div>
+                    <div class="id">
+                      ID: <span>{{ v.productId }}</span>
+                    </div>
+                    <div class="sku">
+                      SKU: <span>{{ v.sku }}</span>
+                    </div>
                   </div>
 
                   <div class="price">
@@ -129,15 +144,29 @@
                   </div>
 
                   <div class="actions">
-                    <button type="button" class="icon-btn" aria-label="Edit" (click)="editVariant(v)">
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      aria-label="Edit"
+                      title="Izmijeni model"
+                      (click)="editVariant(v)"
+                    >
                       <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M3 17.25V21h3.75L17.8 9.95l-3.75-3.75L3 17.25Zm2.92 2.33H5v-.92l8.9-8.9.92.92-8.9 8.9ZM20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/>
+                        <path
+                          d="M3 17.25V21h3.75L17.8 9.95l-3.75-3.75L3 17.25Zm2.92 2.33H5v-.92l8.9-8.9.92.92-8.9 8.9ZM20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"
+                        />
                       </svg>
                     </button>
 
-                    <button type="button" class="icon-btn danger" aria-label="Delete" (click)="deleteVariant(v)">
+                    <button
+                      type="button"
+                      class="icon-btn danger"
+                      aria-label="Delete"
+                      title="Obriši model"
+                      (click)="deleteVariant(v)"
+                    >
                       <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M6 7h12l-1 14H7L6 7Zm3-3h6l1 2H8l1-2Zm-3 2h12v2H6V6Z"/>
+                        <path d="M6 7h12l-1 14H7L6 7Zm3-3h6l1 2H8l1-2Zm-3 2h12v2H6V6Z" />
                       </svg>
                     </button>
                   </div>
@@ -145,8 +174,7 @@
               }
             </div>
           }
-        }
-        @else {
+        } @else {
           @if (!hasProductResults()) {
             <div class="empty">Nema rezultata za “{{ query() }}”.</div>
           } @else {
@@ -159,8 +187,12 @@
 
                   <div class="main">
                     <div class="name">{{ p.productName }}</div>
-                    <div class="id">ID: <span>{{ p.id }}</span></div>
-                    <div class="sku">SKU: <span>{{ p.productSku }}</span></div>
+                    <div class="id">
+                      ID: <span>{{ p.id }}</span>
+                    </div>
+                    <div class="sku">
+                      SKU: <span>{{ p.productSku }}</span>
+                    </div>
                   </div>
 
                   <div class="price">
@@ -169,15 +201,29 @@
                   </div>
 
                   <div class="actions">
-                    <button type="button" class="icon-btn" aria-label="Edit" (click)="editProduct(p)">
+                    <button
+                      type="button"
+                      class="icon-btn"
+                      aria-label="Edit"
+                      title="Izmijeni proizvod"
+                      (click)="editProduct(p)"
+                    >
                       <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M3 17.25V21h3.75L17.8 9.95l-3.75-3.75L3 17.25Zm2.92 2.33H5v-.92l8.9-8.9.92.92-8.9 8.9ZM20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/>
+                        <path
+                          d="M3 17.25V21h3.75L17.8 9.95l-3.75-3.75L3 17.25Zm2.92 2.33H5v-.92l8.9-8.9.92.92-8.9 8.9ZM20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"
+                        />
                       </svg>
                     </button>
 
-                    <button type="button" class="icon-btn danger" aria-label="Delete" (click)="deleteProduct(p)">
+                    <button
+                      type="button"
+                      class="icon-btn danger"
+                      aria-label="Delete"
+                      title="Obriši proizvod"
+                      (click)="deleteProduct(p)"
+                    >
                       <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M6 7h12l-1 14H7L6 7Zm3-3h6l1 2H8l1-2Zm-3 2h12v2H6V6Z"/>
+                        <path d="M6 7h12l-1 14H7L6 7Zm3-3h6l1 2H8l1-2Zm-3 2h12v2H6V6Z" />
                       </svg>
                     </button>
                   </div>
@@ -204,10 +250,7 @@
 }
 
 @if (variantCreateOpen()) {
-  <app-admin-variant-create-modal
-    (closed)="closeVariantCreate()"
-    (created)="onVariantCreated()"
-  />
+  <app-admin-variant-create-modal (closed)="closeVariantCreate()" (created)="onVariantCreated()" />
 }
 
 <app-confirm-dialog

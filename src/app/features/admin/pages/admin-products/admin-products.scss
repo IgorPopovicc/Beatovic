@@ -44,12 +44,16 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.tabs::-webkit-scrollbar { height: 8px; }
+.tabs::-webkit-scrollbar {
+  height: 8px;
+}
 .tabs::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.12);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 9999px;
 }
-.tabs::-webkit-scrollbar-track { background: transparent; }
+.tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
 
 .tab {
   height: 38px;
@@ -61,7 +65,12 @@
   font-weight: 900;
   color: rgba(17, 17, 17, 0.72);
   white-space: nowrap;
-  transition: background 140ms ease, color 140ms ease, border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .tab:hover {
@@ -76,7 +85,7 @@
   background: #fff;
   border-color: #e5e5e5;
   color: #111;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
 }
 
 /* Right-side actions */
@@ -127,11 +136,21 @@
   align-items: center;
   gap: 10px;
   white-space: nowrap;
-  transition: transform 140ms ease, filter 140ms ease, opacity 140ms ease, background 140ms ease, border-color 140ms ease, color 140ms ease;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease,
+    opacity 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
 }
 
-.btn-add:hover { filter: brightness(0.96); }
-.btn-add:active { transform: translateY(1px); }
+.btn-add:hover {
+  filter: brightness(0.96);
+}
+.btn-add:active {
+  transform: translateY(1px);
+}
 
 .plus {
   display: inline-grid;
@@ -185,7 +204,9 @@
   padding: 0 48px 0 44px;
   outline: none;
   font-weight: 800;
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .input:focus {
@@ -204,7 +225,11 @@
   animation: spin 700ms linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ===== Meta ===== */
 .meta {
@@ -213,7 +238,8 @@
   gap: 8px;
 }
 
-.hint, .count {
+.hint,
+.count {
   color: rgba(17, 17, 17, 0.65);
   font-weight: 800;
   font-size: 13px;
@@ -294,7 +320,8 @@
   margin-bottom: 4px;
 }
 
-.id, .sku {
+.id,
+.sku {
   color: rgba(17, 17, 17, 0.65);
   font-weight: 800;
   font-size: 12px;
@@ -303,7 +330,8 @@
   white-space: nowrap;
 }
 
-.id span, .sku span {
+.id span,
+.sku span {
   color: rgba(17, 17, 17, 0.9);
 }
 
@@ -344,7 +372,10 @@
   cursor: pointer;
   display: inline-grid;
   place-items: center;
-  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+  transition:
+    transform 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease;
 }
 
 .icon-btn svg {
@@ -377,14 +408,25 @@ app-admin-product-create-modal {
 
 /* ===== Responsive ===== */
 @media (max-width: 900px) {
-  .card { padding: 14px; }
-  .row { grid-template-columns: 72px 1fr 140px 96px; }
-  .tabs-bar { gap: 10px; }
-  .tab { height: 40px; }
+  .card {
+    padding: 14px;
+  }
+  .row {
+    grid-template-columns: 72px 1fr 140px 96px;
+  }
+  .tabs-bar {
+    gap: 10px;
+  }
+  .tab {
+    height: 40px;
+  }
 }
 
 @media (max-width: 520px) {
-  .card { padding: 14px; border-radius: 16px; }
+  .card {
+    padding: 14px;
+    border-radius: 16px;
+  }
 
   .tabs-bar {
     flex-direction: column;
@@ -408,23 +450,42 @@ app-admin-product-create-modal {
     align-items: stretch;
   }
 
-  .title { font-size: 20px; }
+  .title {
+    font-size: 20px;
+  }
 
   .row {
     grid-template-columns: 72px 1fr;
     grid-template-areas:
-      "img main"
-      "price actions";
+      'img main'
+      'price actions';
   }
 
-  .img { grid-area: img; }
-  .main { grid-area: main; }
-  .price { grid-area: price; text-align: left; }
-  .actions { grid-area: actions; justify-content: flex-end; }
+  .img {
+    grid-area: img;
+  }
+  .main {
+    grid-area: main;
+  }
+  .price {
+    grid-area: price;
+    text-align: left;
+  }
+  .actions {
+    grid-area: actions;
+    justify-content: flex-end;
+  }
 }
 
 @media (max-width: 380px) {
-  .tab { padding: 0 10px; }
-  .input { height: 46px; }
-  .icon-btn { width: 40px; height: 40px; }
+  .tab {
+    padding: 0 10px;
+  }
+  .input {
+    height: 46px;
+  }
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+  }
 }

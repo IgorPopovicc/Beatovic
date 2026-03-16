@@ -96,7 +96,9 @@ export class CheckoutComponent implements OnDestroy {
     });
 
     // Hard validation so you never send product/variant ids by mistake
-    if (orderItems.some((x) => !x.sizeVariantAttributeId || x.sizeVariantAttributeId.includes('::'))) {
+    if (
+      orderItems.some((x) => !x.sizeVariantAttributeId || x.sizeVariantAttributeId.includes('::'))
+    ) {
       this.errorMsg.set('Neispravan ID veličine u korpi. (Očekuje se attributes[].id za VELICINA)');
       return;
     }
@@ -134,20 +136,16 @@ export class CheckoutComponent implements OnDestroy {
             },
           });
         },
-        error: (err) => {
-          const msg =
-            err?.error?.message ||
-            err?.message ||
-            'Došlo je do greške prilikom slanja porudžbine. Pokušaj ponovo.';
-
-          this.errorMsg.set(String(msg));
+        error: (_err) => {
+          const userMsg = 'Trenutno nismo uspjeli poslati porudžbinu. Molimo pokušajte ponovo.';
+          this.errorMsg.set(userMsg);
 
           this.router.navigate(['/order-result'], {
             queryParams: { status: 'error' },
             state: {
               status: 'error',
               email: payload.userDetails.email,
-              error: msg,
+              error: userMsg,
             },
           });
         },

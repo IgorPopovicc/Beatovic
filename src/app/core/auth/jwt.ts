@@ -14,10 +14,10 @@ export function decodeJwtPayload(token: string): any | null {
       typeof Buffer !== 'undefined'
         ? Buffer.from(b64, 'base64').toString('utf-8')
         : decodeURIComponent(
-          Array.prototype.map
-            .call(atob(b64), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-            .join('')
-        );
+            Array.prototype.map
+              .call(atob(b64), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join(''),
+          );
 
     return JSON.parse(json);
   } catch {

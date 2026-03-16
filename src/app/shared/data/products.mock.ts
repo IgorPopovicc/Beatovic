@@ -66,13 +66,7 @@ export const PRODUCTS_MOCK: ProductDetailsModel[] = [
     sizes: [40, 41, 42, 43, 44, 45],
     shortDescription:
       'Udobne patike za svakodnevno nošenje, stabilna peta i lagan đon. Idealne za hodanje i lagani trening.',
-    gallery: [
-      IMG_1,
-      IMG_2,
-      IMG_1,
-      IMG_3,
-      IMG_1,
-    ],
+    gallery: [IMG_1, IMG_2, IMG_1, IMG_3, IMG_1],
     gender: 'muskarci',
     category: 'obuca',
   },
@@ -91,12 +85,7 @@ export const PRODUCTS_MOCK: ProductDetailsModel[] = [
     sizes: [40, 41, 42, 43, 44, 45],
     shortDescription:
       'Klasičan lifestyle model sa udobnim uloškom i stabilnim đonom. Dobro se uklapa uz svakodnevne kombinacije.',
-    gallery: [
-      IMG_2,
-      IMG_2,
-      IMG_2,
-      IMG_2,
-    ],
+    gallery: [IMG_2, IMG_2, IMG_2, IMG_2],
     gender: 'muskarci',
     category: 'obuca',
   },
@@ -115,11 +104,7 @@ export const PRODUCTS_MOCK: ProductDetailsModel[] = [
     sizes: [40, 41, 42, 43, 44],
     shortDescription:
       'Lagane patike sa prozračnim gornjištem i amortizacijom za duže šetnje i svakodnevnu upotrebu.',
-    gallery: [
-      IMG_3,
-      IMG_1,
-      IMG_3,
-    ],
+    gallery: [IMG_3, IMG_1, IMG_3],
     gender: 'muskarci',
     category: 'obuca',
   },
@@ -137,11 +122,7 @@ export const PRODUCTS_MOCK: ProductDetailsModel[] = [
     sizes: [41, 42, 43, 44],
     shortDescription:
       'Retro runner estetika sa udobnim đonom. Stabilan i kvalitetan model za svakodnevno nošenje.',
-    gallery: [
-      IMG_1,
-      IMG_1,
-      IMG_1,
-    ],
+    gallery: [IMG_1, IMG_1, IMG_1],
     gender: 'muskarci',
     category: 'obuca',
   },

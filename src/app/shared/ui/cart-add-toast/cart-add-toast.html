@@ -1,0 +1,18 @@
+<div class="toast-wrap" [class.show]="visible()" aria-live="polite" aria-atomic="true">
+  <div class="toast" role="status">
+    <div class="icon" aria-hidden="true">✓</div>
+
+    <div class="body">
+      <div class="title">{{ title() }}</div>
+      @if (subtitle(); as line) {
+        <div class="subtitle">{{ line }}</div>
+      }
+    </div>
+
+    <a class="view-cart" routerLink="/cart" (click)="onViewCart()">Pogledaj korpu</a>
+
+    <button type="button" class="close-btn" (click)="close()" aria-label="Zatvori obavještenje">
+      ✕
+    </button>
+  </div>
+</div>

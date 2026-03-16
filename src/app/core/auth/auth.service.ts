@@ -1,8 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { KeycloakTokenResponse } from './auth.models';
-import { BrowserStorage } from './storage';
+import { AdminLoginResponse } from './auth.models';
 import { decodeJwtPayload } from './jwt';
 import { map, tap, timeout } from 'rxjs/operators';
 import { catchError, Observable, throwError } from 'rxjs';
@@ -18,11 +17,21 @@ export class AuthService {
   private readonly accessTokenSig = signal<string | null>(this.storage.get(ACCESS_TOKEN_KEY));
   readonly accessToken = this.accessTokenSig.asReadonly();
 
+  constructor() {
+    // Cleanup stale/malformed/expired tokens from previous sessions.
+    if (this.accessTokenSig() && !this.hasValidToken()) {
+      this.logout();
+    }
+  }
+
   readonly isAuthenticated = computed(() => {
     const token = this.accessTokenSig();
     if (!token) return false;
+
     const payload = decodeJwtPayload(token);
-    if (!payload?.exp) return true;
+    if (!payload) return false;
+    if (!payload.exp) return true;
+
     const now = Math.floor(Date.now() / 1000);
     return payload.exp > now;
   });
@@ -41,34 +50,26 @@ export class AuthService {
     if (!token) return null;
 
     const payload = decodeJwtPayload(token);
-    return (
-      payload?.preferred_username ??
-      payload?.email ??
-      payload?.name ??
-      payload?.sub ??
-      null
-    );
+    return payload?.preferred_username ?? payload?.email ?? payload?.name ?? payload?.sub ?? null;
   });
 
   login(username: string, password: string): Observable<void> {
-    const url = `${environment.auth.host}/realms/${environment.auth.realm}/protocol/openid-connect/token`;
-
-    const body = new URLSearchParams({
-      grant_type: 'password',
-      client_id: environment.auth.clientId,
-      username,
-      password,
-    }).toString();
+    const url = `${environment.auth.host}/planetabih-webservice/api/auth/admin-panel/login`;
+    const body = { username, password };
 
     return this.http
-      .post<KeycloakTokenResponse>(url, body, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      .post<AdminLoginResponse>(url, body, {
+        headers: { 'Content-Type': 'application/json' },
       })
       .pipe(
         timeout(15000),
         tap((res) => {
-          this.storage.set(ACCESS_TOKEN_KEY, res.access_token);
-          this.accessTokenSig.set(res.access_token);
+          const token = res?.accessToken ?? '';
+          if (!token) {
+            throw new Error('Login response ne sadrži accessToken.');
+          }
+          this.storage.set(ACCESS_TOKEN_KEY, token);
+          this.accessTokenSig.set(token);
         }),
         map(() => void 0),
         catchError((err) => {
@@ -88,6 +89,7 @@ export class AuthService {
     if (!token) return false;
 
     const payload = decodeJwtPayload(token);
+    if (!payload) return false;
     if (!payload?.exp) return true;
 
     const now = Math.floor(Date.now() / 1000);

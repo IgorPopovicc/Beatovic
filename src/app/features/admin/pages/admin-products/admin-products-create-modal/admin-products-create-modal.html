@@ -8,10 +8,19 @@
   <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <header class="head">
       <div class="title-wrap">
-        <h2 class="title">@if (isEdit()) { Izmijeni proizvod } @else { Dodaj proizvod }</h2>
+        <h2 class="title">
+          @if (isEdit()) {
+            Izmijeni proizvod
+          } @else {
+            Dodaj proizvod
+          }
+        </h2>
         <p class="sub">
-          @if (isEdit()) { Izmijenite osnovne podatke i sačuvajte promjene. }
-          @else { Unesite osnovne podatke i izaberite kategorije. }
+          @if (isEdit()) {
+            Izmijenite osnovne podatke i sačuvajte promjene.
+          } @else {
+            Unesite osnovne podatke i izaberite kategorije.
+          }
         </p>
       </div>
 
@@ -25,17 +34,27 @@
         <div class="grid">
           <div class="field">
             <label class="label">Naziv proizvoda</label>
-            <input class="input" type="text" formControlName="productName" placeholder="npr. Dječije papuče" />
+            <input
+              class="input"
+              type="text"
+              formControlName="productName"
+              placeholder="npr. Dječije papuče"
+            />
           </div>
 
           <div class="field">
             <label class="label">SKU</label>
-            <input class="input" type="text" formControlName="sku" placeholder="npr. PAPUCE-DECA"/>
+            <input class="input" type="text" formControlName="sku" placeholder="npr. PAPUCE-DECA" />
           </div>
 
           <div class="field full">
             <label class="label">Opis</label>
-            <textarea class="textarea" rows="3" formControlName="productDescription" placeholder="Kratak opis proizvoda"></textarea>
+            <textarea
+              class="textarea"
+              rows="3"
+              formControlName="productDescription"
+              placeholder="Kratak opis proizvoda"
+            ></textarea>
           </div>
         </div>
 
@@ -52,7 +71,11 @@
               aria-haspopup="listbox"
             >
               <span class="dd-text">
-                @if (selectedBrandLabel(); as label) { {{ label }} } @else { Izaberi brend }
+                @if (selectedBrandLabel(); as label) {
+                  {{ label }}
+                } @else {
+                  Izaberi brend
+                }
               </span>
               <span class="dd-caret" aria-hidden="true">▾</span>
             </button>
@@ -61,9 +84,15 @@
               <div class="dd-panel" (click)="$event.stopPropagation()">
                 <div class="dd-scroll" role="listbox">
                   @for (o of brandOptions(); track o.id) {
-                    <button type="button" class="dd-item" (click)="selectSingle('brandValueId', o.id)">
+                    <button
+                      type="button"
+                      class="dd-item"
+                      (click)="selectSingle('brandValueId', o.id)"
+                    >
                       <span class="dd-label">{{ o.value }}</span>
-                      @if (form.controls.brandValueId.value === o.id) { <span class="dd-mark">✓</span> }
+                      @if (form.controls.brandValueId.value === o.id) {
+                        <span class="dd-mark">✓</span>
+                      }
                     </button>
                   }
                 </div>
@@ -87,7 +116,11 @@
               aria-haspopup="listbox"
             >
               <span class="dd-text">
-                @if (selectedCategoryLabel(); as label) { {{ label }} } @else { Izaberi kategoriju }
+                @if (selectedCategoryLabel(); as label) {
+                  {{ label }}
+                } @else {
+                  Izaberi kategoriju
+                }
               </span>
               <span class="dd-caret" aria-hidden="true">▾</span>
             </button>
@@ -98,7 +131,9 @@
                   @for (o of categoryOptions(); track o.id) {
                     <button type="button" class="dd-item" (click)="selectSingleCategory(o.id)">
                       <span class="dd-label">{{ o.value }}</span>
-                      @if (form.controls.categoryValueId.value === o.id) { <span class="dd-mark">✓</span> }
+                      @if (form.controls.categoryValueId.value === o.id) {
+                        <span class="dd-mark">✓</span>
+                      }
                     </button>
                   }
                 </div>
@@ -122,7 +157,11 @@
               aria-haspopup="listbox"
             >
               <span class="dd-text">
-                @if (selectedGenderLabel(); as label) { {{ label }} } @else { Izaberi pol }
+                @if (selectedGenderLabel(); as label) {
+                  {{ label }}
+                } @else {
+                  Izaberi pol
+                }
               </span>
               <span class="dd-caret" aria-hidden="true">▾</span>
             </button>
@@ -131,9 +170,15 @@
               <div class="dd-panel" (click)="$event.stopPropagation()">
                 <div class="dd-scroll" role="listbox">
                   @for (o of genderOptions(); track o.id) {
-                    <button type="button" class="dd-item" (click)="selectSingle('genderValueId', o.id)">
+                    <button
+                      type="button"
+                      class="dd-item"
+                      (click)="selectSingle('genderValueId', o.id)"
+                    >
                       <span class="dd-label">{{ o.value }}</span>
-                      @if (form.controls.genderValueId.value === o.id) { <span class="dd-mark">✓</span> }
+                      @if (form.controls.genderValueId.value === o.id) {
+                        <span class="dd-mark">✓</span>
+                      }
                     </button>
                   }
                 </div>
@@ -154,9 +199,17 @@
           <button class="btn ghost" type="button" (click)="close()">Otkaži</button>
           <button class="btn" type="submit" [disabled]="invalid()">
             @if (submitting()) {
-              @if (isEdit()) { Snimanje... } @else { Kreiranje... }
+              @if (isEdit()) {
+                Snimanje...
+              } @else {
+                Kreiranje...
+              }
             } @else {
-              @if (isEdit()) { Sačuvaj izmjene } @else { Sačuvaj proizvod }
+              @if (isEdit()) {
+                Sačuvaj izmjene
+              } @else {
+                Sačuvaj proizvod
+              }
             }
           </button>
         </footer>

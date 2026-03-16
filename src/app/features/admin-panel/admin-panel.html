@@ -10,22 +10,16 @@
         </div>
       </div>
 
-      <button class="btn-logout" type="button" (click)="logout()">
-        Odjavi se
-      </button>
+      <button class="btn-logout" type="button" (click)="logout()">Odjavi se</button>
     </header>
 
     <main class="grid" role="region" aria-label="Admin content">
       <section class="card">
         <h1 class="title">Admin panel</h1>
-        <p class="sub">
-          Ovdje ćemo dodati dodavanje, brisanje i editovanje proizvoda.
-        </p>
+        <p class="sub">Ovdje ćemo dodati dodavanje, brisanje i editovanje proizvoda.</p>
 
         @if (!isAdmin()) {
-          <p class="warn">
-            Token nema ADMIN rolu. Provjeri Keycloak role u realm_access.roles.
-          </p>
+          <p class="warn">Token nema ADMIN rolu. Provjeri Keycloak role u realm_access.roles.</p>
         }
       </section>
 

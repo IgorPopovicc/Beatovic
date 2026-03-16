@@ -4,8 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-brands-slider',
   imports: [],
   templateUrl: './brands-slider.html',
-  styleUrl: './brands-slider.scss'
+  styleUrl: './brands-slider.scss',
 })
-export class BrandsSlider {
-
-}
+export class BrandsSlider {}

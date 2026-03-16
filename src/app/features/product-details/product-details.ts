@@ -1,20 +1,13 @@
 // src/app/pages/product-details/product-details.ts
-import {
-  Component,
-  computed,
-  effect,
-  HostListener,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, computed, effect, HostListener, inject, signal } from '@angular/core';
 import { CommonModule, DecimalPipe, NgOptimizedImage } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Title, Meta } from '@angular/platform-browser';
 import { catchError, map, of, switchMap } from 'rxjs';
 import { ProductDetailsModel } from '../../shared/data/products.mock';
 import { environment } from '../../../environments/environment';
 import { ProductsApiService } from '../../core/api/products-api.service';
 import { CartStore } from '../../core/cart/cart.store';
+import { SeoService } from '../../core/seo/seo.service';
 
 @Component({
   selector: 'app-product-details',
@@ -26,9 +19,8 @@ import { CartStore } from '../../core/cart/cart.store';
 export class ProductDetails {
   private route = inject(ActivatedRoute);
   private api = inject(ProductsApiService);
-  private title = inject(Title);
-  private meta = inject(Meta);
   private cart = inject(CartStore);
+  private seo = inject(SeoService);
 
   loading = signal(true);
   notFound = signal(false);
@@ -53,7 +45,7 @@ export class ProductDetails {
     if (sizes.length) {
       const sel = this.selectedSize();
       if (sel) return (map[sel] ?? 0) > 0;
-      return Object.values(map).some(q => q > 0);
+      return Object.values(map).some((q) => q > 0);
     }
 
     return p.inStock !== false;
@@ -88,7 +80,7 @@ export class ProductDetails {
   constructor() {
     this.route.paramMap
       .pipe(
-        map(pm => (pm.get('id') ?? '').trim()),
+        map((pm) => (pm.get('id') ?? '').trim()),
         switchMap((id) => {
           this.loading.set(true);
           this.notFound.set(false);
@@ -101,10 +93,10 @@ export class ProductDetails {
           if (!id) return of(null);
 
           return this.api.getVariantDetails(id).pipe(
-            map(dto => this.mapDtoToProductDetails(dto, id)),
-            catchError(() => of(null))
+            map((dto) => this.mapDtoToProductDetails(dto, id)),
+            catchError(() => of(null)),
           );
-        })
+        }),
       )
       .subscribe((p) => {
         if (!p) {
@@ -123,7 +115,7 @@ export class ProductDetails {
     effect(() => {
       const p = this.product();
       if (!p) return;
-      const sizes = (p.sizes ?? []).map(x => String(x));
+      const sizes = (p.sizes ?? []).map((x) => String(x));
       const sel = this.selectedSize();
       if (sel && !sizes.includes(sel)) this.selectedSize.set(null);
     });
@@ -131,8 +123,10 @@ export class ProductDetails {
 
   private mapDtoToProductDetails(dto: any, id: string): ProductDetailsModel {
     const mediaBase = (environment.mediaProductBaseUrl ?? '').replace(/\/$/, '');
-    const mkImg = (file?: string) =>
-      file ? `${mediaBase}/${file}` : 'assets/images/placeholder.png';
+    const mkImg = (file?: string) => {
+      const cleanFile = String(file ?? '').replace(/^\/+/, '');
+      return cleanFile ? `${mediaBase}/${cleanFile}` : 'assets/images/products/test.webp';
+    };
 
     const images = Array.isArray(dto?.images) ? dto.images : [];
     const displayed = images.find((x: any) => x?.displayed) ?? images[0];
@@ -140,27 +134,33 @@ export class ProductDetails {
 
     const gallery = images.length
       ? images.map((img: any) => {
-        const u = mkImg(img?.url);
-        return {
-          desktop: u,
-          mobile: u,
-          alt: dto?.productName ?? dto?.name ?? 'Proizvod',
-          w: 1200,
-          h: 1200,
-        };
-      })
-      : [{
-        desktop: main,
-        mobile: main,
-        alt: dto?.productName ?? dto?.name ?? 'Proizvod',
-        w: 1200,
-        h: 1200,
-      }];
+          const u = mkImg(img?.url);
+          return {
+            desktop: u,
+            mobile: u,
+            alt: dto?.productName ?? dto?.name ?? 'Proizvod',
+            w: 1200,
+            h: 1200,
+          };
+        })
+      : [
+          {
+            desktop: main,
+            mobile: main,
+            alt: dto?.productName ?? dto?.name ?? 'Proizvod',
+            w: 1200,
+            h: 1200,
+          },
+        ];
 
     const brand =
       dto?.brand ??
       (Array.isArray(dto?.categories)
-        ? (dto.categories.find((c: any) => (c?.categoryName ?? '').toUpperCase() === 'BREND')?.value ?? '')
+        ? (dto.categories.find((c: any) => (c?.categoryName ?? '').toUpperCase() === 'BREND')
+            ?.displayValue ??
+            dto.categories.find((c: any) => (c?.categoryName ?? '').toUpperCase() === 'BREND')
+              ?.value ??
+            '')
         : '');
 
     // Build size maps from dto.attributes
@@ -171,8 +171,8 @@ export class ProductDetails {
       for (const a of dto.attributes) {
         if (String(a?.attributeName ?? '').toUpperCase() !== 'VELICINA') continue;
 
-        const sizeValue = String(a?.value ?? '').trim(); // e.g. "M"
-        const elementId = String(a?.id ?? '').trim();    // e.g. "edce8ea8-..."
+        const sizeValue = String(a?.displayValue ?? a?.value ?? '').trim(); // e.g. "M"
+        const elementId = String(a?.id ?? '').trim(); // e.g. "edce8ea8-..."
 
         if (!sizeValue || !elementId) continue;
 
@@ -201,7 +201,7 @@ export class ProductDetails {
     const original = Number(dto?.originalPrice ?? dto?.oldPrice ?? 0);
     const oldPrice = original > price ? original : null;
 
-    const inStock = Object.values(qtyMap).some(q => Number(q) > 0);
+    const inStock = Object.values(qtyMap).some((q) => Number(q) > 0);
 
     return {
       id,
@@ -221,32 +221,51 @@ export class ProductDetails {
   }
 
   private applySeo(p: ProductDetailsModel) {
-    const t = `${p.name} | Planeta`;
-    const d = (p.shortDescription ?? '').trim() || 'Detalji proizvoda.';
+    const description = (p.shortDescription ?? '').trim() || 'Detalji proizvoda.';
+    const image = p.gallery?.[0]?.desktop || null;
+    const productPath = `/product/${p.id}`;
 
-    const img = p.gallery?.[0]?.desktop || '';
-    const url = typeof window !== 'undefined' ? window.location.href : '';
+    this.seo.setPage({
+      title: `${p.name} | Planeta`,
+      description,
+      path: productPath,
+      ogType: 'product',
+      image,
+    });
 
-    this.title.setTitle(t);
-    this.meta.updateTag({ name: 'description', content: d });
-
-    this.meta.updateTag({ property: 'og:type', content: 'product' });
-    this.meta.updateTag({ property: 'og:title', content: t });
-    this.meta.updateTag({ property: 'og:description', content: d });
-    if (img) this.meta.updateTag({ property: 'og:image', content: img });
-    if (url) this.meta.updateTag({ property: 'og:url', content: url });
-
-    this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
-    this.meta.updateTag({ name: 'twitter:title', content: t });
-    this.meta.updateTag({ name: 'twitter:description', content: d });
-    if (img) this.meta.updateTag({ name: 'twitter:image', content: img });
+    this.seo.setStructuredData({
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: p.name,
+      description,
+      image: p.gallery?.map((img) => img.desktop) ?? [],
+      sku: p.sku ?? p.id,
+      brand: {
+        '@type': 'Brand',
+        name: p.brand || 'Planeta',
+      },
+      offers: {
+        '@type': 'Offer',
+        priceCurrency: p.currency || 'RSD',
+        price: Number(p.price || 0).toFixed(2),
+        availability: this.inStockUi()
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
+        url: this.seo.absoluteUrl(productPath),
+      },
+    });
   }
 
   private applyNotFoundSeo() {
-    this.title.setTitle('Proizvod nije dostupan | Planeta');
-    this.meta.updateTag({ name: 'description', content: 'Traženi proizvod nije dostupan ili ne postoji.' });
-    this.meta.updateTag({ property: 'og:title', content: 'Proizvod nije dostupan' });
-    this.meta.updateTag({ property: 'og:description', content: 'Traženi proizvod nije dostupan ili ne postoji.' });
+    const id = this.route.snapshot.paramMap.get('id') ?? '';
+    this.seo.setPage({
+      title: 'Proizvod nije dostupan | Planeta',
+      description: 'Traženi proizvod nije dostupan ili ne postoji.',
+      path: id ? `/product/${id}` : '/product',
+      noindex: true,
+      ogType: 'website',
+    });
+    this.seo.clearStructuredData();
   }
 
   setActive(i: number) {
@@ -255,10 +274,16 @@ export class ProductDetails {
     const clamped = Math.max(0, Math.min(i, g.length - 1));
     this.activeIndex.set(clamped);
   }
-  prev() { this.setActive(this.activeIndex() - 1); }
-  next() { this.setActive(this.activeIndex() + 1); }
+  prev() {
+    this.setActive(this.activeIndex() - 1);
+  }
+  next() {
+    this.setActive(this.activeIndex() + 1);
+  }
 
-  selectSize(size: string) { this.selectedSize.set(size); }
+  selectSize(size: string) {
+    this.selectedSize.set(size);
+  }
 
   addToCart() {
     const p = this.product();
@@ -282,10 +307,7 @@ export class ProductDetails {
       if (!sizeAttrElementId) return; // without this id you cannot order
     }
 
-    const img =
-      p.gallery?.[0]?.mobile ||
-      p.gallery?.[0]?.desktop ||
-      '';
+    const img = p.gallery?.[0]?.mobile || p.gallery?.[0]?.desktop || '';
 
     // IMPORTANT:
     // Cart line id must start with size attribute element id, not product/variant id.
@@ -319,7 +341,9 @@ export class ProductDetails {
     this.touchStartY = e.touches[0].clientY;
     this.isSwiping = true;
   }
-  onTouchMove(_: TouchEvent) { if (!this.isSwiping) return; }
+  onTouchMove(_: TouchEvent) {
+    if (!this.isSwiping) return;
+  }
   onTouchEnd(e: TouchEvent) {
     if (!this.isSwiping) return;
     this.isSwiping = false;

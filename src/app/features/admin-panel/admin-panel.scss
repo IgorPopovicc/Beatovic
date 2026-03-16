@@ -71,12 +71,19 @@
   color: #fff;
   font-weight: 900;
   cursor: pointer;
-  transition: transform 140ms ease, filter 140ms ease, opacity 140ms ease;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease,
+    opacity 140ms ease;
   white-space: nowrap;
 }
 
-.btn-logout:hover { filter: brightness(0.96); }
-.btn-logout:active { transform: translateY(1px); }
+.btn-logout:hover {
+  filter: brightness(0.96);
+}
+.btn-logout:active {
+  transform: translateY(1px);
+}
 
 .grid {
   display: grid;

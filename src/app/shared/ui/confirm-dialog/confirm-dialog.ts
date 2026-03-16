@@ -1,12 +1,22 @@
-import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, HostListener, Input, Output, signal } from '@angular/core';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  inject,
+  Input,
+  Output,
+  PLATFORM_ID,
+  ViewChild,
+} from '@angular/core';
 
 export type ConfirmVariant = 'danger' | 'default';
 
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './confirm-dialog.html',
   styleUrl: './confirm-dialog.scss',
 })
@@ -26,18 +36,22 @@ export class ConfirmDialog {
   @Output() confirm = new EventEmitter<void>();
   @Output() cancel = new EventEmitter<void>();
 
+  @ViewChild('confirmBtn') confirmBtn?: ElementRef<HTMLButtonElement>;
+
+  private readonly document = inject(DOCUMENT);
+  private readonly platformId = inject(PLATFORM_ID);
   private lastActive: HTMLElement | null = null;
 
   ngOnChanges() {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     if (this.open) {
-      this.lastActive = document.activeElement as HTMLElement;
-      queueMicrotask(() => {
-        const btn = document.querySelector<HTMLElement>('.cd-confirm');
-        btn?.focus?.();
-      });
-    } else {
-      queueMicrotask(() => this.lastActive?.focus?.());
+      this.lastActive = this.document.activeElement as HTMLElement;
+      queueMicrotask(() => this.confirmBtn?.nativeElement.focus());
+      return;
     }
+
+    queueMicrotask(() => this.lastActive?.focus?.());
   }
 
   onBackdropClick() {

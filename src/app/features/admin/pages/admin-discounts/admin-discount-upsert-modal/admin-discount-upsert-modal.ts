@@ -13,11 +13,12 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { startWith } from 'rxjs/operators';
-import {AdminDiscountsApi} from '../../../../../core/admin-api/admin-discount-api';
+import { AdminDiscountsApi } from '../../../../../core/admin-api/admin-discount-api';
 import {
   CreateDiscountRequest,
   DiscountListItem,
-  DiscountType, UpdateDiscountRequest
+  DiscountType,
+  UpdateDiscountRequest,
 } from '../../../../../core/admin-api/admin-discount.model';
 
 type SelectOption<T extends string> = { id: T; label: string };
@@ -86,12 +87,16 @@ export class AdminDiscountUpsertModal {
   );
 
   private readonly startSig = toSignal(
-    this.form.controls.startDateLocal.valueChanges.pipe(startWith(this.form.controls.startDateLocal.value)),
+    this.form.controls.startDateLocal.valueChanges.pipe(
+      startWith(this.form.controls.startDateLocal.value),
+    ),
     { initialValue: this.form.controls.startDateLocal.value },
   );
 
   private readonly endSig = toSignal(
-    this.form.controls.endDateLocal.valueChanges.pipe(startWith(this.form.controls.endDateLocal.value)),
+    this.form.controls.endDateLocal.valueChanges.pipe(
+      startWith(this.form.controls.endDateLocal.value),
+    ),
     { initialValue: this.form.controls.endDateLocal.value },
   );
 
@@ -218,20 +223,18 @@ export class AdminDiscountUpsertModal {
       ? this.api.update({ ...(base as UpdateDiscountRequest), id: this.discount!.id })
       : this.api.create(base);
 
-    req$
-      .pipe(finalize(() => this.submitting.set(false)))
-      .subscribe({
-        next: () => {
-          this.saved.emit();
-          this.close();
-        },
-        error: (err) => {
-          const msg =
-            err?.status === 401 || err?.status === 403
-              ? 'Nemate dozvolu (provjeri admin token / role).'
-              : 'Greška pri čuvanju popusta. Pokušajte ponovo.';
-          this.error.set(msg);
-        },
-      });
+    req$.pipe(finalize(() => this.submitting.set(false))).subscribe({
+      next: () => {
+        this.saved.emit();
+        this.close();
+      },
+      error: (err) => {
+        const msg =
+          err?.status === 401 || err?.status === 403
+            ? 'Nemate dozvolu (provjeri admin token / role).'
+            : 'Greška pri čuvanju popusta. Pokušajte ponovo.';
+        this.error.set(msg);
+      },
+    });
   }
 }

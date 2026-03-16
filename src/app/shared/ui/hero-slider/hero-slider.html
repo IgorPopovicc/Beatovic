@@ -1,12 +1,18 @@
-<section class="hero"
-         (mouseenter)="pause()" (mouseleave)="resume()"
-         aria-roledescription="carousel"
-         aria-live="polite">
-
+<section
+  class="hero"
+  (mouseenter)="pause()"
+  (mouseleave)="resume()"
+  aria-roledescription="carousel"
+  aria-live="polite"
+>
   <div class="slides">
     @for (s of slides; let i = $index; track i) {
-      <div class="slide" [class.active]="i === index()"
-           [attr.aria-hidden]="i === index() ? 'false' : 'true'">
+      <div
+        class="slide"
+        [class.active]="i === index()"
+        [attr.aria-hidden]="i === index() ? 'false' : 'true'"
+        [style.--slide-bg]="'url(' + s.desktop + ')'"
+      >
         <picture>
           <source [srcset]="s.mobile" media="(max-width: 768px)" />
           <img
@@ -15,26 +21,28 @@
             [width]="s.desktopW"
             [height]="s.desktopH"
             [sizes]="'(max-width:768px) 100vw, 100vw'"
-            priority="{{ i === 0 ? '' : null }}"
+            [priority]="i === 0"
             [attr.loading]="i === 0 ? 'eager' : 'lazy'"
+            [attr.fetchpriority]="i === 0 ? 'high' : 'auto'"
+            decoding="async"
           />
         </picture>
-
       </div>
     }
   </div>
 
-  <button class="ctrl prev" type="button" (click)="prev()" aria-label="Previous slide">‹</button>
-  <button class="ctrl next" type="button" (click)="next()" aria-label="Next slide">›</button>
+  <button class="ctrl prev" type="button" (click)="prev()" aria-label="Prethodni banner">‹</button>
+  <button class="ctrl next" type="button" (click)="next()" aria-label="Sljedeći banner">›</button>
 
   <div class="dots">
     @for (s of slides; let i = $index; track i) {
-      <button type="button"
-              class="dot"
-              [class.active]="i === index()"
-              (click)="go(i)"
-              [attr.aria-label]="'Go to slide ' + (i+1)">
-      </button>
+      <button
+        type="button"
+        class="dot"
+        [class.active]="i === index()"
+        (click)="go(i)"
+        [attr.aria-label]="'Go to slide ' + (i + 1)"
+      ></button>
     }
   </div>
 </section>

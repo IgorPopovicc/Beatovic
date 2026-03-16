@@ -45,20 +45,18 @@ export const productDetailsResolver: ResolveFn<ProductDetailsUI | null> = (route
   if (!id) return of(null);
 
   // Ovaj base mora biti APSOLUTAN za SEO/OG:
-  const mediaBase = environment.mediaProductBaseUrl;
+  const mediaBase = String(environment.mediaProductBaseUrl ?? '').replace(/\/$/, '');
   const currency = 'RSD';
 
   return api.getVariantDetails(id).pipe(
     map((d: any) => {
       // images[] dolazi iz details endpoint-a
       const imgs = (d?.images ?? []) as Array<{ url: string; displayed?: boolean }>;
-      const ordered = [
-        ...imgs.filter(i => i.displayed),
-        ...imgs.filter(i => !i.displayed),
-      ];
+      const ordered = [...imgs.filter((i) => i.displayed), ...imgs.filter((i) => !i.displayed)];
 
       const gallery = (ordered.length ? ordered : []).map((i) => {
-        const abs = i?.url ? (mediaBase + i.url) : 'assets/images/placeholder.png';
+        const clean = String(i?.url ?? '').replace(/^\/+/, '');
+        const abs = clean ? `${mediaBase}/${clean}` : 'assets/images/products/test.webp';
         return {
           desktop: abs,
           mobile: abs,
@@ -75,16 +73,28 @@ export const productDetailsResolver: ResolveFn<ProductDetailsUI | null> = (route
       // Brand/sizes: prilagodi prema realnom shape-u koji ti BE vraća u details.
       // Ako details vraća categories/attributes, ovdje izvuci:
       const brand =
-        d?.categories?.find((c: any) => String(c?.categoryName ?? '').toUpperCase() === 'BREND')?.value
-        ?? d?.brand
-        ?? '—';
+        d?.categories?.find((c: any) => String(c?.categoryName ?? '').toUpperCase() === 'BREND')
+          ?.displayValue ??
+        d?.categories?.find((c: any) => String(c?.categoryName ?? '').toUpperCase() === 'BREND')
+          ?.value ??
+        d?.brand ??
+        '—';
 
       const sizes =
         (d?.attributes ?? [])
           .filter((a: any) => String(a?.attributeName ?? '').toUpperCase() === 'VELICINA')
-          .map((a: any) => a?.value)
-          .filter(Boolean)
-        ?? [];
+          .map((a: any) => a?.displayValue ?? a?.value)
+          .filter(Boolean) ?? [];
+
+      const sizesQty = (d?.attributes ?? [])
+        .filter((a: any) => String(a?.attributeName ?? '').toUpperCase() === 'VELICINA')
+        .map((a: any) => Number(a?.quantity ?? 0));
+      const hasAnySizeQty = sizesQty.some((q: number) => Number.isFinite(q));
+      const inStockFromSizes = sizesQty.some((q: number) => q > 0);
+      const inStock =
+        hasAnySizeQty || sizesQty.length
+          ? inStockFromSizes
+          : Number(d?.quantity ?? 0) > 0;
 
       const sku = d?.sku ?? d?.productSku ?? d?.variantSku;
 
@@ -100,12 +110,12 @@ export const productDetailsResolver: ResolveFn<ProductDetailsUI | null> = (route
         oldPrice: hasDiscount ? originalPrice : null,
         currency,
         brand,
-        inStock: (Number(d?.quantity ?? 0) > 0),
+        inStock,
         sizes,
         shortDescription: d?.shortDescription ?? d?.description ?? undefined,
         gallery,
       } satisfies ProductDetailsUI;
     }),
-    catchError(() => of(null))
+    catchError(() => of(null)),
   );
 };

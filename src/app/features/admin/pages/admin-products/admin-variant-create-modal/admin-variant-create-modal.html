@@ -9,7 +9,9 @@
     <header class="head">
       <div class="title-wrap">
         <h2 class="title">Dodaj model</h2>
-        <p class="sub">Prvo izaberite proizvod, zatim dodajte novi model (varijantu) sa atributima i slikama.</p>
+        <p class="sub">
+          Prvo izaberite proizvod, zatim dodajte novi model (varijantu) sa atributima i slikama.
+        </p>
       </div>
 
       <button class="icon-btn" type="button" (click)="close()" aria-label="Zatvori">✕</button>
@@ -21,7 +23,9 @@
 
         <div class="search">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M10 4a6 6 0 1 0 3.75 10.7l4.78 4.79a1 1 0 0 0 1.42-1.42l-4.79-4.78A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8a4 4 0 0 1 0-8Z"/>
+            <path
+              d="M10 4a6 6 0 1 0 3.75 10.7l4.78 4.79a1 1 0 0 0 1.42-1.42l-4.79-4.78A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8a4 4 0 0 1 0-8Z"
+            />
           </svg>
 
           <input
@@ -51,8 +55,12 @@
                   <button type="button" class="row" role="listitem" (click)="selectProduct(p)">
                     <div class="main">
                       <div class="name">{{ p.productName }}</div>
-                      <div class="meta">ID: <span>{{ p.id }}</span></div>
-                      <div class="meta">SKU: <span>{{ p.productSku }}</span></div>
+                      <div class="meta">
+                        ID: <span>{{ p.id }}</span>
+                      </div>
+                      <div class="meta">
+                        SKU: <span>{{ p.productSku }}</span>
+                      </div>
                     </div>
 
                     <div class="pick">
@@ -119,7 +127,9 @@
                   <div class="variant-row" role="listitem">
                     <div class="v-main">
                       <div class="v-name">{{ v.sku }}</div>
-                      <div class="v-meta">Cijena: <strong>{{ formatPrice(v.finalPrice) }}</strong> RSD</div>
+                      <div class="v-meta">
+                        Cijena: <strong>{{ formatPrice(v.finalPrice) }}</strong> RSD
+                      </div>
                       <div class="v-meta">
                         Atributi:
                         <span class="chips">
@@ -140,7 +150,14 @@
           <section class="cardish form-card">
             <div class="section-title row-between">
               <span>3) Kreiranje novog modela</span>
-              <button type="button" class="x" (click)="closeCreateForm()" aria-label="Zatvori formu">✕</button>
+              <button
+                type="button"
+                class="x"
+                (click)="closeCreateForm()"
+                aria-label="Zatvori formu"
+              >
+                ✕
+              </button>
             </div>
 
             @if (formLoading()) {
@@ -150,7 +167,12 @@
                 <div class="grid2">
                   <div class="field">
                     <label class="label">SKU modela</label>
-                    <input class="input" type="text" formControlName="sku" placeholder="npr. TSHIRT-BLACK-M" />
+                    <input
+                      class="input"
+                      type="text"
+                      formControlName="sku"
+                      placeholder="npr. TSHIRT-BLACK-M"
+                    />
                     @if (form.controls.sku.touched && form.controls.sku.invalid) {
                       <div class="field-err">SKU je obavezan.</div>
                     }
@@ -158,7 +180,14 @@
 
                   <div class="field">
                     <label class="label">Cijena</label>
-                    <input class="input" type="number" formControlName="price" min="0" step="0.01" placeholder="npr. 2499.99" />
+                    <input
+                      class="input"
+                      type="number"
+                      formControlName="price"
+                      min="0"
+                      step="0.01"
+                      placeholder="npr. 2499.99"
+                    />
                     @if (form.controls.price.touched && form.controls.price.invalid) {
                       <div class="field-err">Cijena je obavezna.</div>
                     }
@@ -195,7 +224,11 @@
                       aria-haspopup="listbox"
                     >
                       <span class="dd-text">
-                        @if (selectedColorLabel(); as label) { {{ label }} } @else { Izaberi boju }
+                        @if (selectedColorLabel(); as label) {
+                          {{ label }}
+                        } @else {
+                          Izaberi boju
+                        }
                       </span>
                       <span class="dd-caret" aria-hidden="true">▾</span>
                     </button>
@@ -207,13 +240,18 @@
                             <button type="button" class="dd-item" (click)="selectColor(o.id)">
                               <span class="dd-label color">
                                 @if (isHexColor(o.value)) {
-                                  <span class="swatch" [style.background]="toCssHex(o.value)"></span>
+                                  <span
+                                    class="swatch"
+                                    [style.background]="toCssHex(o.value)"
+                                  ></span>
                                   <span class="text">{{ colorLabel(o.value) }}</span>
                                 } @else {
                                   <span class="text">{{ o.value }}</span>
                                 }
                               </span>
-                              @if (form.controls.colorValueId.value === o.id) { <span class="dd-mark">✓</span> }
+                              @if (form.controls.colorValueId.value === o.id) {
+                                <span class="dd-mark">✓</span>
+                              }
                             </button>
                           }
                         </div>
@@ -227,12 +265,19 @@
 
                   <div class="field">
                     <label class="label">Display slika (naziv fajla)</label>
-                    <input class="input" type="text" formControlName="displayImageName" placeholder="npr. tshirt-black-front.webp" />
+                    <input
+                      class="input"
+                      type="text"
+                      formControlName="displayImageName"
+                      placeholder="npr. tshirt-black-front.webp"
+                    />
                   </div>
                 </div>
 
                 <div class="sizes">
-                  <div class="section-title small">Veličine (multi-select) + količina po veličini</div>
+                  <div class="section-title small">
+                    Veličine (multi-select) + količina po veličini
+                  </div>
 
                   @if (sizeOptions().length === 0) {
                     <div class="hint">Nema učitanih veličina.</div>
@@ -244,9 +289,9 @@
                             <input
                               type="checkbox"
                               [checked]="isSizeSelected(s.id)"
-                              (change)="toggleSize(s.id, s.value, $any($event.target).checked)"
+                              (change)="toggleSize(s.id, optionLabel(s), $any($event.target).checked)"
                             />
-                            <span class="lbl">{{ s.value }}</span>
+                            <span class="lbl">{{ optionLabel(s) }}</span>
                           </label>
 
                           @if (isSizeSelected(s.id)) {
@@ -265,7 +310,9 @@
                     </div>
 
                     @if (sizesInvalid()) {
-                      <div class="field-err">Izaberite bar jednu veličinu i unesite količinu (0 ili više).</div>
+                      <div class="field-err">
+                        Izaberite bar jednu veličinu i unesite količinu (0 ili više).
+                      </div>
                     }
                   }
                 </div>
@@ -284,7 +331,9 @@
                       <span>Dodaj slike</span>
                     </label>
 
-                    <div class="hint">Možete dodati više slika. Nevalidne ekstenzije se ignorišu.</div>
+                    <div class="hint">
+                      Možete dodati više slika. Nevalidne ekstenzije se ignorišu.
+                    </div>
                   </div>
 
                   @if (fileError()) {
@@ -294,12 +343,25 @@
                   @if (files().length > 0) {
                     <div class="previews">
                       @for (f of files(); track f._id) {
-                        <div class="prev">
+                        <div
+                          class="prev"
+                          [class.is-display]="form.controls.displayImageName.value === f.file.name"
+                        >
                           <div class="prev-top">
                             <div class="fn">{{ f.file.name }}</div>
-                            <button type="button" class="rm" (click)="removeFile(f._id)" aria-label="Ukloni">✕</button>
+                            <button
+                              type="button"
+                              class="rm"
+                              (click)="removeFile(f._id)"
+                              aria-label="Ukloni"
+                            >
+                              ✕
+                            </button>
                           </div>
                           <div class="meta">({{ f.file.type || 'file' }})</div>
+                          @if (form.controls.displayImageName.value === f.file.name) {
+                            <span class="badge-mini">display</span>
+                          }
                         </div>
                       }
                     </div>
@@ -313,9 +375,20 @@
                 }
 
                 <footer class="actions">
-                  <button class="btn ghost" type="button" (click)="closeCreateForm()" [disabled]="submitting()">Otkaži</button>
+                  <button
+                    class="btn ghost"
+                    type="button"
+                    (click)="closeCreateForm()"
+                    [disabled]="submitting()"
+                  >
+                    Otkaži
+                  </button>
                   <button class="btn" type="submit" [disabled]="invalid()">
-                    @if (submitting()) { Snimanje... } @else { Sačuvaj }
+                    @if (submitting()) {
+                      Snimanje...
+                    } @else {
+                      Sačuvaj
+                    }
                   </button>
                 </footer>
               </form>

@@ -26,9 +26,7 @@ type TabKey = 'models' | 'products';
 
 type DeleteType = 'product' | 'variant';
 
-type DeleteState =
-  | { type: DeleteType; id: string; name: string }
-  | null;
+type DeleteState = { type: DeleteType; id: string; name: string } | null;
 
 @Component({
   selector: 'app-admin-products',
@@ -219,16 +217,21 @@ export class AdminProducts {
 
   imageUrlVariant(v: ProductVariant): string | null {
     const img = (v.images ?? []).find((x) => x.displayed) ?? (v.images ?? [])[0];
-    if (!img?.url) return null;
-    return `${environment.mediaProductBaseUrl}${img.url}`;
+    const raw = String(img?.url ?? v.mainImageName ?? v.mainImageUrl ?? '').trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+
+    const base = String(environment.mediaProductBaseUrl ?? '').replace(/\/$/, '');
+    const clean = raw.replace(/^\/+/, '');
+    return `${base}/${clean}`;
   }
 
-  formatPrice(value: number): string {
+  formatPrice(value: number | null | undefined): string {
     if (value === null || value === undefined) return '-';
     return new Intl.NumberFormat('sr-RS', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(value);
+    }).format(Number(value));
   }
 
   addProduct(): void {
@@ -396,9 +399,7 @@ export class AdminProducts {
     this.error.set(null);
 
     const req$ =
-      st.type === 'variant'
-        ? this.api.deleteVariant(st.id)
-        : this.api.deleteProduct(st.id);
+      st.type === 'variant' ? this.api.deleteVariant(st.id) : this.api.deleteProduct(st.id);
 
     req$.subscribe({
       next: () => {

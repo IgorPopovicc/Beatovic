@@ -15,7 +15,8 @@
 
         <div class="title">Korpa je prazna</div>
         <div class="muted empty-text">
-          Dodaj proizvode iz kataloga i ovde će se pojaviti. Kada dodaš stavke, moći ćeš mijenjati količine i vidjeti ukupnu cijenu.
+          Dodaj proizvode iz kataloga i ovde će se pojaviti. Kada dodaš stavke, moći ćeš mijenjati
+          količine i vidjeti ukupnu cijenu.
         </div>
 
         <div class="empty-actions">
@@ -66,28 +67,46 @@
                 </div>
 
                 <div class="meta">
-                  @if (it.sku) { <div class="sku">SKU {{ it.sku }}</div> }
+                  @if (it.sku) {
+                    <div class="sku">SKU {{ it.sku }}</div>
+                  }
                   <div class="name">{{ it.name }}</div>
-                  @if (it.size) { <div class="muted">Veličina {{ it.size }}</div> }
+                  @if (it.size) {
+                    <div class="muted">Veličina {{ it.size }}</div>
+                  }
                 </div>
               </div>
 
               <div class="right price">
-                {{ it.unitPrice.amount | number:'1.2-2' }} {{ it.unitPrice.currency }}
+                {{ it.unitPrice.amount | number: '1.2-2' }} {{ it.unitPrice.currency }}
               </div>
 
               <div class="center qty">
-                <button class="qty-btn" type="button" (click)="cart.dec(it.id)" aria-label="Smanji">-</button>
+                <button class="qty-btn" type="button" (click)="cart.dec(it.id)" aria-label="Smanji">
+                  -
+                </button>
                 <div class="qty-value">{{ it.qty }}</div>
-                <button class="qty-btn" type="button" (click)="cart.inc(it.id)" aria-label="Povećaj">+</button>
+                <button
+                  class="qty-btn"
+                  type="button"
+                  (click)="cart.inc(it.id)"
+                  aria-label="Povećaj"
+                >
+                  +
+                </button>
               </div>
 
               <div class="right total">
-                {{ (it.unitPrice.amount * it.qty) | number:'1.2-2' }} {{ it.unitPrice.currency }}
+                {{ it.unitPrice.amount * it.qty | number: '1.2-2' }} {{ it.unitPrice.currency }}
               </div>
 
               <div class="icon-col">
-                <button class="trash" type="button" (click)="askRemove(it.id, it.name)" aria-label="Ukloni">
+                <button
+                  class="trash"
+                  type="button"
+                  (click)="askRemove(it.id, it.name)"
+                  aria-label="Ukloni"
+                >
                   🗑
                 </button>
               </div>
@@ -98,12 +117,14 @@
         <div class="table-foot">
           <div class="sum-row">
             <div class="label">UKUPNO:</div>
-            <div class="value">{{ subtotal().amount | number:'1.2-2' }} {{ subtotal().currency }}</div>
+            <div class="value">
+              {{ subtotal().amount | number: '1.2-2' }} {{ subtotal().currency }}
+            </div>
           </div>
 
           <div class="sum-row big">
             <div class="label">UKUPNO SA PDV-OM:</div>
-            <div class="value">{{ total().amount | number:'1.2-2' }} {{ total().currency }}</div>
+            <div class="value">{{ total().amount | number: '1.2-2' }} {{ total().currency }}</div>
           </div>
 
           <div class="actions">
@@ -117,7 +138,7 @@
         <div class="free-ship">
           <div class="free-title">
             Za besplatnu dostavu nedostaje samo
-            <strong>{{ toFree().amount | number:'1.2-2' }} {{ toFree().currency }}</strong>
+            <strong>{{ toFree().amount | number: '1.2-2' }} {{ toFree().currency }}</strong>
           </div>
 
           <div class="progress">
@@ -143,7 +164,10 @@
             <div class="perk-ico">🚚</div>
             <div class="perk-txt">
               <div class="perk-title">Besplatna dostava</div>
-              <div class="muted">za porudžbine preko {{ cart.freeShippingThreshold().amount | number:'1.2-2' }}{{ cart.freeShippingThreshold().currency }}</div>
+              <div class="muted">
+                za porudžbine preko {{ cart.freeShippingThreshold().amount | number: '1.2-2'
+                }}{{ cart.freeShippingThreshold().currency }}
+              </div>
             </div>
           </div>
 
@@ -178,4 +202,3 @@
   (confirm)="confirmRemove()"
   (cancel)="closeConfirm()"
 />
-

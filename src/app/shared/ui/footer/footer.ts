@@ -1,16 +1,20 @@
-import { Component } from '@angular/core';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { Component, inject, PLATFORM_ID } from '@angular/core';
 
 @Component({
   selector: 'app-footer',
   imports: [],
   templateUrl: './footer.html',
-  styleUrl: './footer.scss'
+  styleUrl: './footer.scss',
 })
 export class Footer {
+  private readonly document = inject(DOCUMENT);
+  private readonly platformId = inject(PLATFORM_ID);
+
   scrollTo(fragment: string): void {
-    const element = document.getElementById(fragment);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const element = this.document.getElementById(fragment);
+    element?.scrollIntoView({ behavior: 'smooth' });
   }
 }

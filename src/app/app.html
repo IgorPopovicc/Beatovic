@@ -1,5 +1,10 @@
 <app-navbar></app-navbar>
 <div class="page">
-  <router-outlet />
+  @if (showBackendFallback()) {
+    <app-backend-fallback (retry)="retryBackend()" />
+  } @else {
+    <router-outlet />
+  }
 </div>
+<app-cart-add-toast />
 <app-footer></app-footer>

@@ -8,9 +8,8 @@ describe('AdminDiscountUpsertModal', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AdminDiscountUpsertModal]
-    })
-    .compileComponents();
+      imports: [AdminDiscountUpsertModal],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(AdminDiscountUpsertModal);
     component = fixture.componentInstance;

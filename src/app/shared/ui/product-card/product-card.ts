@@ -28,10 +28,15 @@ export interface ProductCard {
   standalone: true,
   imports: [NgOptimizedImage, RouterLink, DecimalPipe],
   templateUrl: './product-card.html',
-  styleUrl: './product-card.scss'
+  styleUrl: './product-card.scss',
 })
 export class ProductCardComponent {
   @Input({ required: true }) product!: ProductCard;
+  private imageFallback = false;
+
+  get imageDesktop(): string {
+    return this.imageFallback ? 'assets/images/products/test.webp' : this.product.image.desktop;
+  }
 
   get hasDiscount() {
     const p = this.product;
@@ -43,5 +48,9 @@ export class ProductCardComponent {
     if (!this.hasDiscount) return null;
     const pct = Math.round((1 - p.price / (p.oldPrice as number)) * 100);
     return `${pct}%`;
+  }
+
+  onImageError(): void {
+    this.imageFallback = true;
   }
 }

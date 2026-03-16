@@ -9,11 +9,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import {
-  ReactiveFormsModule,
-  FormBuilder,
-  Validators,
-} from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { finalize, forkJoin, of } from 'rxjs';
 import { catchError, startWith } from 'rxjs/operators';
@@ -31,9 +27,9 @@ import {
 type SelectOption = { id: string; value: string };
 
 const CATEGORY_IDS = {
-  BRAND: '3dc7d5bd-6761-4e87-878c-4b92604d1d6f',     // BREND
-  CATEGORY: 'f66e4dcb-76af-487d-b7d3-a4b5205e86a3',  // KATEGORIJA
-  GENDER: '7ee59a5d-afe1-4d70-a7ba-2f1f1aff6262',    // POL
+  BRAND: '3dc7d5bd-6761-4e87-878c-4b92604d1d6f', // BREND
+  CATEGORY: 'f66e4dcb-76af-487d-b7d3-a4b5205e86a3', // KATEGORIJA
+  GENDER: '7ee59a5d-afe1-4d70-a7ba-2f1f1aff6262', // POL
 } as const;
 
 type DropdownKey = 'brand' | 'category' | 'gender';
@@ -77,7 +73,10 @@ export class AdminProductCreateModal {
   // FORM (category is SINGLE)
   readonly form = this.fb.group({
     productName: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
-    productDescription: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(4)]),
+    productDescription: this.fb.nonNullable.control('', [
+      Validators.required,
+      Validators.minLength(4),
+    ]),
     sku: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
 
     brandValueId: this.fb.control<string | null>(null, [Validators.required]),
@@ -92,17 +91,23 @@ export class AdminProductCreateModal {
   );
 
   private readonly brandIdSig = toSignal(
-    this.form.controls.brandValueId.valueChanges.pipe(startWith(this.form.controls.brandValueId.value)),
+    this.form.controls.brandValueId.valueChanges.pipe(
+      startWith(this.form.controls.brandValueId.value),
+    ),
     { initialValue: this.form.controls.brandValueId.value },
   );
 
   private readonly categoryIdSig = toSignal(
-    this.form.controls.categoryValueId.valueChanges.pipe(startWith(this.form.controls.categoryValueId.value)),
+    this.form.controls.categoryValueId.valueChanges.pipe(
+      startWith(this.form.controls.categoryValueId.value),
+    ),
     { initialValue: this.form.controls.categoryValueId.value },
   );
 
   private readonly genderIdSig = toSignal(
-    this.form.controls.genderValueId.valueChanges.pipe(startWith(this.form.controls.genderValueId.value)),
+    this.form.controls.genderValueId.valueChanges.pipe(
+      startWith(this.form.controls.genderValueId.value),
+    ),
     { initialValue: this.form.controls.genderValueId.value },
   );
 
@@ -134,8 +139,10 @@ export class AdminProductCreateModal {
     this.originalCategories.set(cats);
 
     const brandId = cats.find((c) => c.categoryId === CATEGORY_IDS.BRAND)?.categoryValueId ?? null;
-    const categoryId = cats.find((c) => c.categoryId === CATEGORY_IDS.CATEGORY)?.categoryValueId ?? null;
-    const genderId = cats.find((c) => c.categoryId === CATEGORY_IDS.GENDER)?.categoryValueId ?? null;
+    const categoryId =
+      cats.find((c) => c.categoryId === CATEGORY_IDS.CATEGORY)?.categoryValueId ?? null;
+    const genderId =
+      cats.find((c) => c.categoryId === CATEGORY_IDS.GENDER)?.categoryValueId ?? null;
 
     this.form.patchValue({
       productName: this.product.productName ?? '',
@@ -152,9 +159,15 @@ export class AdminProductCreateModal {
     this.error.set(null);
 
     forkJoin({
-      brands: this.catalogApi.getCategoryValues(CATEGORY_IDS.BRAND).pipe(catchError(() => of([] as ApiCategoryValue[]))),
-      categories: this.catalogApi.getCategoryValues(CATEGORY_IDS.CATEGORY).pipe(catchError(() => of([] as ApiCategoryValue[]))),
-      genders: this.catalogApi.getCategoryValues(CATEGORY_IDS.GENDER).pipe(catchError(() => of([] as ApiCategoryValue[]))),
+      brands: this.catalogApi
+        .getCategoryValues(CATEGORY_IDS.BRAND)
+        .pipe(catchError(() => of([] as ApiCategoryValue[]))),
+      categories: this.catalogApi
+        .getCategoryValues(CATEGORY_IDS.CATEGORY)
+        .pipe(catchError(() => of([] as ApiCategoryValue[]))),
+      genders: this.catalogApi
+        .getCategoryValues(CATEGORY_IDS.GENDER)
+        .pipe(catchError(() => of([] as ApiCategoryValue[]))),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe(({ brands, categories, genders }) => {
@@ -228,30 +241,7 @@ export class AdminProductCreateModal {
 
     const v = this.form.getRawValue();
 
-    // ✅ Preserve all categories that are NOT BREND/KATEGORIJA/POL (e.g. SPORT, etc.)
-    const preserved = (this.originalCategories() ?? []).filter(
-      (c) =>
-        c.categoryId !== CATEGORY_IDS.BRAND &&
-        c.categoryId !== CATEGORY_IDS.CATEGORY &&
-        c.categoryId !== CATEGORY_IDS.GENDER,
-    );
-
-    // ✅ Rebuild our three categories from form
-    const rebuilt = [
-      ...this.buildCategoryEntrySingle('BREND', CATEGORY_IDS.BRAND, v.brandValueId, this.brandOptions()),
-      ...this.buildCategoryEntrySingle('KATEGORIJA', CATEGORY_IDS.CATEGORY, v.categoryValueId, this.categoryOptions()),
-      ...this.buildCategoryEntrySingle('POL', CATEGORY_IDS.GENDER, v.genderValueId, this.genderOptions()),
-    ];
-
-    const categoriesPayload = [
-      ...preserved.map((c) => ({
-        categoryId: c.categoryId,
-        categoryName: c.categoryName,
-        categoryValueId: c.categoryValueId,
-        value: c.value,
-      })),
-      ...rebuilt,
-    ];
+    const selectedCategories = this.buildSelectedCategoryEntries(v);
 
     // CREATE (POST)
     if (!this.isEdit()) {
@@ -259,10 +249,11 @@ export class AdminProductCreateModal {
         productName: v.productName.trim(),
         productDescription: v.productDescription.trim(),
         sku: v.sku.trim(),
-        categories: categoriesPayload,
+        categories: selectedCategories,
       };
 
-      this.api.createProduct(body)
+      this.api
+        .createProduct(body)
         .pipe(finalize(() => this.submitting.set(false)))
         .subscribe({
           next: () => {
@@ -277,16 +268,52 @@ export class AdminProductCreateModal {
       return;
     }
 
-    // EDIT (PUT)
+    // EDIT (PUT) uses diff contract:
+    // - categoriesToAdd
+    // - productCategoryIdsToRemove
+    const existingManaged = (this.originalCategories() ?? []).filter(
+      (c) =>
+        c.categoryId === CATEGORY_IDS.BRAND ||
+        c.categoryId === CATEGORY_IDS.CATEGORY ||
+        c.categoryId === CATEGORY_IDS.GENDER,
+    );
+
+    const categoriesToAdd = selectedCategories.filter(
+      (sel) =>
+        !existingManaged.some(
+          (existing) =>
+            existing.categoryId === sel.categoryId &&
+            existing.categoryValueId === sel.categoryValueId,
+        ),
+    );
+
+    const productCategoryIdsToRemove = existingManaged
+      .filter(
+        (existing) =>
+          !selectedCategories.some(
+            (sel) =>
+              sel.categoryId === existing.categoryId &&
+              sel.categoryValueId === existing.categoryValueId,
+          ),
+      )
+      .map((existing) => String(existing.id ?? '').trim())
+      .filter((id) => !!id);
+
     const body: UpdateProductRequest = {
       id: this.product!.id,
       productName: v.productName.trim(),
       productDescription: v.productDescription.trim(),
-      productSku: v.sku.trim(),
-      categories: categoriesPayload,
     };
 
-    this.api.updateProduct(body)
+    if (categoriesToAdd.length > 0) {
+      body.categoriesToAdd = categoriesToAdd;
+    }
+    if (productCategoryIdsToRemove.length > 0) {
+      body.productCategoryIdsToRemove = productCategoryIdsToRemove;
+    }
+
+    this.api
+      .updateProduct(body)
       .pipe(finalize(() => this.submitting.set(false)))
       .subscribe({
         next: () => {
@@ -300,20 +327,28 @@ export class AdminProductCreateModal {
   }
 
   private buildCategoryEntrySingle(
-    categoryName: string,
     categoryId: string,
     selectedValueId: string | null,
-    options: SelectOption[],
-  ): Array<{ categoryId: string; categoryName: string; categoryValueId: string; value: string }> {
+  ): Array<{ categoryId: string; categoryValueId: string }> {
     if (!selectedValueId) return [];
-    const label = this.findLabel(options, selectedValueId);
-    if (!label) return [];
-    return [{
-      categoryId,
-      categoryName,
-      categoryValueId: selectedValueId,
-      value: label,
-    }];
+    return [
+      {
+        categoryId,
+        categoryValueId: selectedValueId,
+      },
+    ];
+  }
+
+  private buildSelectedCategoryEntries(v: {
+    brandValueId: string | null;
+    categoryValueId: string | null;
+    genderValueId: string | null;
+  }): Array<{ categoryId: string; categoryValueId: string }> {
+    return [
+      ...this.buildCategoryEntrySingle(CATEGORY_IDS.BRAND, v.brandValueId),
+      ...this.buildCategoryEntrySingle(CATEGORY_IDS.CATEGORY, v.categoryValueId),
+      ...this.buildCategoryEntrySingle(CATEGORY_IDS.GENDER, v.genderValueId),
+    ];
   }
 
   private findLabel(options: SelectOption[], id: string | null | undefined): string | null {
@@ -341,5 +376,4 @@ export class AdminProductCreateModal {
       skuCtrl.enable({ emitEvent: false });
     }
   }
-
 }

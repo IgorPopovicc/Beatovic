@@ -1,7 +1,7 @@
 .footer {
-  background-color: #FAFAFA;
+  background-color: #fafafa;
   color: #010101;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Poppins', sans-serif;
 
   .footer-bar {
     height: 6px;
@@ -14,7 +14,7 @@
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 40px;
     max-width: 1200px;
-    margin: 40px auto 20px;
+    margin: 18px auto 20px;
     padding: 0 20px;
     text-align: center;
   }
@@ -68,7 +68,9 @@
     .material-icons-outlined {
       font-size: 28px;
       color: #ee2e24;
-      transition: color 0.3s, transform 0.3s;
+      transition:
+        color 0.3s,
+        transform 0.3s;
     }
 
     a:hover .material-icons-outlined {
@@ -81,7 +83,7 @@
     text-align: center;
     padding: 20px 10px;
     font-size: 14px;
-    background-color: #FAFAFA;
+    background-color: #fafafa;
     border-top: 1px solid #ee2e24;
   }
 
@@ -120,4 +122,3 @@
   color: #010101;
   text-decoration: none;
 }
-

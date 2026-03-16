@@ -85,7 +85,10 @@
   color: #111;
   padding: 0 14px;
   outline: none;
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 .input:focus {
@@ -125,7 +128,10 @@
   font-weight: 900;
   font-size: 15px;
   cursor: pointer;
-  transition: transform 140ms ease, filter 140ms ease, opacity 140ms ease;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease,
+    opacity 140ms ease;
   margin-top: 6px;
 }
 

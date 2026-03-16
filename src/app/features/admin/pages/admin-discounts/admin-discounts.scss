@@ -46,11 +46,18 @@
   align-items: center;
   gap: 10px;
   white-space: nowrap;
-  transition: transform 140ms ease, filter 140ms ease, opacity 140ms ease;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease,
+    opacity 140ms ease;
 }
 
-.btn-add:hover { filter: brightness(0.96); }
-.btn-add:active { transform: translateY(1px); }
+.btn-add:hover {
+  filter: brightness(0.96);
+}
+.btn-add:active {
+  transform: translateY(1px);
+}
 
 .plus {
   display: inline-grid;
@@ -70,7 +77,8 @@
   gap: 8px;
 }
 
-.hint, .count {
+.hint,
+.count {
   color: rgba(17, 17, 17, 0.65);
   font-weight: 800;
   font-size: 13px;
@@ -118,7 +126,9 @@
   min-width: 0;
 }
 
-.main { min-width: 0; }
+.main {
+  min-width: 0;
+}
 
 .name {
   font-weight: 900;
@@ -141,7 +151,9 @@
   white-space: nowrap;
 }
 
-.id span { color: rgba(17, 17, 17, 0.9); }
+.id span {
+  color: rgba(17, 17, 17, 0.9);
+}
 
 .desc {
   margin-top: 6px;
@@ -163,8 +175,14 @@
   gap: 6px;
 }
 
-.period span { color: rgba(17, 17, 17, 0.6); font-weight: 900; }
-.sep { opacity: 0.45; padding: 0 6px; }
+.period span {
+  color: rgba(17, 17, 17, 0.6);
+  font-weight: 900;
+}
+.sep {
+  opacity: 0.45;
+  padding: 0 6px;
+}
 
 .actions {
   display: flex;
@@ -181,7 +199,10 @@
   cursor: pointer;
   display: inline-grid;
   place-items: center;
-  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+  transition:
+    transform 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease;
 }
 
 .icon-btn svg {
@@ -190,18 +211,32 @@
   fill: rgba(17, 17, 17, 0.75);
 }
 
-.icon-btn:hover { background: rgba(0, 0, 0, 0.04); }
-.icon-btn:active { transform: translateY(1px); }
+.icon-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+.icon-btn:active {
+  transform: translateY(1px);
+}
 
 .icon-btn.danger {
   border-color: rgba(224, 24, 36, 0.25);
   background: rgba(224, 24, 36, 0.06);
 }
 
-.icon-btn.danger svg { fill: #a10f18; }
+.icon-btn.danger svg {
+  fill: #a10f18;
+}
 
 @media (max-width: 720px) {
-  .row { grid-template-columns: 1fr; }
-  .actions { justify-content: flex-start; }
-  .btn-add { width: 100%; justify-content: center; height: 46px; }
+  .row {
+    grid-template-columns: 1fr;
+  }
+  .actions {
+    justify-content: flex-start;
+  }
+  .btn-add {
+    width: 100%;
+    justify-content: center;
+    height: 46px;
+  }
 }

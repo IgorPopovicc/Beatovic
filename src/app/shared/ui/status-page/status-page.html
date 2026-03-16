@@ -1,0 +1,37 @@
+<section class="status-shell">
+  <div
+    class="card"
+    [class.tone-success]="tone() === 'success'"
+    [class.tone-warning]="tone() === 'warning'"
+    [class.tone-error]="tone() === 'error'"
+    [class.tone-info]="tone() === 'info'"
+  >
+    @if (loading()) {
+      <div class="loading" role="status" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>{{ loadingText() }}</span>
+      </div>
+    } @else {
+      <div class="badge">{{ badge() }}</div>
+      <div class="icon" aria-hidden="true">{{ icon() }}</div>
+
+      <h1>{{ title() }}</h1>
+      <p class="message">{{ message() }}</p>
+
+      @if (details(); as detailText) {
+        <div class="details">{{ detailText }}</div>
+      }
+
+      @if ((primaryCtaText() && primaryCtaLink()) || (secondaryCtaText() && secondaryCtaLink())) {
+        <div class="actions">
+          @if (primaryCtaText() && primaryCtaLink()) {
+            <a class="btn primary" [routerLink]="primaryCtaLink()">{{ primaryCtaText() }}</a>
+          }
+          @if (secondaryCtaText() && secondaryCtaLink()) {
+            <a class="btn ghost" [routerLink]="secondaryCtaLink()">{{ secondaryCtaText() }}</a>
+          }
+        </div>
+      }
+    }
+  </div>
+</section>

@@ -5,7 +5,7 @@ export interface DiscountListItem {
   type: DiscountType;
   value: number;
   startDate: string; // ISO
-  endDate: string;   // ISO
+  endDate: string; // ISO
   description: string;
 }
 
@@ -13,7 +13,7 @@ export interface CreateDiscountRequest {
   type: DiscountType;
   value: number;
   startDate: string; // ISO
-  endDate: string;   // ISO
+  endDate: string; // ISO
   description: string;
   variantIds: string[]; // trenutno []
 }

@@ -3,10 +3,9 @@ import { CommonModule } from '@angular/common';
 import { of } from 'rxjs';
 import { catchError, finalize, tap } from 'rxjs/operators';
 import { AdminDiscountUpsertModal } from './admin-discount-upsert-modal/admin-discount-upsert-modal';
-import {AdminDiscountsApi} from '../../../../core/admin-api/admin-discount-api';
-import {ConfirmDialog} from '../../../../shared/ui/confirm-dialog/confirm-dialog';
-import {DiscountListItem} from '../../../../core/admin-api/admin-discount.model';
-
+import { AdminDiscountsApi } from '../../../../core/admin-api/admin-discount-api';
+import { ConfirmDialog } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
+import { DiscountListItem } from '../../../../core/admin-api/admin-discount.model';
 
 @Component({
   selector: 'app-admin-discounts',
@@ -42,28 +41,31 @@ export class AdminDiscounts {
     this.loading.set(true);
     this.error.set(null);
 
-    this.api.getAll().pipe(
-      tap((res) => {
-        const list = (res ?? []).slice().sort((a, b) => {
-          // newest first (by startDate)
-          return String(b.startDate).localeCompare(String(a.startDate));
-        });
-        this.discounts.set(list);
-        this.loading.set(false);
-      }),
-      catchError((err) => {
-        this.loading.set(false);
-        this.discounts.set([]);
+    this.api
+      .getAll()
+      .pipe(
+        tap((res) => {
+          const list = (res ?? []).slice().sort((a, b) => {
+            // newest first (by startDate)
+            return String(b.startDate).localeCompare(String(a.startDate));
+          });
+          this.discounts.set(list);
+          this.loading.set(false);
+        }),
+        catchError((err) => {
+          this.loading.set(false);
+          this.discounts.set([]);
 
-        const msg =
-          err?.status === 401 || err?.status === 403
-            ? 'Nemate dozvolu (provjeri admin token / role).'
-            : 'Greška pri učitavanju popusta. Pokušajte ponovo.';
-        this.error.set(msg);
+          const msg =
+            err?.status === 401 || err?.status === 403
+              ? 'Nemate dozvolu (provjeri admin token / role).'
+              : 'Greška pri učitavanju popusta. Pokušajte ponovo.';
+          this.error.set(msg);
 
-        return of([]);
-      }),
-    ).subscribe();
+          return of([]);
+        }),
+      )
+      .subscribe();
   }
 
   add(): void {
@@ -105,22 +107,25 @@ export class AdminDiscounts {
     this.confirmBusy.set(true);
     this.error.set(null);
 
-    this.api.delete(d.id).pipe(
-      finalize(() => this.confirmBusy.set(false)),
-      tap(() => {
-        this.confirmOpen.set(false);
-        this.toDelete.set(null);
-        this.refresh();
-      }),
-      catchError((err) => {
-        const msg =
-          err?.status === 401 || err?.status === 403
-            ? 'Nemate dozvolu (provjeri admin token / role).'
-            : 'Greška pri brisanju popusta. Pokušajte ponovo.';
-        this.error.set(msg);
-        return of(null);
-      }),
-    ).subscribe();
+    this.api
+      .delete(d.id)
+      .pipe(
+        finalize(() => this.confirmBusy.set(false)),
+        tap(() => {
+          this.confirmOpen.set(false);
+          this.toDelete.set(null);
+          this.refresh();
+        }),
+        catchError((err) => {
+          const msg =
+            err?.status === 401 || err?.status === 403
+              ? 'Nemate dozvolu (provjeri admin token / role).'
+              : 'Greška pri brisanju popusta. Pokušajte ponovo.';
+          this.error.set(msg);
+          return of(null);
+        }),
+      )
+      .subscribe();
   }
 
   typeLabel(type: string): string {

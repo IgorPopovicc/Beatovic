@@ -1,14 +1,16 @@
 <section class="promo-video">
   <div class="video-wrap">
     <video
+      #bgVideo
       class="bg-video"
       autoplay
       muted
       loop
       playsinline
       preload="metadata"
+      (canplay)="ensureVideoPlayback()"
     >
-      <source src="assets/media/videos/test.mp4"  type="video/mp4" />
+      <source src="assets/media/videos/test.mp4" type="video/mp4" />
     </video>
     <div class="overlay"></div>
   </div>
@@ -17,15 +19,29 @@
     <div class="panel left">
       <h2>Nova kolekcija trčanja</h2>
       <p>Lagane, prozračne tkanine i poboljšana podrška.</p>
-      <a class="btn" routerLink="/catalog/running">Istraži novu kolekciju</a>
+      <a class="btn" routerLink="/catalog/muskarci/obuca">Istraži novu kolekciju</a>
     </div>
 
     <div class="panel right">
-      <section class="product-grid">
-        @for (p of (products || []); track p.id) {
-          <app-product-card [product]="p"></app-product-card>
-        } @empty {
-          <div class="empty">Nema proizvoda.</div>
+      <section class="featured-products" aria-label="Izdvojeni modeli">
+        <div class="featured-head">
+          <h3>2 modela koja trkači vole</h3>
+        </div>
+
+        @if (error()) {
+          <div class="state error" role="alert">{{ error() }}</div>
+        } @else if (loading()) {
+          <div class="state loading" role="status" aria-live="polite">Učitavanje modela...</div>
+        } @else {
+          <div class="product-grid">
+            @for (p of products(); track p.id) {
+              <div class="product-shell">
+                <app-product-card [product]="p"></app-product-card>
+              </div>
+            } @empty {
+              <div class="state empty">Nema proizvoda.</div>
+            }
+          </div>
         }
       </section>
     </div>

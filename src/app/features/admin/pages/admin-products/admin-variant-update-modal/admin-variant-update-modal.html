@@ -99,7 +99,11 @@
                   [disabled]="discountsLoading()"
                 >
                   <span class="dd-text">
-                    @if (discountsLoading()) { Učitavanje... } @else { {{ selectedDiscountLabel() }} }
+                    @if (discountsLoading()) {
+                      Učitavanje...
+                    } @else {
+                      {{ selectedDiscountLabel() }}
+                    }
                   </span>
                   <span class="dd-caret" aria-hidden="true">▾</span>
                 </button>
@@ -128,8 +132,12 @@
                     </div>
 
                     <div class="dd-actions">
-                      <button type="button" class="mini ghost" (click)="clearDiscounts()">Očisti</button>
-                      <button type="button" class="mini" (click)="discountsOpen.set(false)">OK</button>
+                      <button type="button" class="mini ghost" (click)="clearDiscounts()">
+                        Očisti
+                      </button>
+                      <button type="button" class="mini" (click)="discountsOpen.set(false)">
+                        OK
+                      </button>
                     </div>
                   </div>
                 }
@@ -186,15 +194,19 @@
                               (click)="pickSizeToAdd(s.id)"
                               [class.active]="selectedAddSizeValueId() === s.id"
                             >
-                              <span class="dd-opt-main">{{ s.value }}</span>
-                              @if (selectedAddSizeValueId() === s.id) { <span class="dd-opt-badge">✓</span> }
+                              <span class="dd-opt-main">{{ optionLabel(s) }}</span>
+                              @if (selectedAddSizeValueId() === s.id) {
+                                <span class="dd-opt-badge">✓</span>
+                              }
                             </button>
                           }
                         }
                       </div>
 
                       <div class="dd-actions">
-                        <button type="button" class="mini" (click)="addSizeOpen.set(false)">OK</button>
+                        <button type="button" class="mini" (click)="addSizeOpen.set(false)">
+                          OK
+                        </button>
                       </div>
                     </div>
                   }
@@ -204,7 +216,9 @@
                   type="button"
                   class="add-variant-btn"
                   (click)="confirmAddPickedSize()"
-                  [disabled]="!selectedAddSizeValueId() || !!selectedSizes()[selectedAddSizeValueId()]"
+                  [disabled]="
+                    !selectedAddSizeValueId() || !!selectedSizes()[selectedAddSizeValueId()]
+                  "
                 >
                   <span class="plus">+</span>
                   <span>Dodaj</span>
@@ -212,11 +226,20 @@
               </div>
 
               <div class="sizes-grid">
-                @for (entry of (selectedSizes() | keyvalue); track entry.key) {
+                @for (entry of selectedSizes() | keyvalue; track entry.key) {
                   <div class="size-item">
                     <div class="size-top">
-                      <div class="lbl">Veličina: <strong>{{ entry.value.value }}</strong></div>
-                      <button type="button" class="rm-size" (click)="removeSize(entry.key)" aria-label="Ukloni">✕</button>
+                      <div class="lbl">
+                        Veličina: <strong>{{ entry.value.value }}</strong>
+                      </div>
+                      <button
+                        type="button"
+                        class="rm-size"
+                        (click)="removeSize(entry.key)"
+                        aria-label="Ukloni"
+                      >
+                        ✕
+                      </button>
                     </div>
 
                     <input
@@ -233,7 +256,9 @@
               </div>
 
               @if (sizesInvalid()) {
-                <div class="field-err">Mora postojati bar jedna veličina i količina mora biti 0 ili više.</div>
+                <div class="field-err">
+                  Mora postojati bar jedna veličina i količina mora biti 0 ili više.
+                </div>
               }
             </div>
 
@@ -245,7 +270,7 @@
               } @else {
                 <div class="img-grid">
                   @for (img of existingImages(); track img.id) {
-                    <label class="img-card">
+                    <label class="img-card" [class.is-display]="img.displayed">
                       <input
                         type="checkbox"
                         [checked]="isImageMarkedForRemoval(img.id)"
@@ -256,7 +281,9 @@
                       </span>
                       <span class="meta">
                         <span class="id">{{ img.id }}</span>
-                        @if (img.displayed) { <span class="badge-mini">display</span> }
+                        @if (img.displayed) {
+                          <span class="badge-mini">display</span>
+                        }
                       </span>
                     </label>
                   }
@@ -288,12 +315,25 @@
               @if (files().length > 0) {
                 <div class="previews">
                   @for (f of files(); track f._id) {
-                    <div class="prev">
+                    <div
+                      class="prev"
+                      [class.is-display]="form.controls.displayImageName.value === f.file.name"
+                    >
                       <div class="prev-top">
                         <div class="fn">{{ f.file.name }}</div>
-                        <button type="button" class="rm" (click)="removeFile(f._id)" aria-label="Ukloni">✕</button>
+                        <button
+                          type="button"
+                          class="rm"
+                          (click)="removeFile(f._id)"
+                          aria-label="Ukloni"
+                        >
+                          ✕
+                        </button>
                       </div>
                       <div class="meta">({{ f.file.type || 'file' }})</div>
+                      @if (form.controls.displayImageName.value === f.file.name) {
+                        <span class="badge-mini">display</span>
+                      }
                     </div>
                   }
                 </div>
@@ -316,12 +356,16 @@
                         }
                       </select>
 
-                      <div class="hint">Popuni samo ako želiš da neka od NOVIH slika bude početna.</div>
+                      <div class="hint">
+                        Popuni samo ako želiš da neka od NOVIH slika bude početna.
+                      </div>
                     </div>
 
                     <div class="field inline">
                       <label class="label">Očisti</label>
-                      <button type="button" class="mini ghost" (click)="clearDisplayImageName()">Reset</button>
+                      <button type="button" class="mini ghost" (click)="clearDisplayImageName()">
+                        Reset
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -335,9 +379,15 @@
             }
 
             <footer class="actions">
-              <button class="btn ghost" type="button" (click)="close()" [disabled]="saving()">Otkaži</button>
+              <button class="btn ghost" type="button" (click)="close()" [disabled]="saving()">
+                Otkaži
+              </button>
               <button class="btn" type="submit" [disabled]="invalid()">
-                @if (saving()) { Snimanje... } @else { Sačuvaj izmjene }
+                @if (saving()) {
+                  Snimanje...
+                } @else {
+                  Sačuvaj izmjene
+                }
               </button>
             </footer>
           </form>

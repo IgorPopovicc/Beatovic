@@ -1,0 +1,85 @@
+import {
+  BrowserDomAdapter,
+  BrowserGetTestability,
+  BrowserModule,
+  By,
+  DomEventsPlugin,
+  DomRendererFactory2,
+  DomSanitizer,
+  DomSanitizerImpl,
+  EVENT_MANAGER_PLUGINS,
+  EventManager,
+  EventManagerPlugin,
+  HAMMER_GESTURE_CONFIG,
+  HAMMER_LOADER,
+  HammerGestureConfig,
+  HammerGesturesPlugin,
+  HammerModule,
+  HydrationFeatureKind,
+  KeyEventsPlugin,
+  Meta,
+  REMOVE_STYLES_ON_COMPONENT_DESTROY,
+  SharedStylesHost,
+  Title,
+  VERSION,
+  bootstrapApplication,
+  createApplication,
+  disableDebugTools,
+  enableDebugTools,
+  platformBrowser,
+  provideClientHydration,
+  provideProtractorTestingSupport,
+  withEventReplay,
+  withHttpTransferCacheOptions,
+  withI18nSupport,
+  withIncrementalHydration,
+  withNoHttpTransferCache
+} from "./chunk-OJM5G724.js";
+import "./chunk-M37Z7BMW.js";
+import {
+  getDOM
+} from "./chunk-U73QCW34.js";
+import "./chunk-CZW6QYGI.js";
+import "./chunk-W7CV2PVW.js";
+import "./chunk-MCHBURXN.js";
+import "./chunk-J46EEYGT.js";
+import "./chunk-4YCCEXQQ.js";
+import "./chunk-U7EDC2PH.js";
+export {
+  BrowserModule,
+  By,
+  DomSanitizer,
+  EVENT_MANAGER_PLUGINS,
+  EventManager,
+  EventManagerPlugin,
+  HAMMER_GESTURE_CONFIG,
+  HAMMER_LOADER,
+  HammerGestureConfig,
+  HammerModule,
+  HydrationFeatureKind,
+  Meta,
+  REMOVE_STYLES_ON_COMPONENT_DESTROY,
+  Title,
+  VERSION,
+  bootstrapApplication,
+  createApplication,
+  disableDebugTools,
+  enableDebugTools,
+  platformBrowser,
+  provideClientHydration,
+  provideProtractorTestingSupport,
+  withEventReplay,
+  withHttpTransferCacheOptions,
+  withI18nSupport,
+  withIncrementalHydration,
+  withNoHttpTransferCache,
+  BrowserDomAdapter as ɵBrowserDomAdapter,
+  BrowserGetTestability as ɵBrowserGetTestability,
+  DomEventsPlugin as ɵDomEventsPlugin,
+  DomRendererFactory2 as ɵDomRendererFactory2,
+  DomSanitizerImpl as ɵDomSanitizerImpl,
+  HammerGesturesPlugin as ɵHammerGesturesPlugin,
+  KeyEventsPlugin as ɵKeyEventsPlugin,
+  SharedStylesHost as ɵSharedStylesHost,
+  getDOM as ɵgetDOM
+};

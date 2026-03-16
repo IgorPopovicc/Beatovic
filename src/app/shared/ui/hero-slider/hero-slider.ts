@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, signal, effect, inject, Injector} from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, effect, inject, Injector } from '@angular/core';
 import { NgOptimizedImage, isPlatformBrowser } from '@angular/common';
 import { PLATFORM_ID } from '@angular/core';
 
@@ -15,24 +15,44 @@ type Slide = {
   standalone: true,
   imports: [NgOptimizedImage],
   templateUrl: './hero-slider.html',
-  styleUrl: './hero-slider.scss'
+  styleUrl: './hero-slider.scss',
 })
-export class HeroSlider
-  implements OnInit, OnDestroy {
+export class HeroSlider implements OnInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private injector = inject(Injector);
 
-  private autoRestart = effect(() => {
-    this.index();
-    if (!this.paused()) {
-      this.restartTimer();
-    }
-  }, { injector: this.injector });
+  private autoRestart = effect(
+    () => {
+      this.index();
+      if (!this.paused()) {
+        this.restartTimer();
+      }
+    },
+    { injector: this.injector },
+  );
 
   slides: Slide[] = [
-    { alt: 'Poklon popust 2000 RSD', desktop: 'assets/images/banner/banner.webp', desktopW: 1920, desktopH: 600, mobile: 'assets/images/banner/banner-mobile.jpg' },
-    { alt: 'Nova kolekcija',         desktop: 'assets/images/banner/banner.webp', desktopW: 1920, desktopH: 600, mobile: 'assets/images/banner/banner-mobile.jpg' },
-    { alt: 'Popusti do 50%',         desktop: 'assets/images/banner/banner.webp', desktopW: 1920, desktopH: 600, mobile: 'assets/images/banner/banner-mobile.jpg' },
+    {
+      alt: 'Trčanje i lifestyle modeli za novu sezonu',
+      desktop: 'assets/images/home/hero-slide-1.jpg',
+      desktopW: 1920,
+      desktopH: 860,
+      mobile: 'assets/images/home/hero-slide-1-mobile.jpg',
+    },
+    {
+      alt: 'Nova kolekcija patika za svaki dan',
+      desktop: 'assets/images/home/hero-slide-2.jpg',
+      desktopW: 1920,
+      desktopH: 860,
+      mobile: 'assets/images/home/hero-slide-2-mobile.jpg',
+    },
+    {
+      alt: 'Trening i performanse bez kompromisa',
+      desktop: 'assets/images/home/hero-slide-3.jpg',
+      desktopW: 1920,
+      desktopH: 860,
+      mobile: 'assets/images/home/hero-slide-3-mobile.jpg',
+    },
   ];
 
   index = signal(0);
@@ -46,19 +66,41 @@ export class HeroSlider
     }
   }
 
-  ngOnDestroy(): void { this.clearTimer(); }
+  ngOnDestroy(): void {
+    this.clearTimer();
+  }
 
-  prev() { this.index.set((this.index() + this.slides.length - 1) % this.slides.length); }
-  next() { this.index.set((this.index() + 1) % this.slides.length); }
-  go(i: number) { this.index.set(i); }
+  prev() {
+    this.index.set((this.index() + this.slides.length - 1) % this.slides.length);
+  }
+  next() {
+    this.index.set((this.index() + 1) % this.slides.length);
+  }
+  go(i: number) {
+    this.index.set(i);
+  }
 
-  pause()  { this.paused.set(true);  this.clearTimer(); }
-  resume() { this.paused.set(false); this.startTimer(); }
+  pause() {
+    this.paused.set(true);
+    this.clearTimer();
+  }
+  resume() {
+    this.paused.set(false);
+    this.startTimer();
+  }
 
   private startTimer() {
     if (this.timerId) return;
     this.timerId = setInterval(() => this.next(), this.intervalMs);
   }
-  private restartTimer() { this.clearTimer(); this.startTimer(); }
-  private clearTimer() { if (this.timerId) { clearInterval(this.timerId); this.timerId = null; } }
+  private restartTimer() {
+    this.clearTimer();
+    this.startTimer();
+  }
+  private clearTimer() {
+    if (this.timerId) {
+      clearInterval(this.timerId);
+      this.timerId = null;
+    }
+  }
 }

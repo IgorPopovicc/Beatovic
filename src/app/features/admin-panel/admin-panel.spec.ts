@@ -8,9 +8,8 @@ describe('AdminPanel', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AdminPanel]
-    })
-    .compileComponents();
+      imports: [AdminPanel],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(AdminPanel);
     component = fixture.componentInstance;

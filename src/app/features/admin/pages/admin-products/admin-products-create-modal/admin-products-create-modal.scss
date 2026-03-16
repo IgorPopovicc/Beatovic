@@ -48,14 +48,16 @@
 
 .icon-btn {
   border: 0;
-  background: rgba(0,0,0,0.06);
+  background: rgba(0, 0, 0, 0.06);
   width: 40px;
   height: 40px;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 900;
 }
-.icon-btn:hover { background: rgba(0,0,0,0.10); }
+.icon-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
 
 .state {
   padding: 18px;
@@ -84,8 +86,14 @@
   margin-top: 12px;
 }
 
-.field { display: grid; gap: 6px; min-width: 0; }
-.field.full { grid-column: 1 / -1; }
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.field.full {
+  grid-column: 1 / -1;
+}
 
 .label {
   font-size: 12px;
@@ -95,7 +103,8 @@
   letter-spacing: 0.04em;
 }
 
-.input, .textarea {
+.input,
+.textarea {
   width: 100%;
   border-radius: 14px;
   border: 1px solid #e5e5e5;
@@ -105,7 +114,8 @@
   outline: none;
 }
 
-.input:focus, .textarea:focus {
+.input:focus,
+.textarea:focus {
   border-color: rgba(224, 24, 36, 0.45);
   box-shadow: 0 0 0 3px rgba(224, 24, 36, 0.14);
 }
@@ -146,8 +156,13 @@
   cursor: pointer;
 }
 
-.btn:hover { filter: brightness(0.96); }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn:hover {
+  filter: brightness(0.96);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .btn.ghost {
   background: #fff;
@@ -282,11 +297,7 @@
 
 /* ===== Disabled (read-only) input styling ===== */
 .input:disabled {
-  background: linear-gradient(
-      180deg,
-      #f6f6f6 0%,
-      #f2f2f2 100%
-  );
+  background: linear-gradient(180deg, #f6f6f6 0%, #f2f2f2 100%);
   border-color: #e0e0e0;
   color: rgba(17, 17, 17, 0.55);
   cursor: not-allowed;
@@ -312,18 +323,34 @@
   }
 }
 
-
 /* Tablet / mobile layout */
 @media (max-width: 900px) {
-  .grid { grid-template-columns: 1fr; }
-  .grid2 { grid-template-columns: 1fr; }
-  .dd-scroll { max-height: min(360px, 50vh); }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+  .dd-scroll {
+    max-height: min(360px, 50vh);
+  }
 }
 
 @media (max-width: 520px) {
-  .head { padding: 14px; }
-  .form { padding: 14px; }
-  .actions { flex-direction: column; }
-  .btn { width: 100%; height: 46px; }
-  .dd-scroll { max-height: min(420px, 55vh); }
+  .head {
+    padding: 14px;
+  }
+  .form {
+    padding: 14px;
+  }
+  .actions {
+    flex-direction: column;
+  }
+  .btn {
+    width: 100%;
+    height: 46px;
+  }
+  .dd-scroll {
+    max-height: min(420px, 55vh);
+  }
 }

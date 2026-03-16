@@ -7,40 +7,41 @@
   place-items: center;
 }
 
-.muted { opacity: .65; }
+.muted {
+  opacity: 0.65;
+}
 
 .card {
   width: min(760px, 100%);
   text-align: center;
   padding: clamp(18px, 3vw, 30px);
   background:
-    radial-gradient(1200px 600px at 20% 0%, rgba(224,24,36,.10), transparent 55%),
-    radial-gradient(900px 500px at 90% 40%, rgba(0,0,0,.05), transparent 55%),
-    #fff;
-  border: 1px solid rgba(0,0,0,.08);
+    radial-gradient(1200px 600px at 20% 0%, rgba(224, 24, 36, 0.1), transparent 55%),
+    radial-gradient(900px 500px at 90% 40%, rgba(0, 0, 0, 0.05), transparent 55%), #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 18px;
-  box-shadow: 0 18px 55px rgba(0,0,0,.10);
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.1);
 }
 
 .badge {
   display: inline-block;
   font-weight: 900;
   font-size: 12px;
-  letter-spacing: .4px;
+  letter-spacing: 0.4px;
   text-transform: uppercase;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(0,0,0,.10);
-  background: rgba(0,0,0,.03);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .badge.ok {
-  border-color: rgba(0,0,0,.10);
+  border-color: rgba(0, 0, 0, 0.1);
 }
 
 .badge.err {
-  border-color: rgba(224,24,36,.25);
-  background: rgba(224,24,36,.06);
+  border-color: rgba(224, 24, 36, 0.25);
+  background: rgba(224, 24, 36, 0.06);
 }
 
 .icon {
@@ -50,18 +51,18 @@
   border-radius: 18px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(0,0,0,.10);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   background: #fff;
   font-size: 26px;
 }
 
 .icon.ok {
-  background: rgba(0,0,0,.02);
+  background: rgba(0, 0, 0, 0.02);
 }
 
 .icon.err {
-  background: rgba(224,24,36,.06);
-  border-color: rgba(224,24,36,.18);
+  background: rgba(224, 24, 36, 0.06);
+  border-color: rgba(224, 24, 36, 0.18);
 }
 
 h1 {
@@ -76,8 +77,8 @@ h1 {
   width: min(620px, 100%);
   padding: 12px 12px;
   border-radius: 14px;
-  border: 1px solid rgba(0,0,0,.10);
-  background: rgba(0,0,0,.02);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.02);
 
   .dtitle {
     font-weight: 900;
@@ -86,7 +87,7 @@ h1 {
 
   .dmsg {
     font-weight: 700;
-    opacity: .85;
+    opacity: 0.85;
     line-height: 1.45;
     word-break: break-word;
   }
@@ -104,10 +105,10 @@ h1 {
   height: 44px;
   padding: 0 16px;
   border-radius: 12px;
-  border: 1px solid rgba(0,0,0,.16);
+  border: 1px solid rgba(0, 0, 0, 0.16);
   background: #fff;
   font-weight: 900;
-  letter-spacing: .02em;
+  letter-spacing: 0.02em;
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
@@ -120,4 +121,6 @@ h1 {
   border-color: #e01824;
   color: #fff;
 }
-.btn.ghost { background: transparent; }
+.btn.ghost {
+  background: transparent;
+}

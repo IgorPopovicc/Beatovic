@@ -17,7 +17,13 @@
       </div>
 
       <div class="cd-actions">
-        <button type="button" class="cd-btn primary cd-confirm" (click)="onConfirm()" [disabled]="busy">
+        <button
+          #confirmBtn
+          type="button"
+          class="cd-btn primary cd-confirm"
+          (click)="onConfirm()"
+          [disabled]="busy"
+        >
           {{ confirmText }}
         </button>
         <button type="button" class="cd-btn ghost" (click)="onCancel()" [disabled]="busy">

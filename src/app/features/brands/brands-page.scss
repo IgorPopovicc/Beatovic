@@ -1,0 +1,76 @@
+:host {
+  display: block;
+}
+
+.brands-page {
+  width: min(1240px, 100%);
+  margin: 0 auto;
+  padding: 24px 12px 48px;
+  display: grid;
+  gap: 20px;
+}
+
+.hero {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 18px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
+  padding: 18px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: clamp(26px, 4vw, 40px);
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.68);
+  font-weight: 600;
+}
+
+.slider-wrap {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 18px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
+  padding: 18px;
+  overflow: hidden;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.btn {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  background: #fff;
+  color: #111;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+}
+
+.btn.primary {
+  background: #e01824;
+  border-color: #e01824;
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}

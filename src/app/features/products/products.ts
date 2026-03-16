@@ -1,17 +1,65 @@
-// src/app/features/products/products.ts
-import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, PLATFORM_ID, computed, inject, signal, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { combineLatest, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { Subscription, combineLatest, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { ProductsApiService } from '../../core/api/products-api.service';
-import { ProductSearchResponse, Variant } from '../../core/api/catalog.models';
-
+import { ProductsSearchRequest, ProductSearchResponse, Variant } from '../../core/api/catalog.models';
 import { ProductCardComponent, ProductCard } from '../../shared/ui/product-card/product-card';
+import { mapVariantToProductCard } from '../../shared/ui/product-card/product-card.mapper';
 import { CatalogApiService } from '../../core/api/catalog-api.sevice';
-import { fromSlug, toLabel } from '../../core/api/catalog-slug'; // <- provjeri putanju
-import { environment } from '../../../environments/environment';
+import { fromSlug, toLabel } from '../../core/api/catalog-slug';
+import { SeoService } from '../../core/seo/seo.service';
+
+type SortKey = 'novo' | 'cijena_rastuce' | 'cijena_opadajuce';
+type SortBy = 'NAME' | 'PRICE';
+type SortOrder = 'ASC' | 'DESC';
+
+type FilterOption = {
+  id: string;
+  label: string;
+  count: number;
+  selected: boolean;
+};
+
+type RouteContext = {
+  genderSlug: string;
+  categorySlug: string;
+  searchQuery: string;
+  forceSale: boolean;
+  initialCategoryFilters: Record<string, string[]>;
+};
+
+type RouteResolution =
+  | {
+      ok: true;
+      context: RouteContext;
+    }
+  | {
+      ok: false;
+      reason: 'catalog_unavailable' | 'category_not_found';
+      message: string;
+      genderSlug: string;
+      categorySlug: string;
+    };
+
+type ProductsRequestState = {
+  searchQuery: string;
+  initialCategoryFilters: Record<string, string[]>;
+  categoryFilters: Record<string, string[]>;
+  attributeFilters: Record<string, string[]>;
+  minPrice: number | null;
+  maxPrice: number | null;
+  hasActiveDiscount: boolean | null;
+  hasActiveStock: boolean | null;
+  page: number; // backend is 0-based
+  pageSize: number;
+  sortBy: SortBy;
+  sortOrder: SortOrder;
+};
+
+const DEFAULT_PAGE_SIZE = 24;
 
 @Component({
   selector: 'app-products',
@@ -20,375 +68,499 @@ import { environment } from '../../../environments/environment';
   templateUrl: './products.html',
   styleUrl: './products.scss',
 })
-export class Products implements OnInit {
-  private route = inject(ActivatedRoute);
-  private catalogApi = inject(CatalogApiService);
-  private productsApi = inject(ProductsApiService);
-  private platformId = inject(PLATFORM_ID);
+export class Products implements OnInit, OnDestroy {
+  private readonly route = inject(ActivatedRoute);
+  private readonly catalogApi = inject(CatalogApiService);
+  private readonly productsApi = inject(ProductsApiService);
+  private readonly seo = inject(SeoService);
+
+  private routeSub?: Subscription;
+  private searchSub?: Subscription;
 
   filtersOpen = signal(false);
-
-  sortKey = signal<'novo' | 'cijena_rastuce' | 'cijena_opadajuce'>('novo');
-
-  onlyInStock = signal(false);
-  onlySale = signal(false);
-
-  selectedBrands = signal<Set<string>>(new Set());
-  selectedSizes = signal<Set<string>>(new Set());
-
-  minPrice = signal<number | null>(null);
-  maxPrice = signal<number | null>(null);
-
-  page = signal(1);
-  pageSize = signal(24);
-
   loading = signal(true);
   error = signal<string | null>(null);
 
   response = signal<ProductSearchResponse | null>(null);
+  private currentContext = signal<RouteContext | null>(null);
+  private requestState = signal<ProductsRequestState | null>(null);
 
-  private variantById = computed(() => {
-    const res = this.response();
-    const map = new Map<string, Variant>();
-    for (const v of res?.variants ?? []) map.set(v.id, v);
-    return map;
-  });
-
-  allProducts = computed<ProductCard[]>(() => {
-    const res = this.response();
-    if (!res?.variants?.length) return [];
-    return res.variants.map(v => this.mapVariantToProductCard(v));
-  });
+  private readonly genderSlug = signal('');
+  private readonly categorySlug = signal('');
 
   heading = computed(() => {
-    const p = this.route.snapshot.paramMap;
-    const gender = p.get('gender') ?? '';
-    const category = p.get('category') ?? '';
+    const gender = this.genderSlug();
+    const category = this.categorySlug();
     const g = gender ? toLabel(fromSlug(gender)) : '';
     const c = category ? toLabel(fromSlug(category)) : '';
     return [g, c].filter(Boolean).join(' / ');
   });
 
-  availableBrands = computed(() => {
-    const res = this.response();
-    const cat = res?.availableCategories?.find(c => (c.name ?? '').toUpperCase() === 'BREND');
-    if (cat?.values?.length) {
-      return cat.values
-        .map(v => ({ brand: v.value, count: v.count }))
-        .sort((a, b) => a.brand.localeCompare(b.brand));
-    }
-
-    const map = new Map<string, number>();
-    const byId = this.variantById();
-    for (const p of this.allProducts()) {
-      const v = byId.get(p.id);
-      const brand = v ? this.getCategoryValue(v, 'BREND') : null;
-      if (!brand) continue;
-      map.set(brand, (map.get(brand) ?? 0) + 1);
-    }
-    return [...map.entries()]
-      .map(([brand, count]) => ({ brand, count }))
-      .sort((a, b) => a.brand.localeCompare(b.brand));
+  private readonly brandCategoryGroup = computed(() => {
+    const categories = this.response()?.availableCategories ?? [];
+    return categories.find((c) => this.normalizeKey(c.name) === 'BREND') ?? null;
   });
 
-  availableSizes = computed(() => {
-    const res = this.response();
-    const attr = res?.availableAttributes?.find(a => (a.name ?? '').toUpperCase() === 'VELICINA');
-    if (attr?.values?.length) {
-      return attr.values
-        .map(v => ({ size: v.value, count: v.count }))
-        .sort((a, b) => this.smartSizeCompare(a.size, b.size));
-    }
+  private readonly sizeAttributeGroup = computed(() => {
+    const attributes = this.response()?.availableAttributes ?? [];
+    return attributes.find((a) => this.normalizeKey(a.name) === 'VELICINA') ?? null;
+  });
 
-    const map = new Map<string, number>();
-    const byId = this.variantById();
-    for (const p of this.allProducts()) {
-      const v = byId.get(p.id);
-      if (!v) continue;
-      const sizes = this.getSizeValuesInStock(v);
-      for (const s of sizes) map.set(s, (map.get(s) ?? 0) + 1);
-    }
-    return [...map.entries()]
-      .map(([size, count]) => ({ size, count }))
-      .sort((a, b) => this.smartSizeCompare(a.size, b.size));
+  availableBrands = computed<FilterOption[]>(() => {
+    const group = this.brandCategoryGroup();
+    if (!group?.values?.length) return [];
+
+    const selected = this.selectedCategoryValueIds(group.id);
+    return group.values
+      .map((v) => ({
+        id: v.id,
+        label: String(v.displayValue ?? v.value ?? '').trim(),
+        count: Number(v.count ?? 0),
+        selected: v.alreadySelected ?? selected.has(v.id),
+      }))
+      .filter((v) => !!v.label)
+      .sort((a, b) => a.label.localeCompare(b.label));
+  });
+
+  availableSizes = computed<FilterOption[]>(() => {
+    const group = this.sizeAttributeGroup();
+    if (!group?.values?.length) return [];
+
+    const selected = this.selectedAttributeValueIds(group.id);
+    return group.values
+      .map((v) => ({
+        id: v.id,
+        label: String(v.displayValue ?? v.value ?? '').trim(),
+        count: Number(v.count ?? 0),
+        selected: v.alreadySelected ?? selected.has(v.id),
+      }))
+      .filter((v) => !!v.label)
+      .sort((a, b) => this.smartSizeCompare(a.label, b.label));
   });
 
   priceBounds = computed(() => {
-    const res = this.response();
-    if (res?.priceRange) {
-      return { min: res.priceRange.minPrice ?? 0, max: res.priceRange.maxPrice ?? 0 };
-    }
-    const prices = this.allProducts().map(p => p.price);
-    if (!prices.length) return { min: 0, max: 0 };
-    return { min: Math.min(...prices), max: Math.max(...prices) };
+    const range = this.response()?.priceRange;
+    return {
+      min: Number(range?.minPrice ?? 0),
+      max: Number(range?.maxPrice ?? 0),
+    };
   });
 
-  filteredProducts = computed(() => {
-    let list = this.allProducts();
-    const byId = this.variantById();
+  onlyInStock = computed(() => this.requestState()?.hasActiveStock === true);
+  onlySale = computed(() => this.requestState()?.hasActiveDiscount === true);
+  minPrice = computed(() => this.requestState()?.minPrice ?? null);
+  maxPrice = computed(() => this.requestState()?.maxPrice ?? null);
 
-    if (this.onlyInStock()) {
-      list = list.filter(p => this.getVariantStockQty(byId.get(p.id)) > 0);
-    }
-
-    if (this.onlySale()) {
-      list = list.filter(p => {
-        const v = byId.get(p.id);
-        if (!v) return false;
-        return (v.discountPrice ?? 0) > 0 || (v.finalPrice ?? 0) < (v.originalPrice ?? 0);
-      });
-    }
-
-    const brands = this.selectedBrands();
-    if (brands.size) {
-      list = list.filter(p => {
-        const v = byId.get(p.id);
-        const brand = v ? this.getCategoryValue(v, 'BREND') : null;
-        return brand ? brands.has(brand) : false;
-      });
-    }
-
-    const sizes = this.selectedSizes();
-    if (sizes.size) {
-      list = list.filter(p => {
-        const v = byId.get(p.id);
-        if (!v) return false;
-        const vsizes = this.getSizeValuesInStock(v); // samo veličine koje imaju qty > 0
-        return vsizes.some(s => sizes.has(s));
-      });
-    }
-
-    const minP = this.minPrice();
-    const maxP = this.maxPrice();
-    if (minP !== null && !Number.isNaN(minP)) list = list.filter(p => p.price >= minP);
-    if (maxP !== null && !Number.isNaN(maxP)) list = list.filter(p => p.price <= maxP);
-
-    const key = this.sortKey();
-    if (key === 'cijena_rastuce') {
-      list = [...list].sort((a, b) => a.price - b.price);
-    } else if (key === 'cijena_opadajuce') {
-      list = [...list].sort((a, b) => b.price - a.price);
-    } else {
-      list = [...list].sort((a, b) => {
-        const av = byId.get(a.id);
-        const bv = byId.get(b.id);
-        const an = av?.new ? 1 : 0;
-        const bn = bv?.new ? 1 : 0;
-        return bn - an;
-      });
-    }
-
-    return list;
+  sortKey = computed<SortKey>(() => {
+    const state = this.requestState();
+    if (!state) return 'novo';
+    return this.backendSortToUi(state.sortBy, state.sortOrder);
   });
 
-  totalCount = computed(() => this.filteredProducts().length);
+  page = computed(() => (this.requestState()?.page ?? 0) + 1);
+  pageSize = computed(() => this.requestState()?.pageSize ?? DEFAULT_PAGE_SIZE);
+
+  allProducts = computed<ProductCard[]>(() => {
+    const variants = this.response()?.variants ?? [];
+    return variants.map((v) => this.mapVariantToProductCard(v));
+  });
+
+  // Backend already handles pagination/filtering. We render returned page as-is.
+  pagedProducts = computed(() => this.allProducts());
+
+  totalCount = computed(() => Number(this.response()?.totalResults ?? 0));
 
   totalPages = computed(() => {
-    const size = this.pageSize();
+    const size = Math.max(1, this.pageSize());
     const total = this.totalCount();
     return Math.max(1, Math.ceil(total / size));
   });
 
-  pagedProducts = computed(() => {
-    const p = this.page();
-    const size = this.pageSize();
-    const list = this.filteredProducts();
-    const start = (p - 1) * size;
-    return list.slice(start, start + size);
-  });
-
-  ngOnInit() {
+  ngOnInit(): void {
     const polId$ = this.catalogApi.getCategoryIdByName('POL');
     const katId$ = this.catalogApi.getCategoryIdByName('KATEGORIJA');
 
-    combineLatest([polId$, katId$, this.route.paramMap])
+    this.routeSub = combineLatest([polId$, katId$, this.route.paramMap, this.route.queryParamMap])
       .pipe(
-        switchMap(([polId, katId, params]) => {
-          this.loading.set(true);
-          this.error.set(null);
-
-          this.resetFilters(true);
-          this.page.set(1);
-
-          if (!polId || !katId) {
-            this.loading.set(false);
-            this.error.set('Nedostaje POL/KATEGORIJA ID.');
-            return of(null);
-          }
-
+        switchMap(([polId, katId, params, queryParams]) => {
           const genderSlug = params.get('gender') ?? '';
           const categorySlug = params.get('category') ?? '';
+          const searchQuery = (queryParams.get('q') ?? '').trim();
+          const forceSale = this.queryParamToBool(queryParams.get('sale'));
 
-          const genderApiValue = fromSlug(genderSlug);
-          const categoryApiValue = fromSlug(categorySlug);
+          this.genderSlug.set(genderSlug);
+          this.categorySlug.set(categorySlug);
+
+          if (!polId || !katId) {
+            return of<RouteResolution>({
+              ok: false,
+              reason: 'catalog_unavailable',
+              message: 'Katalog trenutno nije dostupan.',
+              genderSlug,
+              categorySlug,
+            });
+          }
 
           return combineLatest([
             this.catalogApi.getCategoryValues(polId),
             this.catalogApi.getCategoryValues(katId),
           ]).pipe(
-            switchMap(([polValues, katValues]) => {
-              const genderValue = polValues.find(v => v.value === genderApiValue);
-              const categoryValue = katValues.find(v => v.value === categoryApiValue);
+            map(([polValues, katValues]) => {
+              const genderApiValue = fromSlug(genderSlug);
+              const categoryApiValue = fromSlug(categorySlug);
+
+              const genderValue = polValues.find(
+                (v) => this.normalizeKey(v.value) === this.normalizeKey(genderApiValue),
+              );
+              const categoryValue = katValues.find(
+                (v) => this.normalizeKey(v.value) === this.normalizeKey(categoryApiValue),
+              );
 
               if (!genderValue || !categoryValue) {
-                this.loading.set(false);
-                this.error.set('Nepoznata ruta (gender/category).');
-                return of(null);
+                return {
+                  ok: false,
+                  reason: 'category_not_found',
+                  message: 'Tražena kategorija nije pronađena.',
+                  genderSlug,
+                  categorySlug,
+                } satisfies RouteResolution;
               }
 
-              const body = {
-                initialCategoryFilters: {
-                  [polId]: [genderValue.id],
-                  [katId]: [categoryValue.id],
+              return {
+                ok: true,
+                context: {
+                  genderSlug,
+                  categorySlug,
+                  searchQuery,
+                  forceSale,
+                  initialCategoryFilters: {
+                    [polId]: [genderValue.id],
+                    [katId]: [categoryValue.id],
+                  },
                 },
-              };
-
-              return this.productsApi.search(body);
-            })
+              } satisfies RouteResolution;
+            }),
+            catchError(() =>
+              of<RouteResolution>({
+                ok: false,
+                reason: 'catalog_unavailable',
+                message: 'Katalog trenutno nije dostupan.',
+                genderSlug,
+                categorySlug,
+              }),
+            ),
           );
-        })
+        }),
       )
-      .subscribe({
-        next: (res) => {
-          this.response.set(res);
-          this.loading.set(false);
+      .subscribe((resolution) => {
+        if (!resolution.ok) {
+          this.handleRouteError(resolution);
+          return;
+        }
 
-          if (isPlatformBrowser(this.platformId)) {
-            // ništa agresivno ovde
-          }
-        },
-        error: (e) => {
-          console.error(e);
-          this.loading.set(false);
-          this.error.set('Search nije uspeo.');
-        },
+        this.error.set(null);
+        this.response.set(null);
+        this.currentContext.set(resolution.context);
+        this.requestState.set(this.createDefaultRequestState(resolution.context));
+        this.applySeo(resolution.context.genderSlug, resolution.context.categorySlug);
+        this.runSearch();
       });
   }
 
-  openFilters() { this.filtersOpen.set(true); }
-  closeFilters() { this.filtersOpen.set(false); }
-
-  setSort(key: string) {
-    const k = key as 'novo' | 'cijena_rastuce' | 'cijena_opadajuce';
-    this.sortKey.set(k);
-    this.page.set(1);
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
+    this.searchSub?.unsubscribe();
   }
 
-  setInStock(v: boolean) { this.onlyInStock.set(!!v); this.page.set(1); }
-  setSale(v: boolean) { this.onlySale.set(!!v); this.page.set(1); }
-
-  toggleBrand(brand: string) {
-    const next = new Set(this.selectedBrands());
-    next.has(brand) ? next.delete(brand) : next.add(brand);
-    this.selectedBrands.set(next);
-    this.page.set(1);
+  openFilters(): void {
+    this.filtersOpen.set(true);
   }
 
-  toggleSize(size: string) {
-    const next = new Set(this.selectedSizes());
-    next.has(size) ? next.delete(size) : next.add(size);
-    this.selectedSizes.set(next);
-    this.page.set(1);
+  closeFilters(): void {
+    this.filtersOpen.set(false);
   }
 
-  applyPrice(minRaw: string, maxRaw: string) {
+  setSort(key: string): void {
+    const sortKey = (key as SortKey) ?? 'novo';
+    const sort = this.uiSortToBackend(sortKey);
+    this.patchRequestState((prev) => ({ ...prev, ...sort, page: 0 }));
+  }
+
+  setInStock(v: boolean): void {
+    this.patchRequestState((prev) => ({
+      ...prev,
+      hasActiveStock: v ? true : null,
+      page: 0,
+    }));
+  }
+
+  setSale(v: boolean): void {
+    this.patchRequestState((prev) => ({
+      ...prev,
+      hasActiveDiscount: v ? true : null,
+      page: 0,
+    }));
+  }
+
+  toggleBrand(valueId: string): void {
+    const group = this.brandCategoryGroup();
+    if (!group?.id) return;
+
+    this.patchRequestState((prev) => {
+      const current = new Set(prev.categoryFilters[group.id] ?? []);
+      current.has(valueId) ? current.delete(valueId) : current.add(valueId);
+
+      const categoryFilters = { ...prev.categoryFilters };
+      if (current.size > 0) {
+        categoryFilters[group.id] = Array.from(current);
+      } else {
+        delete categoryFilters[group.id];
+      }
+
+      return { ...prev, categoryFilters, page: 0 };
+    });
+  }
+
+  toggleSize(valueId: string): void {
+    const group = this.sizeAttributeGroup();
+    if (!group?.id) return;
+
+    this.patchRequestState((prev) => {
+      const current = new Set(prev.attributeFilters[group.id] ?? []);
+      current.has(valueId) ? current.delete(valueId) : current.add(valueId);
+
+      const attributeFilters = { ...prev.attributeFilters };
+      if (current.size > 0) {
+        attributeFilters[group.id] = Array.from(current);
+      } else {
+        delete attributeFilters[group.id];
+      }
+
+      return { ...prev, attributeFilters, page: 0 };
+    });
+  }
+
+  applyPrice(minRaw: string, maxRaw: string): void {
     const min = minRaw?.trim() ? Number(minRaw) : null;
     const max = maxRaw?.trim() ? Number(maxRaw) : null;
 
-    this.minPrice.set(min !== null && !Number.isNaN(min) ? min : null);
-    this.maxPrice.set(max !== null && !Number.isNaN(max) ? max : null);
-    this.page.set(1);
+    const parsedMin = min !== null && !Number.isNaN(min) ? min : null;
+    const parsedMax = max !== null && !Number.isNaN(max) ? max : null;
+
+    if (parsedMin !== null && parsedMax !== null && parsedMin > parsedMax) {
+      this.error.set('Minimalna cijena ne može biti veća od maksimalne.');
+      return;
+    }
+
+    this.patchRequestState((prev) => ({
+      ...prev,
+      minPrice: parsedMin,
+      maxPrice: parsedMax,
+      page: 0,
+    }));
   }
 
-  clearPrice() { this.minPrice.set(null); this.maxPrice.set(null); this.page.set(1); }
+  clearPrice(): void {
+    this.patchRequestState((prev) => ({
+      ...prev,
+      minPrice: null,
+      maxPrice: null,
+      page: 0,
+    }));
+  }
 
-  resetFilters(keepSidebarState: boolean) {
-    this.onlyInStock.set(false);
-    this.onlySale.set(false);
-    this.selectedBrands.set(new Set());
-    this.selectedSizes.set(new Set());
-    this.minPrice.set(null);
-    this.maxPrice.set(null);
+  resetFilters(keepSidebarState: boolean): void {
+    const context = this.currentContext();
+    const state = this.requestState();
+    if (!context || !state) return;
+
+    this.requestState.set({
+      ...this.createDefaultRequestState(context),
+      pageSize: state.pageSize,
+      sortBy: state.sortBy,
+      sortOrder: state.sortOrder,
+    });
 
     if (!keepSidebarState) this.closeFilters();
-    this.page.set(1);
+    this.runSearch();
   }
 
-  goPage(p: number) {
+  goPage(p: number): void {
     const max = this.totalPages();
-    this.page.set(Math.min(Math.max(1, p), max));
+    const clamped = Math.max(1, Math.min(p, max));
+    this.patchRequestState((prev) => ({ ...prev, page: clamped - 1 }));
   }
 
-  private getVariantStockQty(v: Variant | undefined | null): number {
-    if (!v) return 0;
-
-    const attrs = Array.isArray(v.attributes) ? v.attributes : [];
-
-    const sizeAttrs = attrs.filter(a => String(a?.attributeName ?? '').toUpperCase() === 'VELICINA');
-    if (sizeAttrs.length) {
-      return sizeAttrs.reduce((sum, a) => sum + Number(a?.quantity ?? 0), 0);
-    }
-
-    const hasAnyAttrQty = attrs.some(a => a?.quantity != null);
-    if (hasAnyAttrQty) {
-      return attrs.reduce((sum, a) => sum + Number(a?.quantity ?? 0), 0);
-    }
-
-    return 0;
+  retryLoad(): void {
+    this.runSearch();
   }
 
-  private getSizeValuesInStock(v: Variant): string[] {
-    const attrs = Array.isArray(v.attributes) ? v.attributes : [];
-    return attrs
-      .filter(a => String(a?.attributeName ?? '').toUpperCase() === 'VELICINA')
-      .filter(a => Number(a?.quantity ?? 0) > 0)
-      .map(a => String(a?.value ?? '').trim())
-      .filter(Boolean);
+  private patchRequestState(mutator: (prev: ProductsRequestState) => ProductsRequestState): void {
+    const prev = this.requestState();
+    if (!prev) return;
+    const next = mutator(prev);
+    this.requestState.set(next);
+    this.runSearch();
   }
 
-  private mapVariantToProductCard(v: Variant): ProductCard {
-    const displayed = v.images?.find(i => i.displayed) ?? v.images?.[0];
-    const imgFile = displayed?.url ?? '';
+  private runSearch(): void {
+    const state = this.requestState();
+    if (!state) return;
 
-    const imgUrl = imgFile
-      ? `${environment.mediaProductBaseUrl}/${imgFile}`
-      : 'assets/images/placeholder.png';
+    this.loading.set(true);
+    this.error.set(null);
 
-    const hasDiscount = (v.finalPrice ?? 0) < (v.originalPrice ?? 0);
-    const oldPrice = hasDiscount ? Number(v.originalPrice ?? 0) : null;
+    const body = this.buildRequestBody(state);
+    this.searchSub?.unsubscribe();
 
-    return {
-      id: v.id,
-      slug: this.slugify(`${v.productName}-${v.sku ?? v.id}`),
-      name: v.productName,
-      subtitle: v.productSku ?? undefined,
-      price: Number(v.finalPrice ?? 0),
-      oldPrice,
-      currency: 'RSD',
-      discountLabel: undefined,
-      image: {
-        desktop: imgUrl,
-        mobile: imgUrl,
-        alt: v.productName,
-        w: 1200,
-        h: 1200,
+    this.searchSub = this.productsApi.search(body).subscribe({
+      next: (res) => {
+        this.response.set(res ?? null);
+        this.loading.set(false);
+        this.applyCollectionStructuredData();
       },
-      priority: false,
+      error: (e) => {
+        console.error(e);
+        this.response.set(null);
+        this.loading.set(false);
+        this.error.set('Trenutno ne možemo učitati katalog. Molimo pokušajte ponovo.');
+      },
+    });
+  }
+
+  private buildRequestBody(state: ProductsRequestState): ProductsSearchRequest {
+    const body: ProductsSearchRequest = {
+      initialCategoryFilters: state.initialCategoryFilters,
+      page: state.page,
+      pageSize: state.pageSize,
+      sortBy: state.sortBy,
+      sortOrder: state.sortOrder,
+    };
+
+    if (state.searchQuery) body.searchQuery = state.searchQuery;
+    if (Object.keys(state.categoryFilters).length > 0) body.categoryFilters = state.categoryFilters;
+    if (Object.keys(state.attributeFilters).length > 0) {
+      body.attributeFilters = state.attributeFilters;
+    }
+    if (state.minPrice !== null) body.minPrice = state.minPrice;
+    if (state.maxPrice !== null) body.maxPrice = state.maxPrice;
+    if (state.hasActiveDiscount !== null) body.hasActiveDiscount = state.hasActiveDiscount;
+    if (state.hasActiveStock !== null) body.hasActiveStock = state.hasActiveStock;
+
+    return body;
+  }
+
+  private createDefaultRequestState(context: RouteContext): ProductsRequestState {
+    return {
+      searchQuery: context.searchQuery,
+      initialCategoryFilters: context.initialCategoryFilters,
+      categoryFilters: {},
+      attributeFilters: {},
+      minPrice: null,
+      maxPrice: null,
+      hasActiveDiscount: context.forceSale ? true : null,
+      hasActiveStock: null,
+      page: 0,
+      pageSize: DEFAULT_PAGE_SIZE,
+      sortBy: 'NAME',
+      sortOrder: 'ASC',
     };
   }
 
-  private getCategoryValue(v: Variant, categoryName: string): string | null {
-    const t = categoryName.toUpperCase();
-    const hit = v.categories?.find(c => (c.categoryName ?? '').toUpperCase() === t);
-    return hit?.value ?? null;
+  private handleRouteError(resolution: Exclude<RouteResolution, { ok: true }>): void {
+    this.currentContext.set(null);
+    this.requestState.set(null);
+    this.response.set(null);
+    this.loading.set(false);
+    this.error.set(resolution.message);
+
+    if (resolution.reason === 'catalog_unavailable') {
+      this.seo.setPage({
+        title: 'Katalog trenutno nije dostupan | Planeta',
+        description: 'Podaci za katalog trenutno nisu dostupni. Molimo pokušajte ponovo kasnije.',
+        path: '/catalog',
+        noindex: true,
+      });
+      this.seo.clearStructuredData();
+      return;
+    }
+
+    this.seo.setPage({
+      title: 'Kategorija nije pronađena | Planeta',
+      description: 'Tražena kategorija ne postoji ili je uklonjena iz ponude.',
+      path: `/catalog/${resolution.genderSlug}/${resolution.categorySlug}`,
+      noindex: true,
+    });
+    this.seo.clearStructuredData();
   }
 
-  private getAttributeValues(v: Variant, attrName: string): string[] {
-    const t = attrName.toUpperCase();
-    return (v.attributes ?? [])
-      .filter(a => (a.attributeName ?? '').toUpperCase() === t)
-      .map(a => a.value)
-      .filter(Boolean);
+  private applySeo(genderSlug: string, categorySlug: string): void {
+    const genderLabel = genderSlug ? toLabel(fromSlug(genderSlug)) : 'Proizvodi';
+    const categoryLabel = categorySlug ? toLabel(fromSlug(categorySlug)) : '';
+    const joined = [genderLabel, categoryLabel].filter(Boolean).join(' / ');
+
+    this.seo.setPage({
+      title: `${joined} | Planeta`,
+      description: `Pregled ponude za ${joined.toLowerCase()} uz filtere po veličini, brendu i cijeni.`,
+      path: `/catalog/${genderSlug}/${categorySlug}`,
+      ogType: 'website',
+    });
+  }
+
+  private applyCollectionStructuredData(): void {
+    const products = this.allProducts().slice(0, 12);
+    if (!products.length) {
+      this.seo.clearStructuredData();
+      return;
+    }
+
+    const gender = this.genderSlug();
+    const category = this.categorySlug();
+    const path = gender && category ? `/catalog/${gender}/${category}` : '/catalog';
+
+    const listItems = products.map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: this.seo.absoluteUrl(`/product/${p.id}`),
+      name: p.name,
+    }));
+
+    this.seo.setStructuredData({
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: this.heading() || 'Katalog',
+      url: this.seo.absoluteUrl(path),
+      mainEntity: {
+        '@type': 'ItemList',
+        itemListElement: listItems,
+      },
+    });
+  }
+
+  private selectedCategoryValueIds(groupId: string): Set<string> {
+    const selected = this.requestState()?.categoryFilters?.[groupId] ?? [];
+    return new Set(selected);
+  }
+
+  private selectedAttributeValueIds(groupId: string): Set<string> {
+    const selected = this.requestState()?.attributeFilters?.[groupId] ?? [];
+    return new Set(selected);
+  }
+
+  private uiSortToBackend(key: SortKey): { sortBy: SortBy; sortOrder: SortOrder } {
+    if (key === 'cijena_rastuce') return { sortBy: 'PRICE', sortOrder: 'ASC' };
+    if (key === 'cijena_opadajuce') return { sortBy: 'PRICE', sortOrder: 'DESC' };
+    return { sortBy: 'NAME', sortOrder: 'ASC' };
+  }
+
+  private backendSortToUi(sortBy: SortBy, sortOrder: SortOrder): SortKey {
+    if (sortBy === 'PRICE' && sortOrder === 'ASC') return 'cijena_rastuce';
+    if (sortBy === 'PRICE' && sortOrder === 'DESC') return 'cijena_opadajuce';
+    return 'novo';
+  }
+
+  private mapVariantToProductCard(v: Variant): ProductCard {
+    return mapVariantToProductCard(v);
   }
 
   private smartSizeCompare(a: string, b: string): number {
@@ -402,12 +574,18 @@ export class Products implements OnInit {
     return a.localeCompare(b);
   }
 
-  private slugify(s: string): string {
-    return s
-      .toLowerCase()
+  private normalizeKey(value: unknown): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/\p{M}+/gu, '')
+      .toUpperCase()
+      .trim();
+  }
+
+  private queryParamToBool(value: string | null): boolean {
+    const normalized = String(value ?? '')
       .trim()
-      .replace(/[^\p{L}\p{N}]+/gu, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
+      .toLowerCase();
+    return normalized === '1' || normalized === 'true' || normalized === 'yes';
   }
 }

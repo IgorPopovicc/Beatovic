@@ -6,11 +6,11 @@ export class ProductsService {
   private products = signal<ProductDetailsModel[]>(PRODUCTS_MOCK);
 
   getBySlug(slug: string): ProductDetailsModel | null {
-    return this.products().find(p => p.slug === slug) ?? null;
+    return this.products().find((p) => p.slug === slug) ?? null;
   }
 
   async getById(id: string): Promise<ProductDetailsModel | null> {
-    const found = PRODUCTS_MOCK.find(p => p.id === id);
+    const found = PRODUCTS_MOCK.find((p) => p.id === id);
     return found ?? null;
   }
 }

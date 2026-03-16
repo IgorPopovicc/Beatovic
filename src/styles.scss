@@ -1,6 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
 @use 'styles/colors' as *;
-@import url('https://fonts.googleapis.com/css2?family=Genos:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
 * {
   margin: 0;
@@ -9,14 +8,13 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-*:focus {
-  outline: none !important;
-}
 *:focus-visible {
-  outline: none !important;
+  outline: 3px solid rgba(224, 24, 36, 0.35);
+  outline-offset: 2px;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   font-family: 'Poppins', sans-serif !important;
   background-color: $color-background;
@@ -48,7 +46,8 @@ a {
   }
 }
 
-ul, ol {
+ul,
+ol {
   list-style: none;
 }
 
@@ -64,7 +63,10 @@ button {
   font-family: inherit;
 }
 
-input, textarea, select, button {
+input,
+textarea,
+select,
+button {
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
@@ -72,7 +74,18 @@ input, textarea, select, button {
 
 hr {
   border: none;
-  border-top: 1px solid #E5E5E5;
+  border-top: 1px solid #e5e5e5;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 
 .container {
@@ -93,14 +106,17 @@ hr {
   gap: 26px;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
-.product-grid app-product-card { height: 100%; }
+.product-grid app-product-card {
+  height: 100%;
+}
 
 .hero .overlay,
 .promo-video .overlay {
-  pointer-events: none;   /* VEOMA bitno */
+  pointer-events: none; /* VEOMA bitno */
 }
 
-@media (max-width: 768px){
-  .product-grid { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
-

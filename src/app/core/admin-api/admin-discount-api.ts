@@ -5,8 +5,12 @@ import { catchError } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth/auth.service';
-import { CreateDiscountRequest, DiscountListItem, UpdateDiscountRequest } from './admin-discount.model';
-import {DiscountDTO} from './admin-products.models';
+import {
+  CreateDiscountRequest,
+  DiscountListItem,
+  UpdateDiscountRequest,
+} from './admin-discount.model';
+import { DiscountDTO } from './admin-products.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminDiscountsApi {
@@ -76,7 +80,7 @@ export class AdminDiscountsApi {
     );
   }
 
-  // Delete je POST zahtjev po specifikaciji
+  // Delete endpoint od 01.01.2026 koristi HTTP DELETE (path ostaje isti)
   delete(discountId: string): Observable<unknown> {
     const url = `${environment.apiBaseUrl}/discounts/admin/${discountId}/delete`;
     let headers: HttpHeaders;
@@ -87,7 +91,7 @@ export class AdminDiscountsApi {
       return throwError(() => e);
     }
 
-    return this.http.post(url, {}, { headers }).pipe(
+    return this.http.delete(url, { headers }).pipe(
       catchError((err) => {
         console.error('[AdminDiscountsApi] delete failed:', err);
         return throwError(() => err);

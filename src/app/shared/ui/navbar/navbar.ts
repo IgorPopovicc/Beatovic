@@ -9,17 +9,26 @@ import {
   signal,
   ViewChild,
 } from '@angular/core';
-import {DecimalPipe, isPlatformBrowser, NgOptimizedImage} from '@angular/common';
+import { DecimalPipe, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, startWith, switchMap, tap } from 'rxjs/operators';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs/operators';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CatalogApiService } from '../../../core/api/catalog-api.sevice';
 import { toLabel, toSlug } from '../../../core/api/catalog-slug';
 import { CartStore } from '../../../core/cart/cart.store';
 import { environment } from '../../../../environments/environment';
-import { AdminProductsApi } from '../../../core/admin-api/admin-products-api';
+import { ProductsApiService } from '../../../core/api/products-api.service';
+import { Variant } from '../../../core/api/catalog.models';
 
 @Component({
   selector: 'app-navbar',
@@ -33,7 +42,7 @@ export class Navbar implements OnInit {
   private router = inject(Router);
   private catalogApi = inject(CatalogApiService);
   private cart = inject(CartStore);
-  private productsApi = inject(AdminProductsApi);
+  private productsApi = inject(ProductsApiService);
 
   cartCount = computed(() => this.cart.itemsCount());
 
@@ -56,13 +65,13 @@ export class Navbar implements OnInit {
   activeTitle = computed(() => {
     const idx = this.activeParent();
     const list = this.menu();
-    return idx === null ? '' : list[idx]?.label ?? '';
+    return idx === null ? '' : (list[idx]?.label ?? '');
   });
 
   activeChildren = computed(() => {
     const idx = this.activeParent();
     const list = this.menu();
-    return idx === null ? [] : list[idx]?.children ?? [];
+    return idx === null ? [] : (list[idx]?.children ?? []);
   });
 
   // ===== SEARCH (TYPEAHEAD) =====
@@ -74,7 +83,7 @@ export class Navbar implements OnInit {
   // u dropdown-u prikaz je 5 uz scroll; ovde povučemo 10 da ima smisla “Prikaži više”
   private readonly _pageSize = 10;
 
-  variants = signal<any[]>([]);     // res.foundVariants (tvoj tip ako hoćeš: ProductVariant[])
+  variants = signal<Variant[]>([]);
   totalVariants = signal<number>(0);
 
   readonly query = toSignal(
@@ -104,10 +113,18 @@ export class Navbar implements OnInit {
 
         this.loadingSearch.set(true);
 
-        return this.productsApi.searchMain(q).pipe(
+        return this.productsApi
+          .search({
+            searchQuery: q,
+            page: 0,
+            pageSize: this._pageSize,
+            sortBy: 'NAME',
+            sortOrder: 'ASC',
+          })
+          .pipe(
           tap((res) => {
-            const items = (res.foundVariants ?? []) as any[];
-            this.variants.set(items.slice(0, this._pageSize));
+            const items = (res.variants ?? []) as Variant[];
+            this.variants.set(items);
             this.totalVariants.set(res.totalResults ?? items.length);
             this.loadingSearch.set(false);
           }),
@@ -131,7 +148,11 @@ export class Navbar implements OnInit {
 
   showResults = computed(() => {
     const q = this.query();
-    return this.searchOpen() && q.length >= 3 && (this.variants().length > 0 || this.loadingSearch() || !!this.searchError());
+    return (
+      this.searchOpen() &&
+      q.length >= 3 &&
+      (this.variants().length > 0 || this.loadingSearch() || !!this.searchError())
+    );
   });
 
   ngOnInit() {
@@ -151,28 +172,39 @@ export class Navbar implements OnInit {
     forkJoin([pol$, kat$]).subscribe(([polId, katId]) => {
       if (!polId || !katId) return;
 
-      forkJoin([this.catalogApi.getCategoryValues(polId), this.catalogApi.getCategoryValues(katId)]).subscribe(
-        ([polValues, kategorije]) => {
-          const genderItems: MenuItem[] = polValues.map((g) => {
-            const genderSlug = toSlug(g.value);
+      forkJoin([
+        this.catalogApi.getCategoryValues(polId),
+        this.catalogApi.getCategoryValues(katId),
+      ]).subscribe(([polValues, kategorije]) => {
+        const normalizeMenuValue = (value: unknown): { slug: string; label: string } | null => {
+          const slug = toSlug(value);
+          const label = toLabel(value);
+          return slug && label ? { slug, label } : null;
+        };
 
-            const children = kategorije.map((k) => {
-              const categorySlug = toSlug(k.value);
-              return { label: toLabel(k.value), link: `/catalog/${genderSlug}/${categorySlug}` };
-            });
+        const categoryItems = kategorije
+          .map((k) => normalizeMenuValue(k?.value))
+          .filter((item): item is { slug: string; label: string } => item !== null);
 
-            return { label: toLabel(g.value), children };
-          });
+        const genderItems: MenuItem[] = polValues
+          .map((g) => normalizeMenuValue(g?.value))
+          .filter((item): item is { slug: string; label: string } => item !== null)
+          .map((gender) => ({
+            label: gender.label,
+            children: categoryItems.map((category) => ({
+              label: category.label,
+              link: `/catalog/${gender.slug}/${category.slug}`,
+            })),
+          }));
 
-          const base: MenuItem[] = [
-            { label: 'Početna', link: '/' },
-            ...genderItems,
-            { label: 'Brendovi', link: '/brands' },
-          ];
+        const base: MenuItem[] = [
+          { label: 'Početna', link: '/' },
+          ...genderItems,
+          { label: 'Brendovi', link: '/brands' },
+        ];
 
-          this.menu.set(base);
-        },
-      );
+        this.menu.set(base);
+      });
     });
   }
 
@@ -223,8 +255,8 @@ export class Navbar implements OnInit {
     const q = this.query().trim();
     if (q.length < 3) return;
 
-    // Ako ti je search stranica druga ruta, promeni ovde.
-    this.router.navigate(['/catalog'], { queryParams: { q } });
+    const target = this.resolveCatalogTargetFromCurrentUrl();
+    this.router.navigate(target, { queryParams: { q } });
     this.closeSearch();
   }
 
@@ -255,16 +287,21 @@ export class Navbar implements OnInit {
 
   pickMetaLine(v: any): string {
     const cats = v?.categories ?? [];
-    const brand = cats.find((c: any) => (c.categoryName ?? '').toUpperCase() === 'BREND')?.value;
-    const gender = cats.find((c: any) => (c.categoryName ?? '').toUpperCase() === 'POL')?.value;
-    const cat = cats.find((c: any) => (c.categoryName ?? '').toUpperCase() === 'KATEGORIJA')?.value;
+    const categoryValue = (c: any) => String(c?.displayValue ?? c?.value ?? '').trim();
+    const brand = categoryValue(
+      cats.find((c: any) => (c.categoryName ?? '').toUpperCase() === 'BREND'),
+    );
+    const gender = categoryValue(cats.find((c: any) => (c.categoryName ?? '').toUpperCase() === 'POL'));
+    const cat = categoryValue(
+      cats.find((c: any) => (c.categoryName ?? '').toUpperCase() === 'KATEGORIJA'),
+    );
     const parts = [brand, cat, gender].filter(Boolean);
-    return parts.length ? parts.join(' • ') : (v?.productSku ?? '');
+    return parts.length ? parts.join(' • ') : (v?.sku ?? v?.productSku ?? '');
   }
 
   pickImageUrl(v: any): string {
-    // 1) Preferiraj mainImageUrl ako postoji (tvoj novi format)
-    const main = (v?.mainImageUrl ?? '').trim();
+    // 1) Preferiraj mainImageName/mainImageUrl (light DTO format)
+    const main = (v?.mainImageName ?? v?.mainImageUrl ?? '').trim();
     if (main) {
       return this.joinMediaUrl(main);
     }
@@ -280,10 +317,12 @@ export class Navbar implements OnInit {
     }
 
     // 3) Placeholder
-    return 'assets/images/placeholder/product-placeholder.webp';
+    return 'assets/images/products/test.webp';
   }
 
   private joinMediaUrl(filename: string): string {
+    if (/^https?:\/\//i.test(filename)) return filename;
+
     const base = (environment as any).mediaProductBaseUrl as string | undefined;
     if (!base) return filename; // fail-safe
 
@@ -291,6 +330,17 @@ export class Navbar implements OnInit {
     const normalizedBase = base.endsWith('/') ? base : `${base}/`;
     const cleanFile = filename.startsWith('/') ? filename.slice(1) : filename;
     return `${normalizedBase}${cleanFile}`;
+  }
+
+  private resolveCatalogTargetFromCurrentUrl(): string[] {
+    const path = String(this.router.url ?? '').split('?')[0];
+    const segments = path.split('/').filter(Boolean);
+
+    if (segments[0] === 'catalog' && segments[1] && segments[2]) {
+      return ['/catalog', segments[1], segments[2]];
+    }
+
+    return ['/catalog', 'muskarci', 'obuca'];
   }
 
   // ===== SCROLL / MENU =====

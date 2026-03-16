@@ -11,7 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { catchError, finalize, forkJoin, map, of, switchMap } from 'rxjs';
+import { catchError, finalize, forkJoin, of, switchMap } from 'rxjs';
 
 import { AdminProductsApi } from '../../../../../core/admin-api/admin-products-api';
 import { AdminAttributesApi } from '../../../../../core/admin-api/admin-attributes-api';
@@ -86,6 +86,7 @@ export class AdminVariantUpdateModal {
   readonly discounts = signal<DiscountDTO[]>([]);
   readonly discountsOpen = signal(false);
   readonly selectedDiscountIds = signal<Set<string>>(new Set());
+  readonly initialDiscountVariantIdsByDiscountId = signal<Record<string, string>>({});
 
   // IMAGES
   readonly existingImages = signal<ProductImage[]>([]);
@@ -176,7 +177,7 @@ export class AdminVariantUpdateModal {
   addSizePickedLabel(): string {
     const id = this.selectedAddSizeValueId();
     if (!id) return 'Izaberi veličinu';
-    const raw = this.sizeOptions().find((x) => x.id === id)?.value ?? 'Izabrano';
+    const raw = this.optionLabel(this.sizeOptions().find((x) => x.id === id)) || 'Izabrano';
     return raw;
   }
 
@@ -206,18 +207,22 @@ export class AdminVariantUpdateModal {
         catchError(() => of([] as AttributeDTO[])),
         switchMap((attrs) => {
           this.attributes.set(attrs ?? []);
-          const color = (attrs ?? []).find((a) => a.name?.toUpperCase() === 'BOJA') ?? null;
-          const size = (attrs ?? []).find((a) => a.name?.toUpperCase() === 'VELICINA') ?? null;
+          const color = (attrs ?? []).find((a) => this.isAttribute(a, 'BOJA')) ?? null;
+          const size = (attrs ?? []).find((a) => this.isAttribute(a, 'VELICINA')) ?? null;
           this.colorAttr.set(color);
           this.sizeAttr.set(size);
 
-          if (!color?.id || !size?.id) {
-            return of({ colors: [] as AttributeValueDTO[], sizes: [] as AttributeValueDTO[] });
-          }
-
           return forkJoin({
-            colors: this.attrApi.getAttributeValues(color.id).pipe(catchError(() => of([] as AttributeValueDTO[]))),
-            sizes: this.attrApi.getAttributeValues(size.id).pipe(catchError(() => of([] as AttributeValueDTO[]))),
+            colors: color?.id
+              ? this.attrApi
+                  .getAttributeValues(color.id)
+                  .pipe(catchError(() => of([] as AttributeValueDTO[])))
+              : of([] as AttributeValueDTO[]),
+            sizes: size?.id
+              ? this.attrApi
+                  .getAttributeValues(size.id)
+                  .pipe(catchError(() => of([] as AttributeValueDTO[])))
+              : of([] as AttributeValueDTO[]),
           });
         }),
       ),
@@ -245,6 +250,7 @@ export class AdminVariantUpdateModal {
         this.sizeOptions.set(attrsPack?.sizes ?? []);
 
         this.discounts.set(discounts ?? []);
+        this.initialDiscountVariantIdsByDiscountId.set({});
 
         if (!details) return;
 
@@ -261,7 +267,7 @@ export class AdminVariantUpdateModal {
         this.fileError.set(null);
 
         this.form.reset({
-          price: Number(details.originalPrice ?? 0),
+          price: Number(details.finalPrice ?? details.originalPrice ?? 0),
           isNew: !!details.new,
           isOutlet: !!details.outlet,
           displayImageName: '',
@@ -275,8 +281,13 @@ export class AdminVariantUpdateModal {
   }
 
   private hydrateFromVariant(details: ProductVariant): void {
+    const colorAttr = this.colorAttr();
+    const sizeAttr = this.sizeAttr();
+
     // color
-    const color = (details.attributes ?? []).find((a) => (a.attributeName ?? '').toUpperCase() === 'BOJA');
+    const color = (details.attributes ?? []).find((a) =>
+      this.isColorAttributeEntry(a, colorAttr?.id),
+    );
     if (color?.attributeValueId) {
       this.selectedColorValueId.set(color.attributeValueId);
     } else {
@@ -284,14 +295,16 @@ export class AdminVariantUpdateModal {
     }
 
     // sizes
-    const sizeAttr = this.sizeAttr();
     const sizeMap: Record<string, SizeMeta> = {};
 
     for (const a of details.attributes ?? []) {
-      if ((a.attributeName ?? '').toUpperCase() !== 'VELICINA') continue;
+      if (!this.isSizeAttributeEntry(a, sizeAttr?.id)) continue;
 
       const valueId = a.attributeValueId;
-      const label = this.sizeOptions().find((x) => x.id === valueId)?.value ?? a.value ?? '';
+      if (!valueId) continue;
+      const label =
+        this.optionLabel(this.sizeOptions().find((x) => x.id === valueId)) ||
+        (a.displayValue ?? a.value ?? '');
 
       sizeMap[valueId] = {
         id: a.id ?? crypto.randomUUID(),
@@ -306,11 +319,22 @@ export class AdminVariantUpdateModal {
     this.selectedSizes.set(sizeMap);
 
     // discounts (ako ih ima na details-u)
-    const pre = new Set<string>();
-    for (const ad of (details.activeDiscounts ?? []) as any[]) {
-      if (ad?.id) pre.add(ad.id);
+    const selected = new Set<string>();
+    const byDiscountId: Record<string, string> = {};
+
+    for (const ad of details.activeDiscounts ?? []) {
+      const discountId = String((ad as any)?.discountId ?? ad?.id ?? '').trim();
+      const discountVariantId = String(ad?.id ?? '').trim();
+      if (!discountId) continue;
+
+      selected.add(discountId);
+      if (discountVariantId) {
+        byDiscountId[discountId] = discountVariantId;
+      }
     }
-    this.selectedDiscountIds.set(pre);
+
+    this.selectedDiscountIds.set(selected);
+    this.initialDiscountVariantIdsByDiscountId.set(byDiscountId);
   }
 
   private toFullMediaUrl(url: string): string {
@@ -344,7 +368,7 @@ export class AdminVariantUpdateModal {
     if (current[valueId]) return;
 
     const sizeAttr = this.sizeAttr();
-    const label = this.sizeOptions().find((x) => x.id === valueId)?.value ?? '';
+    const label = this.optionLabel(this.sizeOptions().find((x) => x.id === valueId));
 
     current[valueId] = {
       id: crypto.randomUUID(),
@@ -508,6 +532,100 @@ export class AdminVariantUpdateModal {
     }
   }
 
+  private buildAttributeDiff(
+    details: ProductVariant,
+    colorAttr: AttributeDTO,
+    sizeAttr: AttributeDTO,
+    colorValueId: string,
+  ): { attributesToAdd: ProductAttribute[]; attributeVariantIdsToRemove: string[] } {
+    const existing = details.attributes ?? [];
+    const existingColor = existing.find((a) => this.isColorAttributeEntry(a, colorAttr.id));
+
+    const existingSizesByValueId = new Map<string, ProductAttribute>();
+    for (const attr of existing) {
+      if (!this.isSizeAttributeEntry(attr, sizeAttr.id)) continue;
+      const valueId = String(attr.attributeValueId ?? '').trim();
+      if (!valueId) continue;
+      existingSizesByValueId.set(valueId, attr);
+    }
+
+    const attributesToAdd: ProductAttribute[] = [];
+    const toRemove = new Set<string>();
+
+    const rawColorValue = this.colorOptions().find((x) => x.id === colorValueId)?.value ?? '';
+
+    if (!existingColor || existingColor.attributeValueId !== colorValueId) {
+      if (existingColor?.id) toRemove.add(existingColor.id);
+      attributesToAdd.push({
+        id: crypto.randomUUID(),
+        attributeId: colorAttr.id,
+        attributeName: colorAttr.name,
+        attributeValueId: colorValueId,
+        value: rawColorValue,
+        quantity: 0,
+      });
+    }
+
+    const selectedSizes = Object.values(this.selectedSizes());
+    const selectedSizeIds = new Set<string>(selectedSizes.map((s) => s.attributeValueId));
+
+    for (const size of selectedSizes) {
+      const old = existingSizesByValueId.get(size.attributeValueId);
+      const nextQty = Number(size.qty ?? 0);
+      const oldQty = Number(old?.quantity ?? 0);
+
+      if (!old || oldQty !== nextQty) {
+        if (old?.id) toRemove.add(old.id);
+        attributesToAdd.push({
+          id: crypto.randomUUID(),
+          attributeId: size.attributeId || sizeAttr.id,
+          attributeName: size.attributeName || sizeAttr.name,
+          attributeValueId: size.attributeValueId,
+          value: this.sizeOptionRawValue(size.attributeValueId) || size.value,
+          quantity: nextQty,
+        });
+      }
+    }
+
+    for (const [valueId, old] of existingSizesByValueId.entries()) {
+      if (!selectedSizeIds.has(valueId) && old.id) {
+        toRemove.add(old.id);
+      }
+    }
+
+    return {
+      attributesToAdd,
+      attributeVariantIdsToRemove: Array.from(toRemove),
+    };
+  }
+
+  private buildDiscountDiff(): {
+    discountIdsToAdd: string[];
+    discountVariantIdsToRemove: string[];
+  } {
+    const selected = this.selectedDiscountIds();
+    const initialMap = this.initialDiscountVariantIdsByDiscountId();
+    const initialDiscountIds = new Set(Object.keys(initialMap));
+
+    const discountIdsToAdd: string[] = [];
+    for (const discountId of selected) {
+      if (!initialDiscountIds.has(discountId)) {
+        discountIdsToAdd.push(discountId);
+      }
+    }
+
+    const discountVariantIdsToRemove: string[] = [];
+    for (const discountId of initialDiscountIds) {
+      if (selected.has(discountId)) continue;
+      const relationId = initialMap[discountId];
+      if (relationId) {
+        discountVariantIdsToRemove.push(relationId);
+      }
+    }
+
+    return { discountIdsToAdd, discountVariantIdsToRemove };
+  }
+
   // ======= SUBMIT =======
   submit(): void {
     this.error.set(null);
@@ -537,69 +655,61 @@ export class AdminVariantUpdateModal {
     }
 
     const v = this.form.getRawValue();
-
-    const rawColorValue = this.colorOptions().find((x) => x.id === colorValueId)?.value ?? '';
-
-    const attrs: ProductAttribute[] = [
-      {
-        id: crypto.randomUUID(),
-        attributeId: colorAttr.id,
-        attributeName: colorAttr.name,
-        attributeValueId: colorValueId,
-        value: rawColorValue,
-        quantity: 0,
-      } as any,
-      ...Object.values(this.selectedSizes()).map((m) => ({
-        id: m.id || crypto.randomUUID(),
-        attributeId: sizeAttr.id,
-        attributeName: sizeAttr.name,
-        attributeValueId: m.attributeValueId,
-        value: m.value,
-        quantity: m.qty,
-      })) as any,
-    ];
+    const attributeDiff = this.buildAttributeDiff(d, colorAttr, sizeAttr, colorValueId);
+    const discountDiff = this.buildDiscountDiff();
 
     const dto: UpdateProductVariantDTO = {
       id: d.id,
       price: Number(v.price),
       isNew: !!v.isNew,
       isOutlet: !!v.isOutlet,
-      attributes: attrs as any,
     };
 
-    (dto as any).discountIds = Array.from(this.selectedDiscountIds());
+    if (attributeDiff.attributesToAdd.length > 0) {
+      dto.attributesToAdd = attributeDiff.attributesToAdd;
+    }
+    if (attributeDiff.attributeVariantIdsToRemove.length > 0) {
+      dto.attributeVariantIdsToRemove = attributeDiff.attributeVariantIdsToRemove;
+    }
+    if (discountDiff.discountIdsToAdd.length > 0) {
+      dto.discountIdsToAdd = discountDiff.discountIdsToAdd;
+    }
+    if (discountDiff.discountVariantIdsToRemove.length > 0) {
+      dto.discountVariantIdsToRemove = discountDiff.discountVariantIdsToRemove;
+    }
 
     const removeIds = Array.from(this.imageIdsToRemove());
-    if (removeIds.length > 0) (dto as any).imageIdsToRemove = removeIds;
+    if (removeIds.length > 0) dto.imageIdsToRemove = removeIds;
 
     const displayName = (v.displayImageName ?? '').trim();
     if (displayName && this.newImageNameOptions().includes(displayName)) {
-      (dto as any).displayImageName = displayName;
+      dto.displayImageName = displayName;
     }
 
     const imagesToAdd = this.files().map((x) => x.file);
 
     this.saving.set(true);
 
-    this.productsApi.updateVariantMultipart(dto, imagesToAdd).pipe(
-      finalize(() => this.saving.set(false)),
-    ).subscribe({
-      next: (updatedVariant) => {
-        this.updated.emit(updatedVariant);
-        this.close();
-      },
-      error: (err) => {
-        const msg =
-          err?.status === 400
-            ? 'Validacija nije prošla. Provjerite polja i pokušajte ponovo.'
-            : err?.status === 415
-              ? 'Unsupported Media Type. Ne postavljaj ručno Content-Type; mora FormData.'
-              : err?.status === 401 || err?.status === 403
-                ? 'Nemate dozvolu (provjeri admin token / role).'
-                : 'Greška pri update-u modela. Pokušajte ponovo.';
-        this.error.set(msg);
-      },
-    });
+    this.productsApi
+      .updateVariantMultipart(dto, imagesToAdd)
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (updatedVariant) => {
+          this.updated.emit(updatedVariant);
+          this.close();
+        },
+        error: (err) => {
+          const msg =
+            err?.status === 400
+              ? 'Validacija nije prošla. Provjerite polja i pokušajte ponovo.'
+              : err?.status === 415
+                ? 'Unsupported Media Type. Ne postavljaj ručno Content-Type; mora FormData.'
+                : err?.status === 401 || err?.status === 403
+                  ? 'Nemate dozvolu (provjeri admin token / role).'
+                  : 'Greška pri update-u modela. Pokušajte ponovo.';
+          this.error.set(msg);
+        },
+      });
   }
 
   close(): void {
@@ -621,5 +731,42 @@ export class AdminVariantUpdateModal {
   @HostListener('document:keydown.escape')
   onEsc(): void {
     this.close();
+  }
+
+  optionLabel(option: AttributeValueDTO | null | undefined): string {
+    return String(option?.displayValue ?? option?.value ?? '').trim();
+  }
+
+  private sizeOptionRawValue(valueId: string): string {
+    return String(this.sizeOptions().find((x) => x.id === valueId)?.value ?? '').trim();
+  }
+
+  private isAttribute(attr: AttributeDTO | null | undefined, target: string): boolean {
+    const normTarget = this.normalizeKey(target);
+    return [attr?.name, attr?.displayValue].some((value) => this.normalizeKey(value) === normTarget);
+  }
+
+  private isColorAttributeEntry(attr: ProductAttribute, colorAttrId?: string): boolean {
+    if (colorAttrId && String(attr.attributeId ?? '').trim() === colorAttrId) return true;
+    return (
+      this.normalizeKey(attr.attributeName) === 'BOJA' ||
+      this.normalizeKey(attr.attributeDisplayValue) === 'BOJA'
+    );
+  }
+
+  private isSizeAttributeEntry(attr: ProductAttribute, sizeAttrId?: string): boolean {
+    if (sizeAttrId && String(attr.attributeId ?? '').trim() === sizeAttrId) return true;
+    return (
+      this.normalizeKey(attr.attributeName) === 'VELICINA' ||
+      this.normalizeKey(attr.attributeDisplayValue) === 'VELICINA'
+    );
+  }
+
+  private normalizeKey(value: unknown): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/\p{M}+/gu, '')
+      .toUpperCase()
+      .trim();
   }
 }

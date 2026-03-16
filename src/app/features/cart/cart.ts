@@ -38,7 +38,7 @@ export class CartComponent {
     this.confirmMessage.set(
       name
         ? `Da li želite da uklonite „${name}“ iz korpe?`
-        : 'Da li želite da uklonite ovaj proizvod iz korpe?'
+        : 'Da li želite da uklonite ovaj proizvod iz korpe?',
     );
     this.confirmOpen.set(true);
   }

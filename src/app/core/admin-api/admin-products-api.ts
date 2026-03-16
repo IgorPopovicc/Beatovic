@@ -12,7 +12,8 @@ import {
   SearchProductRequest,
   UpdateProductRequest,
   ProductVariant,
-  CreateProductVariantDTO, UpdateProductVariantDTO,
+  CreateProductVariantDTO,
+  UpdateProductVariantDTO,
 } from './admin-products.models';
 
 @Injectable({ providedIn: 'root' })
@@ -20,17 +21,17 @@ export class AdminProductsApi {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
 
-  searchMain(searchQuery: string): Observable<SearchMainResponse> {
+  searchMain(searchQuery: string, page = 0, pageSize = 20): Observable<SearchMainResponse> {
     const url = `${environment.apiBaseUrl}/products/search-main`;
 
+    const body: SearchMainRequest = { searchQuery, page, pageSize };
+    let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     const token = this.auth.accessToken();
-    if (!token) {
-      return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
     }
 
-    const body: SearchMainRequest = { searchQuery };
-
-    return this.http.post<SearchMainResponse>(url, body, { }).pipe(
+    return this.http.post<SearchMainResponse>(url, body, { headers }).pipe(
       catchError((err) => {
         console.error('[AdminProductsApi] searchMain failed:', err);
         return throwError(() => err);
@@ -38,20 +39,15 @@ export class AdminProductsApi {
     );
   }
 
-  searchProduct(searchQuery: string): Observable<Product[]> {
+  searchProduct(searchQuery: string, page = 0, pageSize = 20): Observable<Product[]> {
     const url = `${environment.apiBaseUrl}/products/search-product`;
-
+    let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     const token = this.auth.accessToken();
-    if (!token) {
-      return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
     }
 
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    });
-
-    const body: SearchProductRequest = { searchQuery };
+    const body: SearchProductRequest = { searchQuery, page, pageSize };
 
     return this.http.post<Product[]>(url, body, { headers }).pipe(
       catchError((err) => {
@@ -180,7 +176,10 @@ export class AdminProductsApi {
     );
   }
 
-  updateVariantMultipart(dto: UpdateProductVariantDTO, imagesToAdd: File[]): Observable<ProductVariant> {
+  updateVariantMultipart(
+    dto: UpdateProductVariantDTO,
+    imagesToAdd: File[],
+  ): Observable<ProductVariant> {
     const token = this.auth.accessToken();
     if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
 
@@ -194,16 +193,16 @@ export class AdminProductsApi {
 
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
 
-    return this.http.post<ProductVariant>(
-      `${environment.apiBaseUrl}/products/admin/variants/update`,
-      formData,
-      { headers },
-    ).pipe(
-      catchError((err) => {
-        console.error('[AdminProductsApi] updateVariantMultipart failed:', err);
-        return throwError(() => err);
-      }),
-    );
+    return this.http
+      .post<ProductVariant>(`${environment.apiBaseUrl}/products/admin/variants/update`, formData, {
+        headers,
+      })
+      .pipe(
+        catchError((err) => {
+          console.error('[AdminProductsApi] updateVariantMultipart failed:', err);
+          return throwError(() => err);
+        }),
+      );
   }
 
   deleteVariant(variantId: string): Observable<unknown> {
@@ -224,5 +223,4 @@ export class AdminProductsApi {
       }),
     );
   }
-
 }

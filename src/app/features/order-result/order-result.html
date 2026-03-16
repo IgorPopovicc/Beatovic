@@ -5,8 +5,11 @@
       <div class="icon ok" aria-hidden="true">✅</div>
       <h1>Uspješno ste poručili</h1>
       <p class="muted">
-        Porudžbina je uspješno poslata. Potvrdu porudžbine ćete dobiti na e-mail čim neko iz radnje odobri porudžbinu na
-        @if (email()) { <strong>{{ email() }}</strong> }
+        Porudžbina je uspješno poslata. Potvrdu porudžbine ćete dobiti na e-mail čim neko iz radnje
+        odobri porudžbinu na
+        @if (email()) {
+          <strong>{{ email() }}</strong>
+        }
       </p>
 
       <div class="actions">
@@ -17,9 +20,7 @@
       <div class="badge err">Porudžbina</div>
       <div class="icon err" aria-hidden="true">⚠️</div>
       <h1>Porudžbina nije uspješna</h1>
-      <p class="muted">
-        Došlo je do greške prilikom slanja porudžbine. Pokušajte ponovo.
-      </p>
+      <p class="muted">Došlo je do greške prilikom slanja porudžbine. Pokušajte ponovo.</p>
 
       @if (error()) {
         <div class="detail" role="status">

@@ -1,74 +1,64 @@
-/* Kontejner sekcije */
-.promo-video{
+.promo-video {
   position: relative;
   width: 100%;
   overflow: hidden;
   color: #fff;
+  margin: 0;
 }
 
-.promo-video .product-grid{
-  display: grid;
-  gap: 26px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.video-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
 }
 
-/* Visina (po želji koriguj) */
-@media (min-width: 769px){
-  .promo-video{ min-height: 60vh; }
-  .content{
-    grid-template-columns: 1fr 1fr;
-    align-items: stretch;
-  }
-}
-@media (max-width: 768px){
-  .promo-video{ min-height: 50vh; }
-}
-
-/* Video pozadina */
-.video-wrap{
-  position: absolute; inset: 0; z-index: 0;
-}
-.bg-video{
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
+.bg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   object-position: center;
 }
 
-/* Tamni overlay iznad videa */
-.overlay{
-  position: absolute; inset: 0;
-  background: rgba(0,0,0,.55);
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.62) 38%,
+    rgba(0, 0, 0, 0.45) 70%,
+    rgba(0, 0, 0, 0.58) 100%
+  );
 }
 
-/* Sadržaj preko videa */
-.content{
+.content {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 20px;
-  padding: clamp(24px, 6vw, 64px);
+  gap: clamp(20px, 4vw, 44px);
+  padding: clamp(24px, 6vw, 72px);
   align-items: center;
 }
 
-/* 2 kolone desktop, stacked mobilni */
-
-
-/* Paneli i tipografija */
-.panel h2{
-  font-size: 2.5rem;
-  margin: 0 0 .5rem;
+.panel h2 {
+  font-size: clamp(2rem, 4.4vw, 3.1rem);
+  margin: 0 0 0.5rem;
   font-weight: 700;
-  letter-spacing: .3px;
+  letter-spacing: 0.3px;
   font-style: italic;
 }
-.panel p{
+
+.panel p {
   margin: 0 0 1rem;
-  color: rgba(255,255,255,.9);
+  color: rgba(255, 255, 255, 0.9);
   font-style: italic;
-  font-size: 1.4rem;
+  font-size: clamp(1rem, 2.1vw, 1.4rem);
+  max-width: 46ch;
 }
-.btn{
+
+.btn {
   display: inline-block;
   padding: 10px 16px;
   border-radius: 12px;
@@ -78,9 +68,95 @@
   font-weight: 600;
   font-style: italic;
 }
-.btn:hover{ filter: brightness(1.05); }
-.btn-outline{
-  background: transparent;
-  color: #fff;
-  border: 2px solid #fff;
+
+.btn:hover {
+  filter: brightness(1.05);
+}
+
+.featured-products {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(15, 15, 15, 0.28);
+  backdrop-filter: blur(6px);
+  padding: clamp(14px, 2vw, 20px);
+}
+
+.featured-head h3 {
+  margin: 0 0 12px;
+  font-size: clamp(1rem, 1.8vw, 1.2rem);
+  letter-spacing: 0.02em;
+  font-weight: 900;
+}
+
+.product-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.product-shell {
+  min-width: 0;
+}
+
+.product-shell app-product-card {
+  display: block;
+}
+
+.state {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  padding: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.state.error {
+  border-color: rgba(224, 24, 36, 0.44);
+  background: rgba(224, 24, 36, 0.2);
+}
+
+@media (min-width: 900px) {
+  .promo-video {
+    min-height: 62vh;
+  }
+
+  .content {
+    grid-template-columns: minmax(0, 1.2fr) minmax(360px, 620px);
+    padding-inline: clamp(28px, 6vw, 110px);
+  }
+}
+
+@media (max-width: 899px) {
+  .promo-video {
+    min-height: 50vh;
+  }
+}
+
+@media (max-width: 680px) {
+  .content {
+    padding: 24px 14px;
+    gap: 16px;
+  }
+
+  .featured-products {
+    padding: 12px;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1200px) {
+  .promo-video {
+    width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    min-height: 66vh;
+  }
+
+  .content {
+    padding-block: clamp(34px, 5vw, 86px);
+    gap: clamp(26px, 3vw, 52px);
+  }
 }

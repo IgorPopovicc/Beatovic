@@ -10,7 +10,14 @@ export class ProductsApiService {
   private baseUrl = environment.apiBaseUrl;
 
   search(body: ProductsSearchRequest): Observable<ProductSearchResponse> {
-    return this.http.post<ProductSearchResponse>(`${this.baseUrl}/products/search`, body);
+    const payload: ProductsSearchRequest = {
+      page: 0,
+      pageSize: 36,
+      sortBy: 'NAME',
+      sortOrder: 'ASC',
+      ...body,
+    };
+    return this.http.post<ProductSearchResponse>(`${this.baseUrl}/products/search`, payload);
   }
 
   getVariantDetails(id: string) {

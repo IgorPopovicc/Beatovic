@@ -8,11 +8,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormControl } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
@@ -28,13 +24,13 @@ import {
   forkJoin,
 } from 'rxjs';
 
-
 import { AdminProductsApi } from '../../../../../core/admin-api/admin-products-api';
 import {
   AttributeDTO,
-  AttributeValueDTO, CreateProductVariantDTO,
+  AttributeValueDTO,
+  CreateProductVariantDTO,
   Product,
-  ProductVariant
+  ProductVariant,
 } from '../../../../../core/admin-api/admin-products.models';
 import { AdminAttributesApi } from '../../../../../core/admin-api/admin-attributes-api';
 
@@ -117,12 +113,13 @@ export class AdminVariantCreateModal {
     { initialValue: this.form.status },
   );
 
-  readonly invalid = computed(() =>
-    this.submitting() ||
-    !this.selectedProduct()?.id ||
-    this.formStatusSig() === 'INVALID' ||
-    this.sizesInvalid() ||
-    this.files().length === 0
+  readonly invalid = computed(
+    () =>
+      this.submitting() ||
+      !this.selectedProduct()?.id ||
+      this.formStatusSig() === 'INVALID' ||
+      this.sizesInvalid() ||
+      this.files().length === 0,
   );
 
   readonly selectedColorLabel = computed(() => {
@@ -141,66 +138,75 @@ export class AdminVariantCreateModal {
   }
 
   private bindProductSearch(): void {
-    this.productSearch.valueChanges.pipe(
-      startWith(this.productSearch.value),
-      map((v) => (v ?? '').trim()),
-      debounceTime(300),
-      distinctUntilChanged(),
-      switchMap((q) => {
-        this.productError.set(null);
+    this.productSearch.valueChanges
+      .pipe(
+        startWith(this.productSearch.value),
+        map((v) => (v ?? '').trim()),
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap((q) => {
+          this.productError.set(null);
 
-        if (q.length < 3) {
-          this.productResults.set([]);
-          return of(null);
-        }
-
-        this.productLoading.set(true);
-
-        return this.productsApi.searchProduct(q).pipe(
-          tap((list) => {
-            this.productResults.set(list ?? []);
-          }),
-          catchError((err) => {
-            const msg =
-              err?.status === 401 || err?.status === 403
-                ? 'Nemate dozvolu (provjeri admin token / role).'
-                : 'Greška pri pretrazi proizvoda.';
-            this.productError.set(msg);
+          if (q.length < 3) {
             this.productResults.set([]);
             return of(null);
-          }),
-          finalize(() => this.productLoading.set(false)),
-        );
-      }),
-    ).subscribe();
+          }
+
+          this.productLoading.set(true);
+
+          return this.productsApi.searchProduct(q).pipe(
+            tap((list) => {
+              this.productResults.set(list ?? []);
+            }),
+            catchError((err) => {
+              const msg =
+                err?.status === 401 || err?.status === 403
+                  ? 'Nemate dozvolu (provjeri admin token / role).'
+                  : 'Greška pri pretrazi proizvoda.';
+              this.productError.set(msg);
+              this.productResults.set([]);
+              return of(null);
+            }),
+            finalize(() => this.productLoading.set(false)),
+          );
+        }),
+      )
+      .subscribe();
   }
 
   private loadAttributes(): void {
     this.formLoading.set(true);
 
-    this.attrApi.getAttributes().pipe(
-      catchError(() => of([] as AttributeDTO[])),
-      switchMap((attrs) => {
-        this.attributes.set(attrs ?? []);
-        const color = (attrs ?? []).find((a) => a.name?.toUpperCase() === 'BOJA') ?? null;
-        const size = (attrs ?? []).find((a) => a.name?.toUpperCase() === 'VELICINA') ?? null;
-        this.colorAttr.set(color);
-        this.sizeAttr.set(size);
+    this.attrApi
+      .getAttributes()
+      .pipe(
+        catchError(() => of([] as AttributeDTO[])),
+        switchMap((attrs) => {
+          this.attributes.set(attrs ?? []);
+          const color = (attrs ?? []).find((a) => this.isAttribute(a, 'BOJA')) ?? null;
+          const size = (attrs ?? []).find((a) => this.isAttribute(a, 'VELICINA')) ?? null;
+          this.colorAttr.set(color);
+          this.sizeAttr.set(size);
 
-        if (!color?.id || !size?.id) {
-          return of({ colors: [] as AttributeValueDTO[], sizes: [] as AttributeValueDTO[] });
-        }
-
-        return forkJoin({
-          colors: this.attrApi.getAttributeValues(color.id).pipe(catchError(() => of([] as AttributeValueDTO[]))),
-          sizes: this.attrApi.getAttributeValues(size.id).pipe(catchError(() => of([] as AttributeValueDTO[]))),
-        });
-      }),
-      finalize(() => this.formLoading.set(false)),
-    ).subscribe(({ colors, sizes }) => {
-      this.colorOptions.set(colors ?? []);
-      this.sizeOptions.set(sizes ?? []);
-    });
+          return forkJoin({
+            colors: color?.id
+              ? this.attrApi
+                  .getAttributeValues(color.id)
+                  .pipe(catchError(() => of([] as AttributeValueDTO[])))
+              : of([] as AttributeValueDTO[]),
+            sizes: size?.id
+              ? this.attrApi
+                  .getAttributeValues(size.id)
+                  .pipe(catchError(() => of([] as AttributeValueDTO[])))
+              : of([] as AttributeValueDTO[]),
+          });
+        }),
+        finalize(() => this.formLoading.set(false)),
+      )
+      .subscribe(({ colors, sizes }) => {
+        this.colorOptions.set(colors ?? []);
+        this.sizeOptions.set(sizes ?? []);
+      });
   }
 
   selectProduct(p: Product): void {
@@ -228,20 +234,21 @@ export class AdminVariantCreateModal {
     this.variantsError.set(null);
     this.variants.set([]);
 
-    this.productsApi.getVariantsByProductId(productId).pipe(
-      finalize(() => this.variantsLoading.set(false)),
-    ).subscribe({
-      next: (list) => {
-        this.variants.set(list ?? []);
-      },
-      error: (err) => {
-        const msg =
-          err?.status === 401 || err?.status === 403
-            ? 'Nemate dozvolu (provjeri admin token / role).'
-            : 'Greška pri učitavanju modela za proizvod.';
-        this.variantsError.set(msg);
-      },
-    });
+    this.productsApi
+      .getVariantsByProductId(productId)
+      .pipe(finalize(() => this.variantsLoading.set(false)))
+      .subscribe({
+        next: (list) => {
+          this.variants.set(list ?? []);
+        },
+        error: (err) => {
+          const msg =
+            err?.status === 401 || err?.status === 403
+              ? 'Nemate dozvolu (provjeri admin token / role).'
+              : 'Greška pri učitavanju modela za proizvod.';
+          this.variantsError.set(msg);
+        },
+      });
   }
 
   openCreateForm(): void {
@@ -292,7 +299,10 @@ export class AdminVariantCreateModal {
     const qty = Number(raw);
     const current = { ...this.selectedSizes() };
     if (!current[sizeValueId]) return;
-    current[sizeValueId] = { ...current[sizeValueId], qty: Number.isFinite(qty) ? Math.max(0, Math.floor(qty)) : 0 };
+    current[sizeValueId] = {
+      ...current[sizeValueId],
+      qty: Number.isFinite(qty) ? Math.max(0, Math.floor(qty)) : 0,
+    };
     this.selectedSizes.set(current);
   }
 
@@ -372,7 +382,7 @@ export class AdminVariantCreateModal {
         attributeId: sizeAttr.id,
         attributeName: sizeAttr.name,
         attributeValueId: sizeValueId,
-        value: meta.value,
+        value: this.sizeOptionRawValue(sizeValueId) || meta.value,
         quantity: meta.qty,
       })),
     ];
@@ -391,43 +401,47 @@ export class AdminVariantCreateModal {
 
     this.submitting.set(true);
 
-    this.productsApi.createVariantMultipart(dto, images).pipe(
-      finalize(() => this.submitting.set(false)),
-    ).subscribe({
-      next: (createdVariant) => {
-        const updated = [createdVariant, ...this.variants()];
-        this.variants.set(updated);
+    this.productsApi
+      .createVariantMultipart(dto, images)
+      .pipe(finalize(() => this.submitting.set(false)))
+      .subscribe({
+        next: (createdVariant) => {
+          const updated = [createdVariant, ...this.variants()];
+          this.variants.set(updated);
 
-        this.createFormOpen.set(false);
+          this.createFormOpen.set(false);
 
-        this.files.set([]);
-        this.selectedSizes.set({});
-        this.form.reset({
-          sku: '',
-          price: 0,
-          isNew: true,
-          isOutlet: false,
-          colorValueId: null,
-          displayImageName: '',
-        });
+          this.files.set([]);
+          this.selectedSizes.set({});
+          this.form.reset({
+            sku: '',
+            price: 0,
+            isNew: true,
+            isOutlet: false,
+            colorValueId: null,
+            displayImageName: '',
+          });
 
-        this.created.emit();
-      },
-      error: (err) => {
-        const msg =
-          err?.status === 400
-            ? 'Validacija nije prošla. Provjerite polja i pokušajte ponovo.'
-            : err?.status === 401 || err?.status === 403
-              ? 'Nemate dozvolu (provjeri admin token / role).'
-              : 'Greška pri snimanju modela. Pokušajte ponovo.';
-        this.submitError.set(msg);
-      },
-    });
+          this.created.emit();
+        },
+        error: (err) => {
+          const msg =
+            err?.status === 400
+              ? 'Validacija nije prošla. Provjerite polja i pokušajte ponovo.'
+              : err?.status === 401 || err?.status === 403
+                ? 'Nemate dozvolu (provjeri admin token / role).'
+                : 'Greška pri snimanju modela. Pokušajte ponovo.';
+          this.submitError.set(msg);
+        },
+      });
   }
 
-  formatPrice(value: number): string {
+  formatPrice(value: number | null | undefined): string {
     if (value === null || value === undefined) return '-';
-    return new Intl.NumberFormat('sr-RS', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+    return new Intl.NumberFormat('sr-RS', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(value));
   }
 
   onOverlayMouseDown(): void {
@@ -477,5 +491,26 @@ export class AdminVariantCreateModal {
     if (css) return `Boja ${css.toUpperCase()}`;
     // Inace naziv iz baze (npr. "Plava")
     return v;
+  }
+
+  optionLabel(option: AttributeValueDTO): string {
+    return String(option.displayValue ?? option.value ?? '').trim();
+  }
+
+  private sizeOptionRawValue(valueId: string): string {
+    return String(this.sizeOptions().find((x) => x.id === valueId)?.value ?? '').trim();
+  }
+
+  private isAttribute(attr: AttributeDTO | null | undefined, target: string): boolean {
+    const normTarget = this.normalizeKey(target);
+    return [attr?.name, attr?.displayValue].some((value) => this.normalizeKey(value) === normTarget);
+  }
+
+  private normalizeKey(value: unknown): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/\p{M}+/gu, '')
+      .toUpperCase()
+      .trim();
   }
 }

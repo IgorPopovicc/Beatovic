@@ -8,9 +8,8 @@ describe('AdminVariantUpdateModal', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AdminVariantUpdateModal]
-    })
-    .compileComponents();
+      imports: [AdminVariantUpdateModal],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(AdminVariantUpdateModal);
     component = fixture.componentInstance;

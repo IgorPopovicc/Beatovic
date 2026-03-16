@@ -1,0 +1,15 @@
+<section class="outage" aria-label="Status servisa">
+  <div class="card" role="status" aria-live="polite">
+    <div class="badge">Planeta</div>
+    <h1>Trenutno imamo poteškoće</h1>
+    <p>
+      Naš tim već radi na tome da webshop ponovo bude potpuno dostupan. Hvala na strpljenju, vraćamo
+      se uskoro.
+    </p>
+
+    <div class="actions">
+      <button type="button" class="btn primary" (click)="retry.emit()">Pokušaj ponovo</button>
+      <a class="btn ghost" routerLink="/">Nazad na početnu</a>
+    </div>
+  </div>
+</section>

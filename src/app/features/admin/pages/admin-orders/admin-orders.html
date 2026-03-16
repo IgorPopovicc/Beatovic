@@ -2,7 +2,7 @@
   <div class="head">
     <div class="head-left">
       <h1 class="title">Narudžbine</h1>
-      <p class="sub">Izaberite period i kliknite Pretraži.</p>
+      <p class="sub">Pretraga po periodu ili po email adresi kupca.</p>
     </div>
 
     <div class="filters">
@@ -19,7 +19,24 @@
       <div class="f actions">
         <label class="lbl ghost">.</label>
         <button class="btn-search" type="button" (click)="onSearch()" [disabled]="!canSearch()">
-          {{ loading() ? 'Učitavanje...' : 'Pretraži' }}
+          {{ loading() ? 'Učitavanje...' : 'Pretraži po datumu' }}
+        </button>
+      </div>
+
+      <div class="f email">
+        <label class="lbl">Email</label>
+        <input class="input" type="email" [formControl]="email" placeholder="kupac@email.com" />
+      </div>
+
+      <div class="f actions">
+        <label class="lbl ghost">.</label>
+        <button
+          class="btn-search"
+          type="button"
+          (click)="onSearchByEmail()"
+          [disabled]="!canSearchByEmail()"
+        >
+          {{ loading() ? 'Učitavanje...' : 'Pretraži po email-u' }}
         </button>
       </div>
     </div>
@@ -28,9 +45,11 @@
   <div class="meta">
     @if (showRangeError()) {
       <div class="error">Start datum mora biti manji od end datuma.</div>
-    }@else {
+    } @else {
       @if (orders().length > 0) {
-        <div class="count">Rezultati: <strong>{{ orders().length }}</strong></div>
+        <div class="count">
+          Rezultati: <strong>{{ orders().length }}</strong>
+        </div>
       } @else {
         <div class="hint">Nakon pretrage, rezultati će se prikazati ovdje.</div>
       }
@@ -44,8 +63,11 @@
   <div class="list">
     @if (orders().length === 0) {
       <div class="empty">
-        @if (loading()) { Učitavanje narudžbi... }
-        @else { Nema podataka (još niste pretražili ili nema narudžbi za period). }
+        @if (loading()) {
+          Učitavanje narudžbi...
+        } @else {
+          Nema podataka (još niste pretražili ili nema narudžbi za period).
+        }
       </div>
     } @else {
       <div class="rows" role="list">
@@ -53,7 +75,9 @@
           <div class="row" role="listitem">
             <div class="main">
               <div class="name">{{ o.userDetails.fullName }}</div>
-              <div class="id">Order ID: <span>{{ o.orderId }}</span></div>
+              <div class="id">
+                Order ID: <span>{{ o.orderId }}</span>
+              </div>
               <div class="desc" title="{{ o.description }}">{{ o.description }}</div>
             </div>
 
@@ -62,26 +86,46 @@
               <div class="value">{{ formatPrice(o.totalPrice) }} RSD</div>
             </div>
 
-            <div class="status" [class]="o.status.toLowerCase()">
-              {{ o.status }}
+            <div class="status" [ngClass]="statusClass(o.status)">
+              {{ statusLabel(o.status) }}
             </div>
 
             <div class="actions">
-              @if (o.status === 'PENDING') {
-                <button class="icon-btn ok" type="button" (click)="completeOrder(o)" aria-label="Complete">✓</button>
-                <button class="icon-btn danger" type="button" (click)="cancelOrder(o)" aria-label="Cancel">✕</button>
-              } @else if (o.status === 'COMPLETED') {
-                <button class="icon-btn" type="button" (click)="returnOrder(o)" aria-label="Return">↩</button>
+              @if (hasAction(o, 'approve')) {
+                <button
+                  class="action-btn ok"
+                  type="button"
+                  (click)="completeOrder(o)"
+                  aria-label="Odobri narudžbinu"
+                  [disabled]="isRowBusy(o)"
+                >
+                  {{ isActionBusy(o, 'complete') ? 'Obrada...' : 'Odobri' }}
+                </button>
               }
 
-              <button
-                class="icon-btn"
-                type="button"
-                (click)="toggleExpand(o.orderId)"
-                aria-label="Detalji"
-              >
-                {{ isExpanded(o.orderId) ? '▴' : '▾' }}
-              </button>
+              @if (hasAction(o, 'cancel')) {
+                <button
+                  class="action-btn danger"
+                  type="button"
+                  (click)="cancelOrder(o)"
+                  aria-label="Otkaži narudžbinu"
+                  [disabled]="isRowBusy(o)"
+                >
+                  {{ isActionBusy(o, 'cancel') ? 'Obrada...' : 'Otkaži' }}
+                </button>
+              }
+
+              @if (hasAction(o, 'details')) {
+                <button
+                  class="action-btn ghost"
+                  type="button"
+                  (click)="toggleExpand(o.orderId)"
+                  aria-label="Detalji"
+                  [disabled]="isRowBusy(o)"
+                >
+                  {{ isExpanded(o.orderId) ? 'Sakrij detalje' : 'Detalji' }}
+                </button>
+              }
             </div>
           </div>
 
@@ -89,16 +133,28 @@
             <div class="details">
               <div class="dcol">
                 <div class="dtitle">Kupac</div>
-                <div class="dline"><span>Ime:</span> <strong>{{ o.userDetails.fullName }}</strong></div>
-                <div class="dline"><span>Email:</span> <strong>{{ o.userDetails.email }}</strong></div>
-                <div class="dline"><span>Telefon:</span> <strong>{{ o.userDetails.phoneNumber }}</strong></div>
+                <div class="dline">
+                  <span>Ime:</span> <strong>{{ o.userDetails.fullName }}</strong>
+                </div>
+                <div class="dline">
+                  <span>Email:</span> <strong>{{ o.userDetails.email }}</strong>
+                </div>
+                <div class="dline">
+                  <span>Telefon:</span> <strong>{{ o.userDetails.phoneNumber }}</strong>
+                </div>
               </div>
 
               <div class="dcol">
                 <div class="dtitle">Adresa</div>
-                <div class="dline"><span>Adresa:</span> <strong>{{ o.userDetails.address }}</strong></div>
-                <div class="dline"><span>Opština:</span> <strong>{{ o.userDetails.municipality }}</strong></div>
-                <div class="dline"><span>Poštanski:</span> <strong>{{ o.userDetails.postalCode }}</strong></div>
+                <div class="dline">
+                  <span>Adresa:</span> <strong>{{ o.userDetails.address }}</strong>
+                </div>
+                <div class="dline">
+                  <span>Opština:</span> <strong>{{ o.userDetails.municipality }}</strong>
+                </div>
+                <div class="dline">
+                  <span>Poštanski:</span> <strong>{{ o.userDetails.postalCode }}</strong>
+                </div>
               </div>
 
               <div class="dcol full">
@@ -110,7 +166,8 @@
                       <div class="it-left">
                         <div class="it-name">{{ i.productName }}</div>
                         <div class="it-meta">
-                          SKU: <span>{{ i.productSku }}</span> · Veličina: <span>{{ i.sizeVariantAttributeValue }}</span>
+                          SKU: <span>{{ i.productSku }}</span> · Veličina:
+                          <span>{{ i.sizeVariantAttributeValue }}</span>
                         </div>
                       </div>
 
@@ -142,3 +199,35 @@
     }
   </div>
 </section>
+
+<app-confirm-dialog
+  [open]="confirmOpen()"
+  [title]="confirmTitle()"
+  [message]="confirmMessage()"
+  [confirmText]="confirmButtonText()"
+  cancelText="Ne"
+  [variant]="confirmVariant()"
+  [icon]="confirmIcon()"
+  [busy]="confirmBusy()"
+  (confirm)="confirmMutation()"
+  (cancel)="closeConfirm()"
+/>
+
+<div class="action-toast-wrap" [class.show]="!!actionNotice()" aria-live="polite" aria-atomic="true">
+  @if (actionNotice(); as notice) {
+    <div class="action-toast" role="status" [class.error]="notice.kind === 'error'">
+      <div class="icon" aria-hidden="true">{{ notice.kind === 'success' ? '✓' : '!' }}</div>
+
+      <div class="body">
+        <div class="title">
+          {{ notice.kind === 'success' ? 'Akcija uspješna' : 'Akcija nije uspjela' }}
+        </div>
+        <div class="message">{{ notice.message }}</div>
+      </div>
+
+      <button type="button" class="close-btn" (click)="closeNotice()" aria-label="Zatvori poruku">
+        ✕
+      </button>
+    </div>
+  }
+</div>

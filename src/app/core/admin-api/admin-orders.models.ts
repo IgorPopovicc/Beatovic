@@ -1,4 +1,4 @@
-export type OrderStatus = 'PENDING' | 'COMPLETED' | 'CANCELED';
+export type OrderStatus = 'PENDING' | 'EMAIL_VERIFIED' | 'COMPLETED' | 'CANCELED' | 'EXPIRED';
 
 export type CouponType = 'PERCENTAGE' | 'FIXED';
 
@@ -52,3 +52,6 @@ export interface UnregisteredOrderRequest {
 
 export type UnregisteredOrderResponse = unknown;
 
+export interface OrdersByEmailRequest {
+  email: string;
+}

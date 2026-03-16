@@ -1,7 +1,7 @@
 .cd-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.35);
+  background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(2px);
   z-index: 4000;
 }
@@ -18,17 +18,19 @@
 .cd-card {
   width: min(620px, 100%);
   background: #fff;
-  border: 1px solid rgba(0,0,0,.10);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 18px;
-  box-shadow: 0 24px 70px rgba(0,0,0,.18);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
   overflow: hidden;
 }
 
 .cd-topline {
   height: 6px;
-  background: rgba(0,0,0,.08);
+  background: rgba(0, 0, 0, 0.08);
 }
-.cd-card.danger .cd-topline { background: #e01824; }
+.cd-card.danger .cd-topline {
+  background: #e01824;
+}
 
 .cd-head {
   display: grid;
@@ -44,8 +46,8 @@
   border-radius: 14px;
   display: grid;
   place-items: center;
-  background: rgba(224,24,36,.08);
-  border: 1px solid rgba(224,24,36,.18);
+  background: rgba(224, 24, 36, 0.08);
+  border: 1px solid rgba(224, 24, 36, 0.18);
   font-size: 20px;
 }
 
@@ -62,7 +64,7 @@
 
 .cd-text {
   margin-top: 8px;
-  color: rgba(0,0,0,.68);
+  color: rgba(0, 0, 0, 0.68);
   line-height: 1.55;
   font-weight: 600;
   font-size: clamp(14px, 2.2vw, 16px);
@@ -79,7 +81,7 @@
 .cd-btn {
   height: 46px;
   border-radius: 12px;
-  border: 1px solid rgba(0,0,0,.16);
+  border: 1px solid rgba(0, 0, 0, 0.16);
   background: #fff;
   font-weight: 900;
   cursor: pointer;
@@ -100,10 +102,12 @@
 }
 
 .cd-btn:disabled {
-  opacity: .55;
+  opacity: 0.55;
   cursor: default;
 }
 
 @media (max-width: 420px) {
-  .cd-actions { grid-template-columns: 1fr; }
+  .cd-actions {
+    grid-template-columns: 1fr;
+  }
 }

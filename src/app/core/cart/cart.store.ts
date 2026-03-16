@@ -38,6 +38,14 @@ export interface CartItem {
   slug?: string;
 }
 
+export interface CartAddEvent {
+  id: number;
+  item: CartItem;
+  qtyAdded: number;
+  qtyInCart: number;
+  merged: boolean;
+}
+
 type StorageKind = 'local' | 'session';
 
 @Injectable({ providedIn: 'root' })
@@ -49,8 +57,10 @@ export class CartStore {
   private storageKey = 'beatovic_cart_v1';
 
   private _items = signal<CartItem[]>(this.readFromStorage());
+  private _lastAddEvent = signal<CartAddEvent | null>(null);
 
   items = computed(() => this._items());
+  lastAddEvent = computed(() => this._lastAddEvent());
 
   itemsCount = computed(() => this._items().reduce((sum, i) => sum + i.qty, 0));
 
@@ -91,21 +101,24 @@ export class CartStore {
     const qtyToAdd = Math.max(1, item.qty ?? 1);
     const current = this._items();
 
-    const idx = current.findIndex(x => x.id === item.id);
+    const idx = current.findIndex((x) => x.id === item.id);
     if (idx >= 0) {
       const next = [...current];
       next[idx] = { ...next[idx], qty: next[idx].qty + qtyToAdd };
       this._items.set(next);
+      this.emitAddEvent(next[idx], qtyToAdd, true);
       return;
     }
 
-    this._items.set([...current, { ...item, qty: qtyToAdd }]);
+    const created: CartItem = { ...item, qty: qtyToAdd };
+    this._items.set([...current, created]);
+    this.emitAddEvent(created, qtyToAdd, false);
   }
 
   setQty(id: string, qty: number) {
     const q = Math.max(1, Math.floor(qty || 1));
     const current = this._items();
-    const idx = current.findIndex(x => x.id === id);
+    const idx = current.findIndex((x) => x.id === id);
     if (idx < 0) return;
 
     const next = [...current];
@@ -114,20 +127,20 @@ export class CartStore {
   }
 
   inc(id: string) {
-    const it = this._items().find(x => x.id === id);
+    const it = this._items().find((x) => x.id === id);
     if (!it) return;
     this.setQty(id, it.qty + 1);
   }
 
   dec(id: string) {
-    const it = this._items().find(x => x.id === id);
+    const it = this._items().find((x) => x.id === id);
     if (!it) return;
     if (it.qty <= 1) return;
     this.setQty(id, it.qty - 1);
   }
 
   remove(id: string) {
-    this._items.set(this._items().filter(x => x.id !== id));
+    this._items.set(this._items().filter((x) => x.id !== id));
   }
 
   clear() {
@@ -147,8 +160,8 @@ export class CartStore {
       const parsed = JSON.parse(raw) as CartItem[];
       if (!Array.isArray(parsed)) return [];
       return parsed
-        .filter(x => x && typeof x.id === 'string')
-        .map(x => ({ ...x, qty: Math.max(1, Number(x.qty || 1)) }));
+        .filter((x) => x && typeof x.id === 'string')
+        .map((x) => ({ ...x, qty: Math.max(1, Number(x.qty || 1)) }));
     } catch {
       return [];
     }
@@ -159,5 +172,15 @@ export class CartStore {
     try {
       this.storage?.setItem(this.storageKey, JSON.stringify(items));
     } catch {}
+  }
+
+  private emitAddEvent(item: CartItem, qtyAdded: number, merged: boolean): void {
+    this._lastAddEvent.set({
+      id: Date.now(),
+      item,
+      qtyAdded,
+      qtyInCart: item.qty,
+      merged,
+    });
   }
 }

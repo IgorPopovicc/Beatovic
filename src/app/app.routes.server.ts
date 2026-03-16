@@ -2,9 +2,25 @@ import { RenderMode, type ServerRoute } from '@angular/ssr';
 
 export const serverRoutes: ServerRoute[] = [
   { path: '', renderMode: RenderMode.Prerender },
-
+  { path: 'catalog', renderMode: RenderMode.Server },
   { path: 'catalog/:gender/:category', renderMode: RenderMode.Server },
   { path: 'product/:id', renderMode: RenderMode.Server },
-
-  { path: '**', renderMode: RenderMode.Server },
+  { path: 'brands', renderMode: RenderMode.Server },
+  { path: 'cart', renderMode: RenderMode.Server },
+  { path: 'checkout', renderMode: RenderMode.Server },
+  { path: 'order-result', renderMode: RenderMode.Server },
+  { path: 'newsletter/unsubscribe', renderMode: RenderMode.Server },
+  { path: 'newsletter/unsubscribe/:token', renderMode: RenderMode.Server },
+  { path: 'order/verify', renderMode: RenderMode.Server },
+  { path: 'order/verify/:token', renderMode: RenderMode.Server },
+  { path: 'orders/verify', renderMode: RenderMode.Server },
+  { path: 'orders/verify/:token', renderMode: RenderMode.Server },
+  { path: 'order-confirmation', renderMode: RenderMode.Server },
+  { path: 'order-confirmation/:token', renderMode: RenderMode.Server },
+  { path: 'confirm-order', renderMode: RenderMode.Server },
+  { path: 'confirm-order/:token', renderMode: RenderMode.Server },
+  { path: 'admin', renderMode: RenderMode.Server },
+  { path: 'admin/**', renderMode: RenderMode.Server },
+  { path: '404', renderMode: RenderMode.Server, status: 404 },
+  { path: '**', renderMode: RenderMode.Server, status: 404 },
 ];

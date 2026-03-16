@@ -1,5 +1,7 @@
 export interface SearchMainRequest {
   searchQuery: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface SearchMainResponse {
@@ -11,38 +13,54 @@ export interface SearchMainResponse {
 
 export interface ProductVariant {
   id: string;
-  productId: string;
+  productId?: string;
   productName: string;
-  productDescription: string;
-  productSku: string;
-  categories: ProductCategory[];
-  sku: string;
-  originalPrice: number;
-  finalPrice: number;
-  discountPrice: number;
-  quantity: number;
-  attributes: ProductAttribute[];
-  activeDiscounts: unknown[];
-  images: ProductImage[];
-  relatedProducts: RelatedProduct[];
-  outlet: boolean;
-  new: boolean;
+  productDescription?: string;
+  productSku?: string;
+  categories?: ProductCategory[];
+  sku?: string;
+  originalPrice?: number;
+  finalPrice?: number;
+  discountPrice?: number;
+  quantity?: number;
+  attributes?: ProductAttribute[];
+  activeDiscounts?: VariantDiscountDetails[];
+  images?: ProductImage[];
+  relatedProducts?: RelatedProduct[];
+  mainImageName?: string;
+  mainImageUrl?: string;
+  outlet?: boolean;
+  new?: boolean;
 }
 
 export interface ProductCategory {
+  id?: string;
   categoryId: string;
   categoryName: string;
   categoryValueId: string;
   value: string;
+  displayValue?: string;
+  description?: string;
 }
 
 export interface ProductAttribute {
   id: string;
   attributeId: string;
   attributeName: string;
+  attributeDisplayValue?: string;
   attributeValueId: string;
-  value: string;
-  quantity: number;
+  value?: string;
+  displayValue?: string;
+  quantity?: number;
+}
+
+export interface VariantDiscountDetails {
+  id: string;
+  variantId?: string;
+  discountId?: string;
+  discountDescription?: string;
+  value: number;
+  type: 'PERCENTAGE' | 'FIXED_AMOUNT';
 }
 
 export interface ProductImage {
@@ -53,19 +71,31 @@ export interface ProductImage {
 
 export interface RelatedProduct {
   id: string;
-  mainImageUrl: string;
+  mainImageUrl?: string;
 }
 
 export interface FoundCategory {
   id: string;
   name: string;
-  values: Array<{ id: string; value: string }>;
+  values: Array<{
+    id: string;
+    value?: string;
+    displayValue?: string;
+    count?: number;
+    alreadySelected?: boolean;
+  }>;
 }
 
 export interface FoundAttribute {
   id?: string;
   name?: string;
-  values?: Array<{ id: string; value: string }>;
+  values?: Array<{
+    id: string;
+    value?: string;
+    displayValue?: string;
+    count?: number;
+    alreadySelected?: boolean;
+  }>;
 }
 
 export interface CreateProductRequest {
@@ -74,14 +104,14 @@ export interface CreateProductRequest {
   sku: string;
   categories: Array<{
     categoryId: string;
-    categoryName: string;
     categoryValueId: string;
-    value: string;
   }>;
 }
 
 export interface SearchProductRequest {
   searchQuery: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface Product {
@@ -90,42 +120,38 @@ export interface Product {
   productDescription: string;
   productSku: string;
   categories: ProductCategory[];
+  variants?: Array<{
+    id: string;
+    sku?: string;
+    colorVariantAttributeValue?: string;
+    mainImageName?: string;
+  }>;
 }
 
 export interface UpdateProductRequest {
   id: string;
   productName: string;
   productDescription: string;
-  productSku: string;
-  categories: Array<{
+  categoriesToAdd?: Array<{
     categoryId: string;
-    categoryName: string;
     categoryValueId: string;
-    value: string;
   }>;
+  productCategoryIdsToRemove?: string[];
 }
-
-/**
- * ===========================
- * DODATO ZA "DODAJ MODEL"
- * (ne mijenja postojeće tipove)
- * ===========================
- */
 
 export interface AttributeDTO {
   id: string;
   name: string;
+  displayValue?: string;
 }
 
 export interface AttributeValueDTO {
   id: string;
   value: string;
+  displayValue?: string;
+  parent?: { id?: string; value?: string; displayValue?: string } | null;
 }
 
-/**
- * DTO koji šalješ backendu za atribut u varijanti
- * (namjerno je isto kao ProductAttribute shape, ali ime je jasnije za create)
- */
 export interface CreateProductVariantAttributeDTO {
   id: string;
   attributeId: string;
@@ -135,10 +161,6 @@ export interface CreateProductVariantAttributeDTO {
   quantity: number;
 }
 
-/**
- * DTO za kreiranje varijante (modela)
- * Pokriva: productId, sku, price, isNew, isOutlet, attributes, discountIds?, displayImageName?
- */
 export interface CreateProductVariantDTO {
   productId: string;
   sku: string;
@@ -153,10 +175,12 @@ export interface CreateProductVariantDTO {
 export interface UpdateProductVariantDTO {
   id: string;
   price: number;
-  attributes: ProductAttribute[];
   isNew?: boolean;
   isOutlet?: boolean;
-  discountIds?: string[];
+  attributesToAdd?: ProductAttribute[];
+  attributeVariantIdsToRemove?: string[];
+  discountIdsToAdd?: string[];
+  discountVariantIdsToRemove?: string[];
   imageIdsToRemove?: string[];
   displayImageName?: string;
 }
@@ -165,7 +189,7 @@ export interface DiscountDTO {
   id: string;
   type: 'PERCENTAGE' | 'FIXED_AMOUNT';
   value: number;
-  startDate: string; // ISO
-  endDate: string;   // ISO
+  startDate: string;
+  endDate: string;
   description: string;
 }

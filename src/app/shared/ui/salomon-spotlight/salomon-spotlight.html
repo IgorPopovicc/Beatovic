@@ -1,0 +1,48 @@
+<section class="salomon-spotlight" aria-label="Salomon izdvajamo">
+  <div class="bg" aria-hidden="true">
+    <img
+      class="bg-image"
+      [ngSrc]="backgroundImage"
+      alt=""
+      width="2200"
+      height="1200"
+      loading="lazy"
+      decoding="async"
+      sizes="(max-width: 768px) 100vw, 100vw"
+    />
+    <div class="overlay"></div>
+  </div>
+
+  <div class="content">
+    <div class="copy">
+      <img class="logo" [ngSrc]="logoImage" width="180" height="38" alt="Salomon" loading="lazy" />
+      <h2>Trail energija za svaki kilometar</h2>
+      <p>
+        Salomon modeli su napravljeni za kontrolu, stabilnost i sigurnost na zahtjevnim terenima.
+        Od laganih treninga do dugih trail dionica.
+      </p>
+
+      <a
+        class="cta"
+        [routerLink]="['/catalog', 'muskarci', 'obuca']"
+        [queryParams]="{ q: 'salomon' }"
+      >
+        Pogledaj sve Salomon modele
+      </a>
+    </div>
+
+    <div class="featured">
+      @if (error()) {
+        <div class="state error" role="alert">{{ error() }}</div>
+      } @else if (loading()) {
+        <div class="state loading" role="status">Učitavanje izdvojenog modela...</div>
+      } @else {
+        @if (product(); as p) {
+          <app-product-card [product]="p"></app-product-card>
+        } @else {
+          <div class="state empty">Trenutno nema dostupnog modela.</div>
+        }
+      }
+    </div>
+  </div>
+</section>
