@@ -1,5 +1,6 @@
 <article
   class="card"
+  [class.card--compact]="variant === 'compact'"
   [routerLink]="['/product', product.id]"
   [state]="{ product: product }"
   aria-label="{{ product.name }}"

@@ -90,6 +90,9 @@
 
 .featured {
   min-width: 0;
+  width: 100%;
+  max-width: 286px;
+  justify-self: end;
 }
 
 .featured app-product-card {
@@ -122,5 +125,10 @@
 
   .copy p {
     max-width: none;
+  }
+
+  .featured {
+    max-width: 320px;
+    justify-self: start;
   }
 }

@@ -23,6 +23,8 @@ export interface ProductCard {
   priority?: boolean;
 }
 
+export type ProductCardVariant = 'default' | 'compact';
+
 @Component({
   selector: 'app-product-card',
   standalone: true,
@@ -32,6 +34,7 @@ export interface ProductCard {
 })
 export class ProductCardComponent {
   @Input({ required: true }) product!: ProductCard;
+  @Input() variant: ProductCardVariant = 'default';
   private imageFallback = false;
 
   get imageDesktop(): string {

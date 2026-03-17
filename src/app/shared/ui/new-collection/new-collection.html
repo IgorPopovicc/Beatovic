@@ -36,7 +36,7 @@
           <div class="product-grid">
             @for (p of products(); track p.id) {
               <div class="product-shell">
-                <app-product-card [product]="p"></app-product-card>
+                <app-product-card [product]="p" variant="compact"></app-product-card>
               </div>
             } @empty {
               <div class="state empty">Nema proizvoda.</div>

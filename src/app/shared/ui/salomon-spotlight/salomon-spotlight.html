@@ -28,7 +28,7 @@
         <div class="state loading" role="status">Učitavanje izdvojenog modela...</div>
       } @else {
         @if (product(); as p) {
-          <app-product-card [product]="p"></app-product-card>
+          <app-product-card [product]="p" variant="compact"></app-product-card>
         } @else {
           <div class="state empty">Trenutno nema dostupnog modela.</div>
         }

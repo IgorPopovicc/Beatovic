@@ -9,9 +9,7 @@ export class RouteScrollService {
   private readonly viewportScroller = inject(ViewportScroller);
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
-  private lastNavigationTrigger: NavigationStart['navigationTrigger'] = 'imperative';
   private lastNavigationHadAnchor = false;
-  private handledScrollForCurrentNavigation = false;
 
   constructor() {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -34,30 +32,18 @@ export class RouteScrollService {
   }
 
   private handleNavigationStart(event: NavigationStart): void {
-    this.lastNavigationTrigger = event.navigationTrigger;
     this.lastNavigationHadAnchor = event.url.includes('#');
-    this.handledScrollForCurrentNavigation = false;
   }
 
   private handleNavigationEndFallback(): void {
-    if (this.handledScrollForCurrentNavigation) return;
     if (this.lastNavigationHadAnchor) return;
-    if (this.lastNavigationTrigger === 'popstate') return;
 
     this.deferScroll(() => this.scrollToTop());
   }
 
   private handleScrollEvent(event: Scroll): void {
-    this.handledScrollForCurrentNavigation = true;
-
     if (event.anchor) {
       this.deferScroll(() => this.viewportScroller.scrollToAnchor(event.anchor!));
-      return;
-    }
-
-    if (event.position && this.lastNavigationTrigger === 'popstate') {
-      // Back/forward navigation: preserve expected browser history position.
-      this.deferScroll(() => this.viewportScroller.scrollToPosition(event.position!));
       return;
     }
 
