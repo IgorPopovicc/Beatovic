@@ -144,9 +144,13 @@
   transition: transform 240ms ease;
   z-index: 1000;
   display: none;
+  pointer-events: none;
+  visibility: hidden;
 }
 .search-mobile.open {
   transform: translateX(0);
+  pointer-events: auto;
+  visibility: visible;
 }
 
 .search-input-mobile {
@@ -195,9 +199,13 @@
   transition: transform 0.25s ease-in-out;
   z-index: 999;
   overflow: hidden;
+  pointer-events: none;
+  visibility: hidden;
 }
 .mobile-menu.open {
   transform: translateX(0);
+  pointer-events: auto;
+  visibility: visible;
 }
 
 .menu-col {

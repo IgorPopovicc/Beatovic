@@ -4,18 +4,20 @@ import {
   ElementRef,
   HostListener,
   inject,
+  OnDestroy,
   OnInit,
   PLATFORM_ID,
   signal,
   ViewChild,
 } from '@angular/core';
 import { DecimalPipe, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { NavigationStart, Router, RouterLink } from '@angular/router';
+import { Subscription, forkJoin, of } from 'rxjs';
 import {
   catchError,
   debounceTime,
   distinctUntilChanged,
+  filter,
   map,
   startWith,
   switchMap,
@@ -37,12 +39,15 @@ import { Variant } from '../../../core/api/catalog.models';
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss',
 })
-export class Navbar implements OnInit {
+export class Navbar implements OnInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private catalogApi = inject(CatalogApiService);
   private cart = inject(CartStore);
   private productsApi = inject(ProductsApiService);
+  private navigationStartSub?: Subscription;
+  private bodyScrollLocked = false;
+  private bodyScrollTop = 0;
 
   cartCount = computed(() => this.cart.itemsCount());
 
@@ -160,9 +165,18 @@ export class Navbar implements OnInit {
       const mq = window.matchMedia('(max-width: 768px)');
       this.isMobile = mq.matches;
       mq.addEventListener?.('change', (e) => (this.isMobile = e.matches));
+
+      this.navigationStartSub = this.router.events
+        .pipe(filter((event): event is NavigationStart => event instanceof NavigationStart))
+        .subscribe(() => this.resetTransientUiForNavigation());
     }
 
     this.loadDynamicMenu();
+  }
+
+  ngOnDestroy(): void {
+    this.navigationStartSub?.unsubscribe();
+    this.lockBodyScroll(false);
   }
 
   private loadDynamicMenu() {
@@ -391,8 +405,46 @@ export class Navbar implements OnInit {
   }
 
   private lockBodyScroll(lock: boolean) {
-    if (typeof window === 'undefined') return;
-    document.body.style.overflow = lock ? 'hidden' : '';
+    if (!isPlatformBrowser(this.platformId)) return;
+    if (lock === this.bodyScrollLocked) return;
+
+    const body = document.body;
+    const root = document.documentElement;
+
+    if (lock) {
+      this.bodyScrollTop = window.scrollY || root.scrollTop || 0;
+      body.style.position = 'fixed';
+      body.style.top = `-${this.bodyScrollTop}px`;
+      body.style.left = '0';
+      body.style.right = '0';
+      body.style.width = '100%';
+      body.style.overflow = 'hidden';
+      root.style.overflow = 'hidden';
+      this.bodyScrollLocked = true;
+      return;
+    }
+
+    body.style.position = '';
+    body.style.top = '';
+    body.style.left = '';
+    body.style.right = '';
+    body.style.width = '';
+    body.style.overflow = '';
+    root.style.overflow = '';
+    this.bodyScrollLocked = false;
+
+    window.scrollTo({
+      top: this.bodyScrollTop,
+      left: 0,
+      behavior: 'auto',
+    });
+  }
+
+  private resetTransientUiForNavigation(): void {
+    this.mobileOpen = false;
+    this.closeSub();
+    this.closeSearch();
+    this.lockBodyScroll(false);
   }
 }
 

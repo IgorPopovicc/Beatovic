@@ -1,6 +1,6 @@
 import { DOCUMENT, ViewportScroller, isPlatformBrowser } from '@angular/common';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { Router, Scroll } from '@angular/router';
+import { NavigationEnd, NavigationStart, Router, Scroll } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
@@ -9,22 +9,53 @@ export class RouteScrollService {
   private readonly viewportScroller = inject(ViewportScroller);
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
+  private lastNavigationTrigger: NavigationStart['navigationTrigger'] = 'imperative';
+  private lastNavigationHadAnchor = false;
+  private handledScrollForCurrentNavigation = false;
 
   constructor() {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    this.router.events
+      .pipe(filter((event): event is NavigationStart => event instanceof NavigationStart))
+      .subscribe((event) => this.handleNavigationStart(event));
+
     this.router.events
       .pipe(filter((event): event is Scroll => event instanceof Scroll))
       .subscribe((event) => this.handleScrollEvent(event));
+
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => this.handleNavigationEndFallback());
+  }
+
+  private handleNavigationStart(event: NavigationStart): void {
+    this.lastNavigationTrigger = event.navigationTrigger;
+    this.lastNavigationHadAnchor = event.url.includes('#');
+    this.handledScrollForCurrentNavigation = false;
+  }
+
+  private handleNavigationEndFallback(): void {
+    if (this.handledScrollForCurrentNavigation) return;
+    if (this.lastNavigationHadAnchor) return;
+    if (this.lastNavigationTrigger === 'popstate') return;
+
+    this.deferScroll(() => this.scrollToTop());
   }
 
   private handleScrollEvent(event: Scroll): void {
+    this.handledScrollForCurrentNavigation = true;
+
     if (event.anchor) {
       this.deferScroll(() => this.viewportScroller.scrollToAnchor(event.anchor!));
       return;
     }
 
-    if (event.position) {
+    if (event.position && this.lastNavigationTrigger === 'popstate') {
       // Back/forward navigation: preserve expected browser history position.
       this.deferScroll(() => this.viewportScroller.scrollToPosition(event.position!));
       return;
@@ -39,11 +70,12 @@ export class RouteScrollService {
 
     requestAnimationFrame(() => {
       work();
+      requestAnimationFrame(() => work());
     });
 
     setTimeout(() => {
       work();
-    }, 0);
+    }, 80);
   }
 
   private scrollToTop(): void {

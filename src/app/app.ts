@@ -7,7 +7,6 @@ import { BackendFallbackComponent } from './features/backend-fallback/backend-fa
 import { RouteSeoService } from './core/seo/route-seo.service';
 import { SeoService } from './core/seo/seo.service';
 import { CartAddToastComponent } from './shared/ui/cart-add-toast/cart-add-toast';
-import { RouteScrollService } from './core/system/route-scroll.service';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +18,6 @@ export class App {
   private readonly router = inject(Router);
   private readonly routeSeo = inject(RouteSeoService);
   private readonly seo = inject(SeoService);
-  private readonly routeScroll = inject(RouteScrollService);
 
   protected readonly showBackendFallback = computed(() => this.backendStatus.unavailable());
 

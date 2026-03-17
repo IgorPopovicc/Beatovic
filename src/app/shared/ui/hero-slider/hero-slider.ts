@@ -5,8 +5,6 @@ import { PLATFORM_ID } from '@angular/core';
 type Slide = {
   alt: string;
   desktop: string;
-  desktopW: number;
-  desktopH: number;
   mobile: string;
 };
 
@@ -20,6 +18,10 @@ type Slide = {
 export class HeroSlider implements OnInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private injector = inject(Injector);
+  private mobileMq: MediaQueryList | null = null;
+  private readonly onMobileQueryChange = (event: MediaQueryListEvent) => {
+    this.mobileViewport.set(event.matches);
+  };
 
   private autoRestart = effect(
     () => {
@@ -35,39 +37,38 @@ export class HeroSlider implements OnInit, OnDestroy {
     {
       alt: 'Trčanje i lifestyle modeli za novu sezonu',
       desktop: 'assets/images/home/hero-slide-1.jpg',
-      desktopW: 1920,
-      desktopH: 860,
       mobile: 'assets/images/home/hero-slide-1-mobile.jpg',
     },
     {
       alt: 'Nova kolekcija patika za svaki dan',
       desktop: 'assets/images/home/hero-slide-2.jpg',
-      desktopW: 1920,
-      desktopH: 860,
       mobile: 'assets/images/home/hero-slide-2-mobile.jpg',
     },
     {
       alt: 'Trening i performanse bez kompromisa',
       desktop: 'assets/images/home/hero-slide-3.jpg',
-      desktopW: 1920,
-      desktopH: 860,
       mobile: 'assets/images/home/hero-slide-3-mobile.jpg',
     },
   ];
 
   index = signal(0);
   paused = signal(false);
+  mobileViewport = signal(false);
   private timerId: any = null;
   intervalMs = 10000; // 10s
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
+      this.mobileMq = window.matchMedia('(max-width: 768px)');
+      this.mobileViewport.set(this.mobileMq.matches);
+      this.mobileMq.addEventListener?.('change', this.onMobileQueryChange);
       this.startTimer();
     }
   }
 
   ngOnDestroy(): void {
     this.clearTimer();
+    this.mobileMq?.removeEventListener?.('change', this.onMobileQueryChange);
   }
 
   prev() {
@@ -78,6 +79,10 @@ export class HeroSlider implements OnInit, OnDestroy {
   }
   go(i: number) {
     this.index.set(i);
+  }
+
+  slideSrc(slide: Slide): string {
+    return this.mobileViewport() ? slide.mobile : slide.desktop;
   }
 
   pause() {

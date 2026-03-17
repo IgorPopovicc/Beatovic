@@ -11,22 +11,18 @@
         class="slide"
         [class.active]="i === index()"
         [attr.aria-hidden]="i === index() ? 'false' : 'true'"
-        [style.--slide-bg]="'url(' + s.desktop + ')'"
+        [style.--slide-bg]="'url(' + slideSrc(s) + ')'"
       >
-        <picture>
-          <source [srcset]="s.mobile" media="(max-width: 768px)" />
-          <img
-            [ngSrc]="s.desktop"
-            [alt]="s.alt"
-            [width]="s.desktopW"
-            [height]="s.desktopH"
-            [sizes]="'(max-width:768px) 100vw, 100vw'"
-            [priority]="i === 0"
-            [attr.loading]="i === 0 ? 'eager' : 'lazy'"
-            [attr.fetchpriority]="i === 0 ? 'high' : 'auto'"
-            decoding="async"
-          />
-        </picture>
+        <img
+          [ngSrc]="slideSrc(s)"
+          [alt]="s.alt"
+          fill
+          [sizes]="'100vw'"
+          [priority]="i === 0"
+          [attr.loading]="i === 0 ? 'eager' : 'lazy'"
+          [attr.fetchpriority]="i === 0 ? 'high' : 'auto'"
+          decoding="async"
+        />
       </div>
     }
   </div>
