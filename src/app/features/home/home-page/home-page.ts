@@ -25,7 +25,7 @@ export class HomePage implements OnInit {
 
   ngOnInit(): void {
     const homeUrl = this.seo.absoluteUrl('/');
-    const heroImage = this.seo.absoluteUrl('/assets/images/home/hero-slide-1.jpg');
+    const brandImage = this.seo.absoluteUrl('/assets/images/logo/planets_main_logo.png');
 
     this.seo.setPage({
       title: 'Planeta webshop | Patike, odjeća i oprema online',
@@ -33,7 +33,8 @@ export class HomePage implements OnInit {
         'Planeta webshop nudi patike, odjeću i sportsku opremu uz sigurnu kupovinu, brzu isporuku i aktuelne akcije.',
       path: '/',
       ogType: 'website',
-      image: heroImage,
+      image: brandImage,
+      imageAlt: 'Planeta webshop logo',
     });
 
     this.seo.setStructuredData({
@@ -55,13 +56,13 @@ export class HomePage implements OnInit {
           url: homeUrl,
           description:
             'Patike, odjeća i sportska oprema za muškarce i žene sa redovno osvježenim kolekcijama.',
-          primaryImageOfPage: heroImage,
+          primaryImageOfPage: brandImage,
         },
         {
           '@type': 'Organization',
           name: 'Planeta',
           url: homeUrl,
-          logo: this.seo.absoluteUrl('/favicon.ico'),
+          logo: brandImage,
         },
       ],
     });

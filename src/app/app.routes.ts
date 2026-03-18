@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { adminOnlyGuard } from './core/auth/admin.guard';
 import { adminLoginRedirectGuard } from './core/auth/admin-login.guard';
+import { productDetailsResolver } from './features/product-details/product-details.resolver';
 
 export const routes: Routes = [
   {
@@ -8,6 +9,7 @@ export const routes: Routes = [
     pathMatch: 'full',
     loadComponent: () => import('./features/home/home-page/home-page').then((m) => m.HomePage),
     data: {
+      structuredDataManaged: true,
       seo: {
         title: 'Planeta webshop | Patike, odjeća i oprema online',
         description:
@@ -20,6 +22,7 @@ export const routes: Routes = [
     path: 'catalog/:gender/:category',
     loadComponent: () => import('./features/products/products').then((m) => m.Products),
     data: {
+      structuredDataManaged: true,
       seo: {
         title: 'Katalog | Planeta',
         description: 'Pregled proizvoda i filtera po kategorijama u Planeta webshopu.',
@@ -51,6 +54,10 @@ export const routes: Routes = [
     path: 'product/:id',
     loadComponent: () =>
       import('./features/product-details/product-details').then((m) => m.ProductDetails),
+    runGuardsAndResolvers: 'paramsOrQueryParamsChange',
+    resolve: {
+      product: productDetailsResolver,
+    },
     data: {
       seo: {
         title: 'Proizvod | Planeta',

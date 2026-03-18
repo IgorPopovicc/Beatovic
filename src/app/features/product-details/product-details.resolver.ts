@@ -1,37 +1,33 @@
-// src/app/features/product-details/product-details.resolver.ts
 import { ResolveFn } from '@angular/router';
 import { inject } from '@angular/core';
 import { of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ProductsApiService } from '../../core/api/products-api.service';
+import { ProductDetailsModel } from '../../shared/data/products.mock';
 import { environment } from '../../../environments/environment';
 
-// Minimalno šta ti template očekuje.
-// Možeš proširiti po potrebi.
-export type ProductDetailsUI = {
-  id: string;
-  slug: string;
-  name: string;
-  subtitle?: string;
-  sku?: string;
-  price: number;
-  oldPrice?: number | null;
-  currency?: string;
-  brand: string;
-  inStock: boolean;
-  sizes?: Array<string | number>;
-  shortDescription?: string;
-  gallery: Array<{
-    desktop: string;
-    mobile: string;
-    alt: string;
-    w: number;
-    h: number;
-  }>;
+const PRODUCT_PLACEHOLDER = 'assets/images/products/test.webp';
+
+export type ProductDetailsResolved = ProductDetailsModel & {
+  sizeQtyMap: Record<string, number>;
+  sizeAttrElementIdMap: Record<string, string>;
+  seoDescription: string;
+  seoImage: { url: string; alt: string } | null;
 };
 
-function slugify(s: string): string {
-  return s
+function normalize(value: unknown): string {
+  return String(value ?? '').trim();
+}
+
+function normalizeKey(value: unknown): string {
+  return normalize(value)
+    .normalize('NFD')
+    .replace(/\p{M}+/gu, '')
+    .toUpperCase();
+}
+
+function slugify(value: string): string {
+  return value
     .toLowerCase()
     .trim()
     .replace(/[^\p{L}\p{N}]+/gu, '-')
@@ -39,82 +35,191 @@ function slugify(s: string): string {
     .replace(/^-|-$/g, '');
 }
 
-export const productDetailsResolver: ResolveFn<ProductDetailsUI | null> = (route) => {
+function truncate(value: string, max = 190): string {
+  const text = normalize(value);
+  if (!text) return '';
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 1).trimEnd()}…`;
+}
+
+function resolveMediaUrl(pathOrUrl: string): string {
+  const value = normalize(pathOrUrl);
+  if (!value) return '';
+  if (/^https?:\/\//i.test(value)) return value;
+
+  const base = normalize(environment.mediaProductBaseUrl).replace(/\/$/, '');
+  if (!base) return value;
+
+  const clean = value
+    .replace(/^\/+/, '')
+    .replace(/^media\/product\/+/i, '')
+    .replace(/^product\/+/i, '');
+  if (!clean) return '';
+
+  const [pathPart, searchPart = ''] = clean.split('?');
+  const encodedPath = pathPart
+    .split('/')
+    .filter(Boolean)
+    .map((segment) => {
+      try {
+        return encodeURIComponent(decodeURIComponent(segment));
+      } catch {
+        return encodeURIComponent(segment);
+      }
+    })
+    .join('/');
+
+  return `${base}/${encodedPath}${searchPart ? `?${searchPart}` : ''}`;
+}
+
+function pickBrand(dto: any): string {
+  const categories = Array.isArray(dto?.categories) ? dto.categories : [];
+  const fromCategory = categories.find((c: any) => normalizeKey(c?.categoryName) === 'BREND');
+  return normalize(fromCategory?.displayValue ?? fromCategory?.value ?? dto?.brand ?? '') || 'Planeta';
+}
+
+function buildSizeMaps(dto: any): {
+  sizeQtyMap: Record<string, number>;
+  sizeAttrElementIdMap: Record<string, string>;
+  sizes: string[];
+} {
+  const sizeQtyMap: Record<string, number> = {};
+  const sizeAttrElementIdMap: Record<string, string> = {};
+  const attributes = Array.isArray(dto?.attributes) ? dto.attributes : [];
+
+  for (const attr of attributes) {
+    if (normalizeKey(attr?.attributeName) !== 'VELICINA') continue;
+
+    const sizeValue = normalize(attr?.displayValue ?? attr?.value);
+    if (!sizeValue) continue;
+
+    sizeQtyMap[sizeValue] = Number(attr?.quantity ?? 0);
+    const attributeElementId = normalize(attr?.id);
+    if (attributeElementId) {
+      sizeAttrElementIdMap[sizeValue] = attributeElementId;
+    }
+  }
+
+  const smartSizeCompare = (a: string, b: string): number => {
+    const na = Number(a);
+    const nb = Number(b);
+    const aNum = !Number.isNaN(na);
+    const bNum = !Number.isNaN(nb);
+
+    if (aNum && bNum) return na - nb;
+    if (aNum) return -1;
+    if (bNum) return 1;
+    return a.localeCompare(b);
+  };
+
+  const sizes = Object.keys(sizeQtyMap).sort(smartSizeCompare);
+  return { sizeQtyMap, sizeAttrElementIdMap, sizes };
+}
+
+function buildGallery(dto: any, productName: string): ProductDetailsModel['gallery'] {
+  const images = Array.isArray(dto?.images) ? dto.images : [];
+  const displayed = images.find((img: any) => !!img?.displayed);
+
+  const candidatePaths: string[] = [];
+
+  if (displayed?.url) {
+    candidatePaths.push(String(displayed.url));
+  }
+  for (const img of images) {
+    if (!img?.url) continue;
+    candidatePaths.push(String(img.url));
+  }
+
+  candidatePaths.push(normalize(dto?.mainImageName));
+  candidatePaths.push(normalize(dto?.mainImageUrl));
+
+  const uniqueUrls: string[] = [];
+  const seen = new Set<string>();
+
+  for (const candidate of candidatePaths) {
+    const resolved = resolveMediaUrl(candidate);
+    if (!resolved || seen.has(resolved)) continue;
+    seen.add(resolved);
+    uniqueUrls.push(resolved);
+  }
+
+  if (!uniqueUrls.length) {
+    uniqueUrls.push(PRODUCT_PLACEHOLDER);
+  }
+
+  return uniqueUrls.map((url) => ({
+    desktop: url,
+    mobile: url,
+    alt: productName,
+    w: 1200,
+    h: 1200,
+  }));
+}
+
+function pickSeoImage(gallery: ProductDetailsModel['gallery']): { url: string; alt: string } | null {
+  const first = gallery[0];
+  if (!first) return null;
+
+  const url = normalize(first.desktop || first.mobile);
+  if (!/^https?:\/\//i.test(url)) return null;
+
+  return {
+    url,
+    alt: normalize(first.alt) || 'Planeta proizvod',
+  };
+}
+
+function toResolvedProduct(dto: any, id: string): ProductDetailsResolved {
+  const name = normalize(dto?.productName ?? dto?.name) || 'Proizvod';
+  const sku = normalize(dto?.sku ?? dto?.productSku ?? dto?.variantSku) || undefined;
+  const brand = pickBrand(dto);
+
+  const finalPrice = Number(dto?.finalPrice ?? dto?.price ?? dto?.originalPrice ?? 0);
+  const originalPrice = Number(dto?.originalPrice ?? finalPrice);
+  const oldPrice = originalPrice > finalPrice ? originalPrice : null;
+
+  const { sizeQtyMap, sizeAttrElementIdMap, sizes } = buildSizeMaps(dto);
+  const inStockFromSizes = Object.values(sizeQtyMap).some((qty) => qty > 0);
+  const inStockFromVariant = Number(dto?.quantity ?? 0) > 0;
+  const inStock = sizes.length > 0 ? inStockFromSizes : inStockFromVariant;
+
+  const gallery = buildGallery(dto, name);
+
+  const rawDescription = normalize(dto?.shortDescription ?? dto?.description);
+  const seoDescription =
+    truncate(rawDescription, 190) ||
+    `Detalji proizvoda ${name} u Planeta webshopu. Pogledajte cijenu i dostupne veličine.`;
+
+  return {
+    id,
+    slug: slugify(`${name}-${sku || id}`),
+    name,
+    subtitle: normalize(dto?.productSku ?? dto?.subtitle) || undefined,
+    sku,
+    price: finalPrice,
+    oldPrice,
+    currency: normalize(dto?.currency) || 'RSD',
+    brand,
+    inStock,
+    sizes,
+    shortDescription: rawDescription || undefined,
+    gallery,
+    sizeQtyMap,
+    sizeAttrElementIdMap,
+    seoDescription,
+    seoImage: pickSeoImage(gallery),
+  };
+}
+
+export const productDetailsResolver: ResolveFn<ProductDetailsResolved | null> = (route) => {
   const api = inject(ProductsApiService);
-  const id = route.paramMap.get('id');
+  const id = normalize(route.paramMap.get('id'));
   if (!id) return of(null);
 
-  // Ovaj base mora biti APSOLUTAN za SEO/OG:
-  const mediaBase = String(environment.mediaProductBaseUrl ?? '').replace(/\/$/, '');
-  const currency = 'RSD';
-
   return api.getVariantDetails(id).pipe(
-    map((d: any) => {
-      // images[] dolazi iz details endpoint-a
-      const imgs = (d?.images ?? []) as Array<{ url: string; displayed?: boolean }>;
-      const ordered = [...imgs.filter((i) => i.displayed), ...imgs.filter((i) => !i.displayed)];
-
-      const gallery = (ordered.length ? ordered : []).map((i) => {
-        const clean = String(i?.url ?? '').replace(/^\/+/, '');
-        const abs = clean ? `${mediaBase}/${clean}` : 'assets/images/products/test.webp';
-        return {
-          desktop: abs,
-          mobile: abs,
-          alt: d?.productName ?? 'Proizvod',
-          w: 1200,
-          h: 1200,
-        };
-      });
-
-      const finalPrice = Number(d?.finalPrice ?? d?.price ?? 0);
-      const originalPrice = Number(d?.originalPrice ?? finalPrice);
-      const hasDiscount = originalPrice > finalPrice;
-
-      // Brand/sizes: prilagodi prema realnom shape-u koji ti BE vraća u details.
-      // Ako details vraća categories/attributes, ovdje izvuci:
-      const brand =
-        d?.categories?.find((c: any) => String(c?.categoryName ?? '').toUpperCase() === 'BREND')
-          ?.displayValue ??
-        d?.categories?.find((c: any) => String(c?.categoryName ?? '').toUpperCase() === 'BREND')
-          ?.value ??
-        d?.brand ??
-        '—';
-
-      const sizes =
-        (d?.attributes ?? [])
-          .filter((a: any) => String(a?.attributeName ?? '').toUpperCase() === 'VELICINA')
-          .map((a: any) => a?.displayValue ?? a?.value)
-          .filter(Boolean) ?? [];
-
-      const sizesQty = (d?.attributes ?? [])
-        .filter((a: any) => String(a?.attributeName ?? '').toUpperCase() === 'VELICINA')
-        .map((a: any) => Number(a?.quantity ?? 0));
-      const hasAnySizeQty = sizesQty.some((q: number) => Number.isFinite(q));
-      const inStockFromSizes = sizesQty.some((q: number) => q > 0);
-      const inStock =
-        hasAnySizeQty || sizesQty.length
-          ? inStockFromSizes
-          : Number(d?.quantity ?? 0) > 0;
-
-      const sku = d?.sku ?? d?.productSku ?? d?.variantSku;
-
-      const slug = slugify(`${d?.productName ?? 'proizvod'}-${sku ?? id}`);
-
-      return {
-        id,
-        slug,
-        name: d?.productName ?? 'Proizvod',
-        subtitle: d?.productSku ?? undefined,
-        sku: sku ?? undefined,
-        price: finalPrice,
-        oldPrice: hasDiscount ? originalPrice : null,
-        currency,
-        brand,
-        inStock,
-        sizes,
-        shortDescription: d?.shortDescription ?? d?.description ?? undefined,
-        gallery,
-      } satisfies ProductDetailsUI;
+    map((dto) => {
+      if (!dto) return null;
+      return toResolvedProduct(dto, id);
     }),
     catchError(() => of(null)),
   );

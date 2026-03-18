@@ -10,6 +10,9 @@ export type SeoPageConfig = {
   canonicalUrl?: string;
   ogType?: 'website' | 'product' | 'article';
   image?: string | null;
+  imageAlt?: string | null;
+  imageWidth?: number | null;
+  imageHeight?: number | null;
   noindex?: boolean;
 };
 
@@ -21,7 +24,8 @@ export class SeoService {
 
   private readonly siteUrl = String(environment.siteUrl || '').replace(/\/+$/, '');
   private readonly structuredDataId = 'app-structured-data';
-  private readonly defaultSocialImagePath = '/assets/images/home/hero-slide-1.jpg';
+  private readonly defaultSocialImagePath = '/assets/images/logo/planets_main_logo.png';
+  private readonly defaultSocialImageAlt = 'Planeta webshop logo';
 
   setPage(config: SeoPageConfig): void {
     const pageTitle = config.title.trim();
@@ -40,6 +44,7 @@ export class SeoService {
     this.updateMetaByProperty('og:title', pageTitle);
     this.updateMetaByProperty('og:description', description);
     this.updateMetaByProperty('og:url', canonical);
+    this.updateMetaByProperty('og:locale', 'sr_BA');
 
     this.updateMetaByName('twitter:card', 'summary_large_image');
     this.updateMetaByName('twitter:title', pageTitle);
@@ -47,13 +52,39 @@ export class SeoService {
     this.updateMetaByName('twitter:url', canonical);
 
     const image = (config.image?.trim() || this.defaultSocialImagePath).trim();
+    const imageAlt = (config.imageAlt?.trim() || this.defaultSocialImageAlt).trim();
     if (image) {
       const absoluteImage = this.absoluteUrl(image);
       this.updateMetaByProperty('og:image', absoluteImage);
+      this.updateMetaByProperty('og:image:secure_url', absoluteImage);
+      this.updateMetaByProperty('og:image:alt', imageAlt);
+      this.updateMetaByProperty('og:image:type', this.detectMimeType(absoluteImage));
       this.updateMetaByName('twitter:image', absoluteImage);
+      this.updateMetaByName('twitter:image:alt', imageAlt);
+
+      const width = Number(config.imageWidth ?? 0);
+      const height = Number(config.imageHeight ?? 0);
+
+      if (width > 0) {
+        this.updateMetaByProperty('og:image:width', String(width));
+      } else {
+        this.removeMetaByProperty('og:image:width');
+      }
+
+      if (height > 0) {
+        this.updateMetaByProperty('og:image:height', String(height));
+      } else {
+        this.removeMetaByProperty('og:image:height');
+      }
     } else {
       this.removeMetaByProperty('og:image');
+      this.removeMetaByProperty('og:image:secure_url');
+      this.removeMetaByProperty('og:image:alt');
+      this.removeMetaByProperty('og:image:type');
+      this.removeMetaByProperty('og:image:width');
+      this.removeMetaByProperty('og:image:height');
       this.removeMetaByName('twitter:image');
+      this.removeMetaByName('twitter:image:alt');
     }
 
     this.upsertCanonical(canonical);
@@ -119,5 +150,13 @@ export class SeoService {
 
   private removeMetaByProperty(property: string): void {
     this.meta.removeTag(`property="${property}"`);
+  }
+
+  private detectMimeType(url: string): string {
+    const path = url.toLowerCase().split('?')[0];
+    if (path.endsWith('.png')) return 'image/png';
+    if (path.endsWith('.webp')) return 'image/webp';
+    if (path.endsWith('.jpg') || path.endsWith('.jpeg')) return 'image/jpeg';
+    return 'image/png';
   }
 }
