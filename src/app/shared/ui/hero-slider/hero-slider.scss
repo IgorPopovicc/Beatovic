@@ -137,6 +137,7 @@
 @media (max-width: 768px) {
   .hero {
     min-height: calc(78vh - 84px);
+    min-height: calc(78svh - 84px);
   }
 
   .slide::before {

@@ -5,8 +5,6 @@
   color: #fff;
   margin: 0;
   background: #10151f;
-  content-visibility: auto;
-  contain-intrinsic-size: 820px;
 }
 
 .video-wrap {
@@ -128,6 +126,7 @@
 @media (min-width: 900px) {
   .promo-video {
     min-height: 62vh;
+    min-height: 62svh;
   }
 
   .content {
@@ -139,6 +138,7 @@
 @media (max-width: 899px) {
   .promo-video {
     min-height: 50vh;
+    min-height: 50svh;
   }
 }
 
@@ -166,6 +166,7 @@
     width: 100vw;
     margin-inline: calc(50% - 50vw);
     min-height: 66vh;
+    min-height: 66svh;
   }
 
   .content {
