@@ -37,8 +37,18 @@ export class ProductCardComponent {
   @Input() variant: ProductCardVariant = 'default';
   private imageFallback = false;
 
+  get imageMobile(): string {
+    if (this.imageFallback) return 'assets/images/products/test.webp';
+    return this.product.image.mobile || this.product.image.desktop;
+  }
+
   get imageDesktop(): string {
     return this.imageFallback ? 'assets/images/products/test.webp' : this.product.image.desktop;
+  }
+
+  get showMobileSource(): boolean {
+    if (this.imageFallback) return false;
+    return !!this.product.image.mobile && this.product.image.mobile !== this.product.image.desktop;
   }
 
   get hasDiscount() {

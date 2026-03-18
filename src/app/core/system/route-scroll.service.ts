@@ -1,7 +1,7 @@
 import { DOCUMENT, ViewportScroller, isPlatformBrowser } from '@angular/common';
-import { Injector, afterNextRender, inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { ApplicationRef, Injector, afterNextRender, inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { NavigationEnd, NavigationStart, Router } from '@angular/router';
+import { filter, take } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class RouteScrollService {
@@ -10,6 +10,8 @@ export class RouteScrollService {
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly injector = inject(Injector);
+  private readonly appRef = inject(ApplicationRef);
+  private readonly pendingTimers = new Set<number>();
 
   constructor() {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -17,6 +19,13 @@ export class RouteScrollService {
     if ('scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual';
     }
+
+    this.router.events
+      .pipe(filter((event): event is NavigationStart => event instanceof NavigationStart))
+      .subscribe(() => {
+        this.clearPendingTimers();
+        this.forceWindowTop();
+      });
 
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
@@ -28,45 +37,49 @@ export class RouteScrollService {
 
     afterNextRender(
       () => {
-        if (fragment) {
-          this.deferScroll(() => this.viewportScroller.scrollToAnchor(fragment));
-          return;
-        }
-
-        this.deferScroll(() => this.scrollToTop());
+        const work = fragment
+          ? () => this.viewportScroller.scrollToAnchor(fragment)
+          : () => this.scrollToTop();
+        this.deferScroll(work);
       },
       { injector: this.injector },
     );
   }
 
   private deferScroll(work: () => void): void {
-    work();
+    this.clearPendingTimers();
 
+    work();
     Promise.resolve().then(() => work());
 
-    requestAnimationFrame(() => {
-      work();
-      setTimeout(work, 0);
-    });
+    const passes = [0, 40, 120, 240, 420];
+    for (const delay of passes) {
+      if (delay === 0) {
+        requestAnimationFrame(() => work());
+        continue;
+      }
 
-    setTimeout(() => {
-      work();
-    }, 120);
+      const id = window.setTimeout(() => {
+        requestAnimationFrame(() => work());
+        this.pendingTimers.delete(id);
+      }, delay);
+      this.pendingTimers.add(id);
+    }
 
-    // SSR hydration + async content can still shift scroll after first paint.
-    setTimeout(() => {
-      work();
-    }, 280);
+    this.appRef.isStable
+      .pipe(
+        filter(Boolean),
+        take(1),
+      )
+      .subscribe(() => {
+        work();
+        requestAnimationFrame(() => work());
+      });
   }
 
   private scrollToTop(): void {
     this.viewportScroller.scrollToPosition([0, 0]);
-
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: 'auto',
-    });
+    this.forceWindowTop();
 
     const scrollingElement = this.document.scrollingElement as HTMLElement | null;
     if (scrollingElement) {
@@ -95,5 +108,18 @@ export class RouteScrollService {
     }
 
     return Array.from(unique);
+  }
+
+  private forceWindowTop(): void {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    this.document.documentElement.scrollTop = 0;
+    this.document.body.scrollTop = 0;
+  }
+
+  private clearPendingTimers(): void {
+    for (const id of this.pendingTimers) {
+      clearTimeout(id);
+    }
+    this.pendingTimers.clear();
   }
 }

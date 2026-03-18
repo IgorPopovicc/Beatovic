@@ -32,14 +32,34 @@ function resolveMediaUrl(pathOrUrl: string): string {
   const base = normalize(environment.mediaProductBaseUrl).replace(/\/$/, '');
   if (!base) return value;
 
-  const clean = value.replace(/^\/+/, '').replace(/^media\/product\/+/i, '');
-  return `${base}/${clean}`;
+  const clean = value
+    .replace(/^\/+/, '')
+    .replace(/^media\/product\/+/i, '')
+    .replace(/^product\/+/i, '');
+
+  if (!clean) return '';
+
+  const [pathPart, searchPart = ''] = clean.split('?');
+  const encodedPath = pathPart
+    .split('/')
+    .filter(Boolean)
+    .map((segment) => {
+      try {
+        return encodeURIComponent(decodeURIComponent(segment));
+      } catch {
+        return encodeURIComponent(segment);
+      }
+    })
+    .join('/');
+
+  return `${base}/${encodedPath}${searchPart ? `?${searchPart}` : ''}`;
 }
 
 function imageUrlFromVariant(v: Variant): string {
   const displayed = v.images?.find((i) => i.displayed) ?? v.images?.[0];
   const candidates = [
-    normalize(v.mainImageName ?? v.mainImageUrl),
+    normalize(v.mainImageName),
+    normalize(v.mainImageUrl),
     normalize(displayed?.url),
     normalize(v.images?.[0]?.url),
   ];

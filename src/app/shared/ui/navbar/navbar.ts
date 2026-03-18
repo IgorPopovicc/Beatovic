@@ -404,7 +404,7 @@ export class Navbar implements OnInit, OnDestroy {
     if (!inSearch) this.closeSearch();
   }
 
-  private lockBodyScroll(lock: boolean) {
+  private lockBodyScroll(lock: boolean, options?: { restoreScroll?: boolean }) {
     if (!isPlatformBrowser(this.platformId)) return;
     if (lock === this.bodyScrollLocked) return;
 
@@ -433,18 +433,20 @@ export class Navbar implements OnInit, OnDestroy {
     root.style.overflow = '';
     this.bodyScrollLocked = false;
 
-    window.scrollTo({
-      top: this.bodyScrollTop,
-      left: 0,
-      behavior: 'auto',
-    });
+    if (options?.restoreScroll !== false) {
+      window.scrollTo({
+        top: this.bodyScrollTop,
+        left: 0,
+        behavior: 'auto',
+      });
+    }
   }
 
   private resetTransientUiForNavigation(): void {
     this.mobileOpen = false;
     this.closeSub();
     this.closeSearch();
-    this.lockBodyScroll(false);
+    this.lockBodyScroll(false, { restoreScroll: false });
   }
 }
 

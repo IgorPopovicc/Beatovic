@@ -17,7 +17,9 @@
       }
 
       <picture>
-        <source [srcset]="product.image.mobile" media="(max-width: 768px)" />
+        @if (showMobileSource) {
+          <source [srcset]="imageMobile" media="(max-width: 768px)" />
+        }
         <img
           [ngSrc]="imageDesktop"
           [alt]="product.image.alt"

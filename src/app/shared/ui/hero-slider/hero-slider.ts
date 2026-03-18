@@ -18,10 +18,7 @@ type Slide = {
 export class HeroSlider implements OnInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private injector = inject(Injector);
-  private mobileMq: MediaQueryList | null = null;
-  private readonly onMobileQueryChange = (event: MediaQueryListEvent) => {
-    this.mobileViewport.set(event.matches);
-  };
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   private autoRestart = effect(
     () => {
@@ -53,22 +50,17 @@ export class HeroSlider implements OnInit, OnDestroy {
 
   index = signal(0);
   paused = signal(false);
-  mobileViewport = signal(false);
   private timerId: any = null;
   intervalMs = 10000; // 10s
 
   ngOnInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      this.mobileMq = window.matchMedia('(max-width: 768px)');
-      this.mobileViewport.set(this.mobileMq.matches);
-      this.mobileMq.addEventListener?.('change', this.onMobileQueryChange);
+    if (this.isBrowser) {
       this.startTimer();
     }
   }
 
   ngOnDestroy(): void {
     this.clearTimer();
-    this.mobileMq?.removeEventListener?.('change', this.onMobileQueryChange);
   }
 
   prev() {
@@ -81,10 +73,6 @@ export class HeroSlider implements OnInit, OnDestroy {
     this.index.set(i);
   }
 
-  slideSrc(slide: Slide): string {
-    return this.mobileViewport() ? slide.mobile : slide.desktop;
-  }
-
   pause() {
     this.paused.set(true);
     this.clearTimer();
@@ -95,6 +83,7 @@ export class HeroSlider implements OnInit, OnDestroy {
   }
 
   private startTimer() {
+    if (!this.isBrowser) return;
     if (this.timerId) return;
     this.timerId = setInterval(() => this.next(), this.intervalMs);
   }
