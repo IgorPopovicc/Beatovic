@@ -24,15 +24,33 @@ function slugify(value: string): string {
     .replace(/^-|-$/g, '');
 }
 
-function imageUrlFromVariant(v: Variant): string {
-  const displayed = v.images?.find((i) => i.displayed) ?? v.images?.[0];
-  const imgFile = normalize(displayed?.url ?? v.mainImageName ?? v.mainImageUrl);
-  if (!imgFile) return IMAGE_FALLBACK;
-  if (/^https?:\/\//i.test(imgFile)) return imgFile;
+function resolveMediaUrl(pathOrUrl: string): string {
+  const value = normalize(pathOrUrl);
+  if (!value) return '';
+  if (/^https?:\/\//i.test(value)) return value;
 
   const base = normalize(environment.mediaProductBaseUrl).replace(/\/$/, '');
-  const clean = imgFile.replace(/^\/+/, '');
-  return base ? `${base}/${clean}` : imgFile;
+  if (!base) return value;
+
+  const clean = value.replace(/^\/+/, '').replace(/^media\/product\/+/i, '');
+  return `${base}/${clean}`;
+}
+
+function imageUrlFromVariant(v: Variant): string {
+  const displayed = v.images?.find((i) => i.displayed) ?? v.images?.[0];
+  const candidates = [
+    normalize(v.mainImageName ?? v.mainImageUrl),
+    normalize(displayed?.url),
+    normalize(v.images?.[0]?.url),
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const resolved = resolveMediaUrl(candidate);
+    if (resolved) return resolved;
+  }
+
+  return IMAGE_FALLBACK;
 }
 
 export function mapVariantToProductCard(v: Variant, options?: { priority?: boolean }): ProductCard {

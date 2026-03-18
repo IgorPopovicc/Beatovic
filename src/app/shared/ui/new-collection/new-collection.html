@@ -1,25 +1,35 @@
-<section class="promo-video">
+<section
+  #sectionRoot
+  class="promo-video"
+  [style.--running-fallback-bg]="'url(' + fallbackBackgroundImage + ')'"
+  aria-labelledby="running-collection-title"
+>
   <div class="video-wrap">
-    <video
-      #bgVideo
-      class="bg-video"
-      autoplay
-      muted
-      loop
-      playsinline
-      preload="metadata"
-      (canplay)="ensureVideoPlayback()"
-    >
-      <source src="assets/media/videos/test.mp4" type="video/mp4" />
-    </video>
+    @if (shouldRenderVideo()) {
+      <video
+        #bgVideo
+        class="bg-video"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="none"
+        [attr.poster]="fallbackBackgroundImage"
+        (canplay)="ensureVideoPlayback()"
+      >
+        <source src="assets/media/videos/test.mp4" type="video/mp4" />
+      </video>
+    }
     <div class="overlay"></div>
   </div>
 
   <div class="content">
     <div class="panel left">
-      <h2>Nova kolekcija trčanja</h2>
+      <h2 id="running-collection-title">Nova kolekcija trčanja</h2>
       <p>Lagane, prozračne tkanine i poboljšana podrška.</p>
-      <a class="btn" routerLink="/catalog/muskarci/obuca">Istraži novu kolekciju</a>
+      <a class="btn" [routerLink]="['/catalog', 'muskarci', 'obuca']" [queryParams]="{ q: 'running' }">
+        Istraži novu kolekciju
+      </a>
     </div>
 
     <div class="panel right">
@@ -36,7 +46,7 @@
           <div class="product-grid">
             @for (p of products(); track p.id) {
               <div class="product-shell">
-                <app-product-card [product]="p" variant="compact"></app-product-card>
+                <app-product-card [product]="p" variant="home"></app-product-card>
               </div>
             } @empty {
               <div class="state empty">Nema proizvoda.</div>

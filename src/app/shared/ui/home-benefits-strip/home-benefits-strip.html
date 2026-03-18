@@ -1,0 +1,27 @@
+<section class="home-benefits" aria-label="Prednosti kupovine">
+  <h2 class="sr-only">Prednosti kupovine u Planeta webshopu</h2>
+
+  <ul class="benefits-list">
+    @for (item of benefits; track item.title) {
+      <li class="benefit-item">
+        @if (item.link) {
+          <a class="benefit-card" [routerLink]="item.link" [queryParams]="item.queryParams">
+            <span class="material-icons-outlined benefit-icon" aria-hidden="true">{{ item.icon }}</span>
+            <div class="benefit-copy">
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.description }}</p>
+            </div>
+          </a>
+        } @else {
+          <div class="benefit-card">
+            <span class="material-icons-outlined benefit-icon" aria-hidden="true">{{ item.icon }}</span>
+            <div class="benefit-copy">
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.description }}</p>
+            </div>
+          </div>
+        }
+      </li>
+    }
+  </ul>
+</section>

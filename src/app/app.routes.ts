@@ -9,9 +9,9 @@ export const routes: Routes = [
     loadComponent: () => import('./features/home/home-page/home-page').then((m) => m.HomePage),
     data: {
       seo: {
-        title: 'Planeta | Online Shop',
+        title: 'Planeta webshop | Patike, odjeća i oprema online',
         description:
-          'Planeta webshop: patike, odjeća i oprema sa brzom isporukom i sigurnom kupovinom.',
+          'Planeta webshop nudi patike, odjeću i sportsku opremu uz sigurnu kupovinu, brzu isporuku i aktuelne akcije.',
       },
     },
   },

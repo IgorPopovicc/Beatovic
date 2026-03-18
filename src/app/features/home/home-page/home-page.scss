@@ -17,6 +17,8 @@
   align-items: center;
   justify-content: center;
   gap: 1.1rem;
+  content-visibility: auto;
+  contain-intrinsic-size: 240px;
 }
 
 .brands-title {

@@ -21,6 +21,7 @@ export class SeoService {
 
   private readonly siteUrl = String(environment.siteUrl || '').replace(/\/+$/, '');
   private readonly structuredDataId = 'app-structured-data';
+  private readonly defaultSocialImagePath = '/assets/images/home/hero-slide-1.jpg';
 
   setPage(config: SeoPageConfig): void {
     const pageTitle = config.title.trim();
@@ -35,6 +36,7 @@ export class SeoService {
     this.updateMetaByName('robots', robots);
 
     this.updateMetaByProperty('og:type', ogType);
+    this.updateMetaByProperty('og:site_name', 'Planeta');
     this.updateMetaByProperty('og:title', pageTitle);
     this.updateMetaByProperty('og:description', description);
     this.updateMetaByProperty('og:url', canonical);
@@ -42,8 +44,9 @@ export class SeoService {
     this.updateMetaByName('twitter:card', 'summary_large_image');
     this.updateMetaByName('twitter:title', pageTitle);
     this.updateMetaByName('twitter:description', description);
+    this.updateMetaByName('twitter:url', canonical);
 
-    const image = config.image?.trim();
+    const image = (config.image?.trim() || this.defaultSocialImagePath).trim();
     if (image) {
       const absoluteImage = this.absoluteUrl(image);
       this.updateMetaByProperty('og:image', absoluteImage);

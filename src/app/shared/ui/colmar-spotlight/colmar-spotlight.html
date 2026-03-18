@@ -1,0 +1,37 @@
+<section class="colmar-spotlight" aria-labelledby="colmar-spotlight-title">
+  <div class="bg" aria-hidden="true" [style.--brand-bg]="'url(' + backgroundImage() + ')'">
+    <div class="overlay"></div>
+  </div>
+
+  <div class="content">
+    <div class="copy">
+      <p class="eyebrow">{{ config.eyebrow }}</p>
+      <h2 id="colmar-spotlight-title">{{ config.headline }}</h2>
+      <p>
+        {{ config.description }}
+      </p>
+
+      <a
+        class="cta"
+        [routerLink]="config.ctaLink"
+        [queryParams]="config.ctaQueryParams"
+      >
+        {{ config.ctaLabel }}
+      </a>
+    </div>
+
+    <div class="featured">
+      @if (error()) {
+        <div class="state error" role="alert">{{ error() }}</div>
+      } @else if (loading()) {
+        <div class="state loading" role="status">Učitavanje izdvojenog modela...</div>
+      } @else {
+        @if (product(); as p) {
+          <app-product-card [product]="p" variant="home"></app-product-card>
+        } @else {
+          <div class="state empty">Trenutno nema dostupnog modela.</div>
+        }
+      }
+    </div>
+  </div>
+</section>

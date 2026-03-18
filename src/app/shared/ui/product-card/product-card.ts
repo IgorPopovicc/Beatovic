@@ -23,7 +23,7 @@ export interface ProductCard {
   priority?: boolean;
 }
 
-export type ProductCardVariant = 'default' | 'compact';
+export type ProductCardVariant = 'default' | 'compact' | 'home';
 
 @Component({
   selector: 'app-product-card',
@@ -51,6 +51,18 @@ export class ProductCardComponent {
     if (!this.hasDiscount) return null;
     const pct = Math.round((1 - p.price / (p.oldPrice as number)) * 100);
     return `${pct}%`;
+  }
+
+  get imageSizes(): string {
+    if (this.variant === 'home') {
+      return '(max-width: 680px) 84vw, (max-width: 1100px) 34vw, 18vw';
+    }
+
+    if (this.variant === 'compact') {
+      return '(max-width: 680px) 86vw, (max-width: 1100px) 40vw, 20vw';
+    }
+
+    return '(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw';
   }
 
   onImageError(): void {

@@ -28,8 +28,9 @@ export const appConfig: ApplicationConfig = {
     provideRouter(
       routes,
       withInMemoryScrolling({
-        scrollPositionRestoration: 'top',
-        anchorScrolling: 'enabled',
+        // Centralized by RouteScrollService for SSR/hydration-safe behavior.
+        scrollPositionRestoration: 'disabled',
+        anchorScrolling: 'disabled',
       }),
       withRouterConfig({
         onSameUrlNavigation: 'reload',

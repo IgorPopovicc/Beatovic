@@ -1,6 +1,6 @@
 import { DOCUMENT, ViewportScroller, isPlatformBrowser } from '@angular/common';
-import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { NavigationEnd, NavigationStart, Router, Scroll } from '@angular/router';
+import { Injector, afterNextRender, inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
@@ -9,7 +9,7 @@ export class RouteScrollService {
   private readonly viewportScroller = inject(ViewportScroller);
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
-  private lastNavigationHadAnchor = false;
+  private readonly injector = inject(Injector);
 
   constructor() {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -19,49 +19,44 @@ export class RouteScrollService {
     }
 
     this.router.events
-      .pipe(filter((event): event is NavigationStart => event instanceof NavigationStart))
-      .subscribe((event) => this.handleNavigationStart(event));
-
-    this.router.events
-      .pipe(filter((event): event is Scroll => event instanceof Scroll))
-      .subscribe((event) => this.handleScrollEvent(event));
-
-    this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe(() => this.handleNavigationEndFallback());
+      .subscribe((event) => this.handleNavigationEnd(event));
   }
 
-  private handleNavigationStart(event: NavigationStart): void {
-    this.lastNavigationHadAnchor = event.url.includes('#');
-  }
+  private handleNavigationEnd(event: NavigationEnd): void {
+    const fragment = this.router.parseUrl(event.urlAfterRedirects).fragment;
 
-  private handleNavigationEndFallback(): void {
-    if (this.lastNavigationHadAnchor) return;
+    afterNextRender(
+      () => {
+        if (fragment) {
+          this.deferScroll(() => this.viewportScroller.scrollToAnchor(fragment));
+          return;
+        }
 
-    this.deferScroll(() => this.scrollToTop());
-  }
-
-  private handleScrollEvent(event: Scroll): void {
-    if (event.anchor) {
-      this.deferScroll(() => this.viewportScroller.scrollToAnchor(event.anchor!));
-      return;
-    }
-
-    // New route navigation: always start at top.
-    this.deferScroll(() => this.scrollToTop());
+        this.deferScroll(() => this.scrollToTop());
+      },
+      { injector: this.injector },
+    );
   }
 
   private deferScroll(work: () => void): void {
     work();
 
+    Promise.resolve().then(() => work());
+
     requestAnimationFrame(() => {
       work();
-      requestAnimationFrame(() => work());
+      setTimeout(work, 0);
     });
 
     setTimeout(() => {
       work();
-    }, 80);
+    }, 120);
+
+    // SSR hydration + async content can still shift scroll after first paint.
+    setTimeout(() => {
+      work();
+    }, 280);
   }
 
   private scrollToTop(): void {
@@ -79,10 +74,26 @@ export class RouteScrollService {
       scrollingElement.scrollLeft = 0;
     }
 
-    const appPage = this.document.querySelector<HTMLElement>('.page');
-    if (appPage && appPage.scrollHeight > appPage.clientHeight) {
-      appPage.scrollTop = 0;
-      appPage.scrollLeft = 0;
+    for (const container of this.customScrollContainers()) {
+      container.scrollTop = 0;
+      container.scrollLeft = 0;
     }
+  }
+
+  private customScrollContainers(): HTMLElement[] {
+    const unique = new Set<HTMLElement>();
+    const candidates = this.document.querySelectorAll<HTMLElement>('.page, main, [data-scroll-container]');
+
+    for (const el of candidates) {
+      if (unique.has(el)) continue;
+      const style = window.getComputedStyle(el);
+      const overflowY = style.overflowY;
+      const scrollable = overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay';
+      if (!scrollable) continue;
+      if (el.scrollHeight <= el.clientHeight) continue;
+      unique.add(el);
+    }
+
+    return Array.from(unique);
   }
 }

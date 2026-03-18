@@ -16,9 +16,9 @@ export class RouteSeoService {
   private readonly router = inject(Router);
   private readonly seo = inject(SeoService);
 
-  private readonly defaultTitle = 'Planeta | Online Shop';
+  private readonly defaultTitle = 'Planeta webshop | Patike, odjeća i oprema online';
   private readonly defaultDescription =
-    'Planeta webshop: patike, odjeća i oprema sa brzom isporukom i sigurnom kupovinom.';
+    'Planeta webshop nudi patike, odjeću i sportsku opremu uz sigurnu kupovinu, brzu isporuku i aktuelne akcije.';
 
   constructor() {
     this.refresh();

@@ -125,10 +125,10 @@
       </div>
 
       <a routerLink="/cart" class="cart-btn" aria-label="Cart">
-        <svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M7 7V6a5 5 0 0 1 10 0v1h2a1 1 0 0 1 1 1l-1 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 8a1 1 0 0 1 1-1h2Zm2 0h6V6a3 3 0 1 0-6 0v1Zm-2 2 .9 11h8.2L17 9H7Z"
-          />
+        <svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none">
+          <circle cx="9" cy="20" r="1.6" />
+          <circle cx="17" cy="20" r="1.6" />
+          <path d="M3.5 4H5.7L8 14.6a1.8 1.8 0 0 0 1.75 1.4h6.9a1.8 1.8 0 0 0 1.72-1.3L20.5 7H6.4" />
         </svg>
         @if (cartCount() > 0) {
           <span class="cart-badge" aria-label="Broj stavki u korpi">{{ cartCount() }}</span>

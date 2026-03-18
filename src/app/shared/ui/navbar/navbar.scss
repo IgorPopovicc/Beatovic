@@ -53,6 +53,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
 }
 
 .cart-badge {
@@ -304,9 +305,14 @@
 }
 
 .cart-icon {
-  width: 40px;
-  height: 40px;
-  fill: #111;
+  width: 48px;
+  height: 48px;
+  display: block;
+  stroke: #111;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
 }
 
 .menu-footer-logo {
@@ -559,8 +565,8 @@
     height: 42px;
   }
   .cart-icon {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
   }
   .menu-col.main {
     width: 300px;
@@ -589,8 +595,8 @@
     height: 36px;
   }
   .cart-icon {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
   }
   .menu-col.sub {
     left: 0;
