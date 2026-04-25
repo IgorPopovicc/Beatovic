@@ -7,6 +7,7 @@
   width: min(1500px, 100% - clamp(24px, 6vw, 96px));
   margin: clamp(12px, 2.4vw, 32px) auto clamp(34px, 5vw, 62px);
   border-radius: 20px;
+  overflow: hidden;
   overflow: clip;
   min-height: clamp(330px, 48vw, 500px);
   border: 1px solid rgba(17, 17, 17, 0.08);

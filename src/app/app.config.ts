@@ -1,9 +1,7 @@
 import {
   ApplicationConfig,
   provideBrowserGlobalErrorListeners,
-  provideEnvironmentInitializer,
   provideZonelessChangeDetection,
-  inject,
 } from '@angular/core';
 import { provideRouter, withInMemoryScrolling, withRouterConfig } from '@angular/router';
 import {
@@ -16,21 +14,16 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { backendFallbackInterceptor } from './core/system/backend-fallback.interceptor';
-import { RouteScrollService } from './core/system/route-scroll.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideEnvironmentInitializer(() => {
-      inject(RouteScrollService);
-    }),
     provideRouter(
       routes,
       withInMemoryScrolling({
-        // Centralized by RouteScrollService for SSR/hydration-safe behavior.
-        scrollPositionRestoration: 'disabled',
-        anchorScrolling: 'disabled',
+        scrollPositionRestoration: 'top',
+        anchorScrolling: 'enabled',
       }),
       withRouterConfig({
         onSameUrlNavigation: 'reload',

@@ -1,7 +1,13 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "functions": {
+    "dist/Beatovic/server/server.mjs": {
+      "runtime": "nodejs20.x"
+    }
+  },
   "routes": [
     { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "dist/Beatovic/server/server.mjs" }
+    { "src": "/(.*)", "dest": "/dist/Beatovic/server/server.mjs" }
   ]
 }

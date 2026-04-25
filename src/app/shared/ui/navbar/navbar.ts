@@ -40,6 +40,7 @@ import { Variant } from '../../../core/api/catalog.models';
   styleUrl: './navbar.scss',
 })
 export class Navbar implements OnInit, OnDestroy {
+  private static readonly NAV_HEIGHT_PX = 98;
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private catalogApi = inject(CatalogApiService);
@@ -51,8 +52,10 @@ export class Navbar implements OnInit, OnDestroy {
 
   cartCount = computed(() => this.cart.itemsCount());
 
-  private _lastY = 0;
-  private _threshold = 80;
+  private lastScrollY = 0;
+  private readonly hideAfterScrollRatio = 0.2;
+  private readonly directionDeltaPx = 8;
+  private readonly minScrollableForAutoHidePx = Navbar.NAV_HEIGHT_PX * 2;
 
   _hidden = signal(false);
   mobileOpen = false;
@@ -165,6 +168,7 @@ export class Navbar implements OnInit, OnDestroy {
       const mq = window.matchMedia('(max-width: 768px)');
       this.isMobile = mq.matches;
       mq.addEventListener?.('change', (e) => (this.isMobile = e.matches));
+      this.lastScrollY = this.currentScrollY();
 
       this.navigationStartSub = this.router.events
         .pipe(filter((event): event is NavigationStart => event instanceof NavigationStart))
@@ -226,6 +230,7 @@ export class Navbar implements OnInit, OnDestroy {
     this.searchOpen.update((v) => !v);
 
     if (this.searchOpen()) {
+      this._hidden.set(false);
       if (isPlatformBrowser(this.platformId)) {
         setTimeout(() => {
           (this.isMobile ? this.searchInputMobile : this.searchInputInline)?.nativeElement.focus();
@@ -357,23 +362,44 @@ export class Navbar implements OnInit, OnDestroy {
     return ['/catalog', 'muskarci', 'obuca'];
   }
 
-  // ===== SCROLL / MENU =====
   @HostListener('window:scroll')
-  onScroll() {
+  onWindowScroll() {
     if (!isPlatformBrowser(this.platformId)) return;
-    const y = window.scrollY || document.documentElement.scrollTop || 0;
 
-    const goingDown = y > this._lastY;
-    const nearTop = y < this._threshold;
+    const y = this.currentScrollY();
 
-    if (nearTop) this._hidden.set(false);
-    else this._hidden.set(goingDown);
+    if (this.mobileOpen || this.searchOpen()) {
+      this._hidden.set(false);
+      this.lastScrollY = y;
+      return;
+    }
 
-    this._lastY = y;
+    const maxScroll = this.maxScrollableY();
+    if (maxScroll < this.minScrollableForAutoHidePx) {
+      this._hidden.set(false);
+      this.lastScrollY = y;
+      return;
+    }
+
+    const hideStartY = Math.floor(maxScroll * this.hideAfterScrollRatio);
+    if (y <= hideStartY) {
+      this._hidden.set(false);
+      this.lastScrollY = y;
+      return;
+    }
+
+    const delta = y - this.lastScrollY;
+    if (Math.abs(delta) < this.directionDeltaPx) return;
+
+    this._hidden.set(delta > 0);
+    this.lastScrollY = y;
   }
 
   toggleMenu() {
     this.mobileOpen = !this.mobileOpen;
+    if (this.mobileOpen) {
+      this._hidden.set(false);
+    }
     this.lockBodyScroll(this.mobileOpen);
   }
 
@@ -412,7 +438,7 @@ export class Navbar implements OnInit, OnDestroy {
     const root = document.documentElement;
 
     if (lock) {
-      this.bodyScrollTop = window.scrollY || root.scrollTop || 0;
+      this.bodyScrollTop = this.currentScrollY();
       body.style.position = 'fixed';
       body.style.top = `-${this.bodyScrollTop}px`;
       body.style.left = '0';
@@ -443,10 +469,27 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   private resetTransientUiForNavigation(): void {
+    this._hidden.set(false);
     this.mobileOpen = false;
     this.closeSub();
     this.closeSearch();
     this.lockBodyScroll(false, { restoreScroll: false });
+  }
+
+  private currentScrollY(): number {
+    const scroller = document.scrollingElement as HTMLElement | null;
+    if (scroller) return scroller.scrollTop;
+    return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+  }
+
+  private maxScrollableY(): number {
+    const scroller = document.scrollingElement as HTMLElement | null;
+    if (scroller) {
+      return Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+    }
+
+    const root = document.documentElement;
+    return Math.max(0, root.scrollHeight - root.clientHeight);
   }
 }
 

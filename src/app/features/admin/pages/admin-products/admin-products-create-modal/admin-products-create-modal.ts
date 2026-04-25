@@ -27,9 +27,9 @@ import {
 type SelectOption = { id: string; value: string };
 
 const CATEGORY_IDS = {
-  BRAND: '3dc7d5bd-6761-4e87-878c-4b92604d1d6f', // BREND
-  CATEGORY: 'f66e4dcb-76af-487d-b7d3-a4b5205e86a3', // KATEGORIJA
-  GENDER: '7ee59a5d-afe1-4d70-a7ba-2f1f1aff6262', // POL
+  BRAND: '6097b54c-67a9-49ee-8d17-e407c59a79f8', // BREND
+  CATEGORY: '747da3d4-fd91-464a-9f7c-151f0aed7226', // KATEGORIJA
+  GENDER: '1577b656-702f-476e-a1d9-828aea623a3f', // POL
 } as const;
 
 type DropdownKey = 'brand' | 'category' | 'gender';

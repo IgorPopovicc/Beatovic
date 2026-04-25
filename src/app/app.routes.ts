@@ -177,7 +177,6 @@ export const routes: Routes = [
       },
     },
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'panel' },
       {
         path: 'panel',
         loadComponent: () =>

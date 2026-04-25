@@ -9,10 +9,20 @@
   display: flex;
   align-items: center;
   z-index: 1000;
-  transition: transform 0.2s ease-in-out;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+  will-change: opacity;
 }
+
 .nav-wrap.nav-hidden {
-  transform: translateY(-100%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background: transparent;
+  border-color: transparent;
 }
 
 .nav-inner {

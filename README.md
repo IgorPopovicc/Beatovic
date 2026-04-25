@@ -43,7 +43,7 @@ In your Vercel Project Settings, set:
 
 Build Command: npm run vercel-build
 
-Output Directory: dist/Beatovic/browser
+Output Directory: (leave empty for SSR)
 
 Install Command: npm install
 
