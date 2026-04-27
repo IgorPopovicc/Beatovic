@@ -21,7 +21,7 @@ export class HomeBenefitsStrip {
     {
       icon: 'local_shipping',
       title: 'Brza isporuka',
-      description: 'Slanje porudžbina širom BiH u kratkom roku.',
+      description: 'Slanje narudžbi širom BiH u kratkom roku.',
     },
     {
       icon: 'sync_alt',
@@ -33,12 +33,12 @@ export class HomeBenefitsStrip {
     {
       icon: 'verified_user',
       title: 'Sigurna kupovina',
-      description: 'Zaštićeno plaćanje i sigurna obrada podataka o porudžbini.',
+      description: 'Zaštićeno plaćanje i sigurna obrada podataka o narudžbi.',
     },
     {
       icon: 'support_agent',
       title: 'Podrška kupcima',
-      description: 'Tim podrške je dostupan za pomoć oko izbora i narudžbine.',
+      description: 'Tim podrške je dostupan za pomoć oko izbora i narudžbi.',
       link: ['/brands'],
     },
   ];

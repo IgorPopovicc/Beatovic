@@ -1,6 +1,7 @@
 // src/app/core/cart/cart.store.ts
 import { Injectable, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { APP_CURRENCY_CODE, normalizeCurrencyCode } from '../../shared/utils/currency';
 
 export interface CartMoney {
   amount: number;
@@ -66,14 +67,14 @@ export class CartStore {
 
   subtotal = computed(() => {
     const items = this._items();
-    if (!items.length) return { amount: 0, currency: 'KM' } as CartMoney;
+    if (!items.length) return { amount: 0, currency: APP_CURRENCY_CODE } as CartMoney;
 
-    const currency = items[0].unitPrice.currency ?? 'KM';
+    const currency = normalizeCurrencyCode(items[0].unitPrice.currency);
     const amount = items.reduce((sum, i) => sum + i.unitPrice.amount * i.qty, 0);
     return { amount, currency };
   });
 
-  freeShippingThreshold = signal<CartMoney>({ amount: 99.99, currency: 'KM' });
+  freeShippingThreshold = signal<CartMoney>({ amount: 99.99, currency: APP_CURRENCY_CODE });
 
   amountToFreeShipping = computed(() => {
     const t = this.freeShippingThreshold();
@@ -161,7 +162,14 @@ export class CartStore {
       if (!Array.isArray(parsed)) return [];
       return parsed
         .filter((x) => x && typeof x.id === 'string')
-        .map((x) => ({ ...x, qty: Math.max(1, Number(x.qty || 1)) }));
+        .map((x) => ({
+          ...x,
+          unitPrice: {
+            ...x.unitPrice,
+            currency: normalizeCurrencyCode(x.unitPrice?.currency),
+          },
+          qty: Math.max(1, Number(x.qty || 1)),
+        }));
     } catch {
       return [];
     }

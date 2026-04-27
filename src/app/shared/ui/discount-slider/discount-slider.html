@@ -10,6 +10,12 @@
     <div class="state error" role="alert">{{ error() }}</div>
   } @else if (loading()) {
     <div class="state loading" role="status" aria-live="polite">Učitavanje proizvoda na popustu...</div>
+  } @else if (!hasProducts()) {
+    <div class="empty-sale" role="status" aria-live="polite">
+      <h3>Trenutno nema proizvoda na akciji.</h3>
+      <p>Pogledajte našu kompletnu ponudu i pronađite proizvode koji vam odgovaraju.</p>
+      <a class="empty-link" [routerLink]="['/catalog', 'muskarci', 'obuca']">Otvori katalog</a>
+    </div>
   } @else {
     <div class="discount-row" role="list">
       @for (p of visibleProducts(); track p.id) {

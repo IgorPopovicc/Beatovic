@@ -3,6 +3,7 @@ import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { SeoService } from './seo.service';
 import { ProductDetailsResolved } from '../../features/product-details/product-details.resolver';
+import { normalizeCurrencyCode } from '../../shared/utils/currency';
 
 type RouteSeoData = {
   title: string;
@@ -86,25 +87,41 @@ export class RouteSeoService {
       return;
     }
 
-    const description = product.seoDescription;
-    const image = product.seoImage?.url ?? null;
-    const imageAlt = product.seoImage?.alt ?? product.name;
+    const description = (product.seoDescription || product.shortDescription || product.name).trim();
+    const primaryImage = product.gallery?.[0] ?? null;
+    const imageCandidate =
+      product.seoImage?.url ?? primaryImage?.desktop ?? primaryImage?.mobile ?? null;
+    const isProductPlaceholder =
+      String(imageCandidate ?? '')
+        .toLowerCase()
+        .includes('/assets/images/products/test.webp') ||
+      String(imageCandidate ?? '')
+        .toLowerCase()
+        .includes('assets/images/products/test.webp');
+    const absoluteImage =
+      imageCandidate && !isProductPlaceholder ? this.seo.absoluteUrl(imageCandidate) : null;
+    const imageAlt = (product.seoImage?.alt || primaryImage?.alt || product.name).trim();
 
     this.seo.setPage({
       title: `${product.name} | Planeta`,
       description,
       path,
       ogType: 'product',
-      image,
+      image: absoluteImage,
       imageAlt,
+      imageWidth: Number(primaryImage?.w ?? 0) || null,
+      imageHeight: Number(primaryImage?.h ?? 0) || null,
     });
 
     this.seo.setStructuredData({
       '@context': 'https://schema.org',
       '@type': 'Product',
+      url: this.seo.absoluteUrl(path),
       name: product.name,
       description,
-      image: image ? [image] : [this.seo.absoluteUrl('/assets/images/logo/planets_main_logo.png')],
+      image: absoluteImage
+        ? [absoluteImage]
+        : [this.seo.absoluteUrl('/assets/images/logo/planets_main_logo.png')],
       sku: product.sku ?? product.id,
       brand: {
         '@type': 'Brand',
@@ -112,7 +129,7 @@ export class RouteSeoService {
       },
       offers: {
         '@type': 'Offer',
-        priceCurrency: product.currency || 'RSD',
+        priceCurrency: normalizeCurrencyCode(product.currency),
         price: Number(product.price || 0).toFixed(2),
         availability: product.inStock
           ? 'https://schema.org/InStock'

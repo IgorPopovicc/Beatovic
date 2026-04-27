@@ -59,7 +59,7 @@ export class AdminDiscountUpsertModal {
 
   readonly typeOptions = signal<SelectOption<DiscountType>[]>([
     { id: 'PERCENTAGE', label: 'PERCENTAGE (%)' },
-    { id: 'FIXED_AMOUNT', label: 'FIXED_AMOUNT (RSD)' },
+    { id: 'FIXED_AMOUNT', label: 'FIXED_AMOUNT (KM)' },
   ]);
 
   // dropdown state

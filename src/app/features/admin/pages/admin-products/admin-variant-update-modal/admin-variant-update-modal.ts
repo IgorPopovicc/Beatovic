@@ -511,7 +511,7 @@ export class AdminVariantUpdateModal {
   }
 
   discountLabel(d: DiscountDTO): string {
-    const value = d.type === 'PERCENTAGE' ? `${Number(d.value)}%` : `${Number(d.value)} RSD`;
+    const value = d.type === 'PERCENTAGE' ? `${Number(d.value)}%` : `${Number(d.value)} KM`;
     const s = this.formatDateTime(d.startDate);
     const e = this.formatDateTime(d.endDate);
     return `${value} — ${d.description} (${s} → ${e})`;
@@ -520,7 +520,7 @@ export class AdminVariantUpdateModal {
   formatDateTime(iso: string): string {
     if (!iso) return '-';
     try {
-      return new Intl.DateTimeFormat('sr-RS', {
+      return new Intl.DateTimeFormat('bs-BA', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',

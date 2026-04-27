@@ -1,10 +1,22 @@
-import { Component, computed, effect, HostListener, inject, signal } from '@angular/core';
-import { CommonModule, DecimalPipe, NgOptimizedImage } from '@angular/common';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  HostListener,
+  inject,
+  OnDestroy,
+  PLATFORM_ID,
+  signal,
+} from '@angular/core';
+import { CommonModule, DecimalPipe, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProductDetailsModel } from '../../shared/data/products.mock';
 import { CartStore } from '../../core/cart/cart.store';
 import { ProductDetailsResolved } from './product-details.resolver';
+import { currencyDisplayLabel, normalizeCurrencyCode } from '../../shared/utils/currency';
 
 @Component({
   selector: 'app-product-details',
@@ -13,13 +25,17 @@ import { ProductDetailsResolved } from './product-details.resolver';
   templateUrl: './product-details.html',
   styleUrl: './product-details.scss',
 })
-export class ProductDetails {
+export class ProductDetails implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly cart = inject(CartStore);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
+  private shareNoticeTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly loading = signal(true);
   readonly notFound = signal(false);
   readonly product = signal<ProductDetailsModel | null>(null);
+  readonly shareNotice = signal<{ kind: 'success' | 'error'; text: string } | null>(null);
 
   readonly activeIndex = signal(0);
   readonly selectedSize = signal<string | null>(null);
@@ -71,9 +87,41 @@ export class ProductDetails {
     return Number(this.sizeQtyMap()[key] ?? 0);
   };
 
+  readonly hasSizeOptions = computed(() => (this.product()?.sizes?.length ?? 0) > 0);
+
+  readonly selectedSizeOutOfStock = computed(() => {
+    const selected = this.selectedSize();
+    if (!selected) return false;
+    return this.sizeQty(selected) <= 0;
+  });
+
+  readonly canAddToCart = computed(() => {
+    const p = this.product();
+    if (!p) return false;
+
+    const hasSizes = this.hasSizeOptions();
+    const selected = this.selectedSize();
+
+    if (hasSizes && !selected) return false;
+    if (!this.inStockUi()) return false;
+
+    if (hasSizes) {
+      const sizeValue = String(selected ?? '');
+      if (this.sizeQty(sizeValue) <= 0) return false;
+      if (!this.sizeAttrElementIdMap()[sizeValue]) return false;
+    }
+
+    return true;
+  });
+
+  readonly sizeIsOutOfStock = (size: string | number) => {
+    return this.sizeQty(size) <= 0;
+  };
+
   constructor() {
     this.route.data
       .pipe(map((data) => (data['product'] as ProductDetailsResolved | null) ?? null))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((resolved) => this.applyResolvedProduct(resolved));
 
     effect(() => {
@@ -85,6 +133,12 @@ export class ProductDetails {
         this.selectedSize.set(null);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.shareNoticeTimer) {
+      clearTimeout(this.shareNoticeTimer);
+    }
   }
 
   private applyResolvedProduct(resolved: ProductDetailsResolved | null): void {
@@ -145,17 +199,18 @@ export class ProductDetails {
   addToCart(): void {
     const p = this.product();
     if (!p) return;
+    if (!this.canAddToCart()) return;
 
     const selected = this.selectedSize();
-    const hasSizes = (p.sizes?.length ?? 0) > 0;
+    const hasSizes = this.hasSizeOptions();
     if (hasSizes && !selected) return;
-    if (!this.inStockUi()) return;
 
-    const sizeValue = hasSizes ? String(selected) : '';
+    const sizeValue = hasSizes ? (selected ?? '') : '';
     const sizeAttrElementId = hasSizes ? this.sizeAttrElementIdMap()[sizeValue] : '';
 
     if (hasSizes) {
       const qty = Number(this.sizeQtyMap()[sizeValue] ?? 0);
+      // Defensive guard in case button state is bypassed manually.
       if (qty <= 0) return;
       if (!sizeAttrElementId) return;
     }
@@ -172,10 +227,55 @@ export class ProductDetails {
       image: image ? { url: image, alt: p.name } : null,
       unitPrice: {
         amount: Number(p.price ?? 0),
-        currency: p.currency || 'RSD',
+        currency: normalizeCurrencyCode(p.currency),
       },
       qty: 1,
     });
+  }
+
+  currencyLabel(currency: unknown): string {
+    return currencyDisplayLabel(currency);
+  }
+
+  async shareProduct(): Promise<void> {
+    const p = this.product();
+    if (!p || !isPlatformBrowser(this.platformId)) return;
+
+    const url = window.location.href;
+    const shareData: ShareData = {
+      title: p.name,
+      text: p.shortDescription || p.name,
+      url,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        this.showShareNotice('success', 'Proizvod je spreman za dijeljenje.');
+        return;
+      }
+
+      await navigator.clipboard.writeText(url);
+      this.showShareNotice('success', 'Link proizvoda je kopiran.');
+    } catch (error) {
+      if ((error as DOMException)?.name === 'AbortError') return;
+
+      try {
+        await navigator.clipboard.writeText(url);
+        this.showShareNotice('success', 'Link proizvoda je kopiran.');
+      } catch {
+        this.showShareNotice('error', 'Link nije moguće kopirati. Pokušajte ponovo.');
+      }
+    }
+  }
+
+  private showShareNotice(kind: 'success' | 'error', text: string): void {
+    if (this.shareNoticeTimer) {
+      clearTimeout(this.shareNoticeTimer);
+    }
+
+    this.shareNotice.set({ kind, text });
+    this.shareNoticeTimer = setTimeout(() => this.shareNotice.set(null), 3200);
   }
 
   private touchStartX = 0;

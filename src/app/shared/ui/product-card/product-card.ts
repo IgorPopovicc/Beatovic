@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { DecimalPipe, NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { currencyDisplayLabel } from '../../utils/currency';
 
 export interface ProductImage {
   desktop: string;
@@ -61,6 +62,10 @@ export class ProductCardComponent {
     if (!this.hasDiscount) return null;
     const pct = Math.round((1 - p.price / (p.oldPrice as number)) * 100);
     return `${pct}%`;
+  }
+
+  get currencyLabel(): string {
+    return currencyDisplayLabel(this.product.currency);
   }
 
   get imageSizes(): string {

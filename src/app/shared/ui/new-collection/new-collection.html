@@ -23,37 +23,49 @@
     <div class="overlay"></div>
   </div>
 
-  <div class="content">
-    <div class="panel left">
-      <h2 id="running-collection-title">Nova kolekcija trčanja</h2>
-      <p>Lagane, prozračne tkanine i poboljšana podrška.</p>
-      <a class="btn" [routerLink]="['/catalog', 'muskarci', 'obuca']" [queryParams]="{ q: 'running' }">
-        Istraži novu kolekciju
-      </a>
-    </div>
+  <div class="content-shell">
+    <div class="content">
+      <div class="panel left">
+        <span class="eyebrow">Running izbor</span>
+        <h2 id="running-collection-title">Nova kolekcija trčanja</h2>
+        <p>
+          Lagani modeli za duže distance i svakodnevni tempo. Dizajnirani za stabilnost, odziv i
+          udobnost kroz cijeli dan.
+        </p>
+        <a
+          class="btn"
+          [routerLink]="['/catalog', 'muskarci', 'obuca']"
+          [queryParams]="{ q: 'running' }"
+        >
+          Istraži novu kolekciju
+        </a>
+      </div>
 
-    <div class="panel right">
-      <section class="featured-products" aria-label="Izdvojeni modeli">
-        <div class="featured-head">
-          <h3>2 modela koja trkači vole</h3>
-        </div>
-
-        @if (error()) {
-          <div class="state error" role="alert">{{ error() }}</div>
-        } @else if (loading()) {
-          <div class="state loading" role="status" aria-live="polite">Učitavanje modela...</div>
-        } @else {
-          <div class="product-grid">
-            @for (p of products(); track p.id) {
-              <div class="product-shell">
-                <app-product-card [product]="p" variant="home"></app-product-card>
-              </div>
-            } @empty {
-              <div class="state empty">Nema proizvoda.</div>
-            }
+      <div class="panel right">
+        <section class="featured-products" aria-label="Izdvojeni modeli">
+          <div class="featured-head">
+            <span class="featured-label">Preporuka sedmice</span>
+            <h3>2 modela koja trkači najviše biraju</h3>
+            <p>Odabrani modeli sa fokusom na podršku, amortizaciju i prozračnost.</p>
           </div>
-        }
-      </section>
+
+          @if (error()) {
+            <div class="state error" role="alert">{{ error() }}</div>
+          } @else if (loading()) {
+            <div class="state loading" role="status" aria-live="polite">Učitavanje modela...</div>
+          } @else {
+            <div class="product-grid">
+              @for (p of products(); track p.id) {
+                <div class="product-shell">
+                  <app-product-card [product]="p" variant="home"></app-product-card>
+                </div>
+              } @empty {
+                <div class="state empty">Nema proizvoda.</div>
+              }
+            </div>
+          }
+        </section>
+      </div>
     </div>
   </div>
 </section>

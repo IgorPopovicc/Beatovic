@@ -1,5 +1,6 @@
 import { environment } from '../../../../environments/environment';
 import { Variant } from '../../../core/api/catalog.models';
+import { normalizeCurrencyCode } from '../../utils/currency';
 import { ProductCard } from './product-card';
 
 const IMAGE_FALLBACK = 'assets/images/products/test.webp';
@@ -92,7 +93,7 @@ export function mapVariantToProductCard(v: Variant, options?: { priority?: boole
     subtitle: normalize(v.productSku) || undefined,
     price: finalPrice,
     oldPrice: hasDiscount ? originalPrice : null,
-    currency: 'RSD',
+    currency: normalizeCurrencyCode((v as any).currency),
     discountLabel: undefined,
     image: {
       desktop: imageUrl,

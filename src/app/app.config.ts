@@ -1,5 +1,7 @@
 import {
   ApplicationConfig,
+  DEFAULT_CURRENCY_CODE,
+  LOCALE_ID,
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
@@ -10,13 +12,20 @@ import {
   withHttpTransferCacheOptions,
 } from '@angular/platform-browser';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { registerLocaleData } from '@angular/common';
+import localeBs from '@angular/common/locales/bs';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { backendFallbackInterceptor } from './core/system/backend-fallback.interceptor';
+import { APP_CURRENCY_CODE, APP_LOCALE } from './shared/utils/currency';
+
+registerLocaleData(localeBs);
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: LOCALE_ID, useValue: APP_LOCALE },
+    { provide: DEFAULT_CURRENCY_CODE, useValue: APP_CURRENCY_CODE },
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(

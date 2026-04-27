@@ -46,7 +46,7 @@ export class HomePage implements OnInit {
           url: homeUrl,
           potentialAction: {
             '@type': 'SearchAction',
-            target: `${this.seo.absoluteUrl('/catalog/muskarci/obuca')}?q={search_term_string}`,
+            target: `${this.seo.absoluteUrl('/products')}?search={search_term_string}`,
             'query-input': 'required name=search_term_string',
           },
         },

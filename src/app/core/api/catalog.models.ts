@@ -55,6 +55,7 @@ export interface Variant {
   sku?: string;
   originalPrice?: number;
   finalPrice?: number;
+  currency?: string;
   discountPrice?: number;
   quantity?: number;
   mainImageName?: string;

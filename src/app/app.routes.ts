@@ -19,6 +19,18 @@ export const routes: Routes = [
   },
   { path: 'catalog', redirectTo: 'catalog/muskarci/obuca', pathMatch: 'full' },
   {
+    path: 'products',
+    loadComponent: () => import('./features/products/products').then((m) => m.Products),
+    data: {
+      structuredDataManaged: true,
+      seo: {
+        title: 'Proizvodi | Planeta',
+        description: 'Pregled svih proizvoda i filtera u Planeta webshopu.',
+      },
+    },
+  },
+  { path: 'products/:gender/:category', redirectTo: 'catalog/:gender/:category' },
+  {
     path: 'catalog/:gender/:category',
     loadComponent: () => import('./features/products/products').then((m) => m.Products),
     data: {
@@ -72,7 +84,7 @@ export const routes: Routes = [
     data: {
       seo: {
         title: 'Naplata | Planeta',
-        description: 'Unesite podatke za porudžbinu i završite kupovinu.',
+        description: 'Unesite podatke za narudžbu i završite kupovinu.',
         noindex: true,
       },
     },
@@ -83,8 +95,8 @@ export const routes: Routes = [
       import('./features/order-result/order-result').then((m) => m.OrderResultComponent),
     data: {
       seo: {
-        title: 'Status porudžbine | Planeta',
-        description: 'Status vaše porudžbine.',
+        title: 'Status narudžbe | Planeta',
+        description: 'Status vaše narudžbe.',
         noindex: true,
       },
     },
@@ -125,8 +137,8 @@ export const routes: Routes = [
       ),
     data: {
       seo: {
-        title: 'Potvrda porudžbine | Planeta',
-        description: 'Status potvrde porudžbine putem email-a.',
+        title: 'Potvrda narudžbe | Planeta',
+        description: 'Status potvrde narudžbe putem email-a.',
         noindex: true,
       },
     },
@@ -139,8 +151,8 @@ export const routes: Routes = [
       ),
     data: {
       seo: {
-        title: 'Potvrda porudžbine | Planeta',
-        description: 'Status potvrde porudžbine putem email-a.',
+        title: 'Potvrda narudžbe | Planeta',
+        description: 'Status potvrde narudžbe putem email-a.',
         noindex: true,
       },
     },
@@ -211,8 +223,8 @@ export const routes: Routes = [
           import('./features/admin/pages/admin-orders/admin-orders').then((m) => m.AdminOrders),
         data: {
           seo: {
-            title: 'Admin Narudžbine | Planeta',
-            description: 'Upravljanje narudžbinama.',
+            title: 'Admin Narudžbe | Planeta',
+            description: 'Upravljanje narudžbama.',
             noindex: true,
           },
         },

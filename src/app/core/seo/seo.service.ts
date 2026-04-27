@@ -44,7 +44,7 @@ export class SeoService {
     this.updateMetaByProperty('og:title', pageTitle);
     this.updateMetaByProperty('og:description', description);
     this.updateMetaByProperty('og:url', canonical);
-    this.updateMetaByProperty('og:locale', 'sr_BA');
+    this.updateMetaByProperty('og:locale', 'bs_BA');
 
     this.updateMetaByName('twitter:card', 'summary_large_image');
     this.updateMetaByName('twitter:title', pageTitle);

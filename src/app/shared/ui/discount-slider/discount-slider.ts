@@ -21,6 +21,7 @@ export class DiscountSlider {
   readonly products = signal<ProductCard[]>([]);
 
   readonly visibleProducts = computed(() => this.products().slice(0, 6));
+  readonly hasProducts = computed(() => this.visibleProducts().length > 0);
 
   constructor() {
     this.loadDiscountedProducts();

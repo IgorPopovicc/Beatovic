@@ -50,6 +50,44 @@
   color: #a10f18;
 }
 
+.empty-sale {
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  background: #fff;
+  padding: clamp(18px, 3vw, 28px);
+  display: grid;
+  gap: 8px;
+  min-height: 150px;
+  align-content: center;
+}
+
+.empty-sale h3 {
+  margin: 0;
+  color: #111;
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  font-weight: 900;
+}
+
+.empty-sale p {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.68);
+  line-height: 1.5;
+  font-weight: 600;
+  max-width: 62ch;
+}
+
+.empty-link {
+  width: fit-content;
+  margin-top: 8px;
+  color: #b91c1c;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.empty-link:hover {
+  text-decoration: underline;
+}
+
 .discount-row {
   display: flex;
   align-items: stretch;

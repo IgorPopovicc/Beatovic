@@ -5,7 +5,7 @@
         >← Nazad</a
       >
       <h1>Naplata</h1>
-      <p class="muted">Popuni podatke za isporuku i potvrdi porudžbinu.</p>
+      <p class="muted">Popuni podatke za isporuku i potvrdi narudžbu.</p>
     </div>
 
     <div class="right">
@@ -29,7 +29,7 @@
     </div>
   } @else {
     <div class="co-grid">
-      <section class="card form-card" aria-label="Podaci za porudžbinu">
+      <section class="card form-card" aria-label="Podaci za narudžbu">
         <div class="card-head">
           <div class="title">Podaci kupca</div>
           <div class="hint">Sva polja su obavezna.</div>
@@ -46,7 +46,7 @@
               <input
                 type="text"
                 formControlName="fullName"
-                placeholder="npr. Petar Petrović"
+                placeholder="npr. Amar Hadžić"
                 autocomplete="name"
               />
               @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
@@ -74,7 +74,7 @@
               <input
                 type="tel"
                 formControlName="phoneNumber"
-                placeholder="+381601234567"
+                placeholder="+387 61 123 456"
                 autocomplete="tel"
               />
               @if (form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid) {
@@ -83,15 +83,15 @@
             </div>
 
             <div class="field">
-              <label>Opština</label>
+              <label>Općina</label>
               <input
                 type="text"
                 formControlName="municipality"
-                placeholder="npr. Vračar"
+                placeholder="npr. Centar Sarajevo"
                 autocomplete="address-level2"
               />
               @if (form.controls.municipality.touched && form.controls.municipality.invalid) {
-                <div class="err">Opština je obavezna.</div>
+                <div class="err">Općina je obavezna.</div>
               }
             </div>
           </div>
@@ -115,7 +115,7 @@
               <input
                 type="text"
                 formControlName="postalCode"
-                placeholder="11000"
+                placeholder="71000"
                 autocomplete="postal-code"
               />
               @if (form.controls.postalCode.touched && form.controls.postalCode.invalid) {
@@ -127,7 +127,7 @@
           <div class="row2">
             <div class="field">
               <label>Kupon</label>
-              <input type="text" formControlName="couponCode" placeholder="npr. 1000DINPOPUST" />
+              <input type="text" formControlName="couponCode" placeholder="npr. 10KMPOPUST" />
               @if (form.controls.couponCode.touched && form.controls.couponCode.invalid) {
                 <div class="err">Kupon je obavezan.</div>
               }
@@ -135,7 +135,7 @@
 
             <div class="field">
               <label>Napomena</label>
-              <input type="text" formControlName="description" placeholder="npr. Da dođe što pre" />
+              <input type="text" formControlName="description" placeholder="npr. Dostaviti poslije 17h" />
               @if (form.controls.description.touched && form.controls.description.invalid) {
                 <div class="err">Napomena je obavezna.</div>
               }
@@ -158,12 +158,12 @@
           </div>
 
           <div class="micro muted">
-            Klikom na “Poruči” potvrđuješ da su podaci tačni. Detalji porudžbine stižu na e-mail.
+            Klikom na “Poruči” potvrđuješ da su podaci tačni. Detalji narudžbe stižu na e-mail.
           </div>
         </form>
       </section>
 
-      <aside class="card sum-card" aria-label="Pregled porudžbine">
+      <aside class="card sum-card" aria-label="Pregled narudžbe">
         <div class="card-head">
           <div class="title">Pregled</div>
           <div class="pill">{{ count() }} stavki</div>
@@ -192,7 +192,8 @@
 
               <div class="sum-right">
                 <div class="price">
-                  {{ it.unitPrice.amount * it.qty | number: '1.2-2' }} {{ it.unitPrice.currency }}
+                  {{ it.unitPrice.amount * it.qty | number: '1.2-2' }}
+                  {{ currencyLabel(it.unitPrice.currency) }}
                 </div>
               </div>
             </div>
@@ -205,19 +206,21 @@
           <div class="trow">
             <div class="muted">Međuzbir</div>
             <div class="val">
-              {{ subtotal().amount | number: '1.2-2' }} {{ subtotal().currency }}
+              {{ subtotal().amount | number: '1.2-2' }} {{ currencyLabel(subtotal().currency) }}
             </div>
           </div>
 
           <div class="trow big">
             <div>Ukupno</div>
-            <div class="val">{{ total().amount | number: '1.2-2' }} {{ total().currency }}</div>
+            <div class="val">
+              {{ total().amount | number: '1.2-2' }} {{ currencyLabel(total().currency) }}
+            </div>
           </div>
         </div>
 
         <div class="note">
           <div class="ico" aria-hidden="true">📧</div>
-          <div class="txt">Nakon poručivanja, provjeri e-mail za detalje porudžbine.</div>
+          <div class="txt">Nakon poručivanja, provjeri e-mail za detalje narudžbe.</div>
         </div>
       </aside>
     </div>

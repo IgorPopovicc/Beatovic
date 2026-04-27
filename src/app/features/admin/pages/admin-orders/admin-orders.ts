@@ -134,8 +134,8 @@ export class AdminOrders implements OnDestroy {
   });
 
   readonly confirmTitle = computed(() => {
-    if (this.confirmAction() === 'cancel') return 'Otkaži narudžbinu';
-    return 'Odobri narudžbinu';
+    if (this.confirmAction() === 'cancel') return 'Otkaži narudžbu';
+    return 'Odobri narudžbu';
   });
 
   readonly confirmMessage = computed(() => {
@@ -143,10 +143,10 @@ export class AdminOrders implements OnDestroy {
     if (!order) return '';
 
     if (this.confirmAction() === 'cancel') {
-      return `Da li ste sigurni da želite da otkažete narudžbinu ${order.orderId}?`;
+      return `Jeste li sigurni da želite otkazati narudžbu ${order.orderId}?`;
     }
 
-    return `Da li ste sigurni da želite da odobrite narudžbinu ${order.orderId}?`;
+    return `Jeste li sigurni da želite odobriti narudžbu ${order.orderId}?`;
   });
 
   readonly confirmButtonText = computed(() => {
@@ -262,7 +262,7 @@ export class AdminOrders implements OnDestroy {
   }
 
   formatPrice(v: number): string {
-    return new Intl.NumberFormat('sr-RS', {
+    return new Intl.NumberFormat('bs-BA', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(v);
@@ -298,8 +298,8 @@ export class AdminOrders implements OnDestroy {
         tap(() => {
           const successMsg =
             action === 'complete'
-              ? 'Narudžbina je uspješno odobrena.'
-              : 'Narudžbina je uspješno otkazana.';
+              ? 'Narudžba je uspješno odobrena.'
+              : 'Narudžba je uspješno otkazana.';
 
           this.showNotice('success', successMsg);
           this.refreshOrders();
@@ -412,8 +412,8 @@ export class AdminOrders implements OnDestroy {
     }
 
     return action === 'complete'
-      ? 'Greška pri odobravanju narudžbine. Pokušajte ponovo.'
-      : 'Greška pri otkazivanju narudžbine. Pokušajte ponovo.';
+      ? 'Greška pri odobravanju narudžbe. Pokušajte ponovo.'
+      : 'Greška pri otkazivanju narudžbe. Pokušajte ponovo.';
   }
 
   private statusFromError(err: unknown): number | null {

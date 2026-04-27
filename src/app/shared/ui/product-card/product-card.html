@@ -44,12 +44,12 @@
       <div class="price-row" [class.price-row--discounted]="hasDiscount">
         @if (hasDiscount) {
           <span class="old-price">
-            {{ product.oldPrice! | number: '1.0-0' }} {{ product.currency || 'RSD' }}
+            {{ product.oldPrice! | number: '1.0-0' }} {{ currencyLabel }}
           </span>
         }
 
         <span class="price">
-          {{ product.price | number: '1.0-0' }} {{ product.currency || 'RSD' }}
+          {{ product.price | number: '1.0-0' }} {{ currencyLabel }}
         </span>
 
         @if (variant === 'home' && hasDiscount && percentOff) {

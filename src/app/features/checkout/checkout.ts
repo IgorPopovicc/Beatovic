@@ -9,6 +9,7 @@ import { finalize, takeUntil } from 'rxjs/operators';
 import { CartStore } from '../../core/cart/cart.store';
 import { UnregisteredOrderRequest } from '../../core/admin-api/admin-orders.models';
 import { AdminOrdersApi } from '../../core/admin-api/admin-prders-api';
+import { currencyDisplayLabel } from '../../shared/utils/currency';
 
 @Component({
   selector: 'app-checkout',
@@ -48,6 +49,10 @@ export class CheckoutComponent implements OnDestroy {
   });
 
   total = computed(() => this.subtotal());
+
+  currencyLabel(currency: unknown): string {
+    return currencyDisplayLabel(currency);
+  }
 
   canSubmit = computed(() => {
     return this.count() > 0 && this.formStatus() === 'VALID' && !this.submitting();
@@ -137,7 +142,7 @@ export class CheckoutComponent implements OnDestroy {
           });
         },
         error: (_err) => {
-          const userMsg = 'Trenutno nismo uspjeli poslati porudžbinu. Molimo pokušajte ponovo.';
+          const userMsg = 'Trenutno nismo uspjeli poslati narudžbu. Molimo pokušajte ponovo.';
           this.errorMsg.set(userMsg);
 
           this.router.navigate(['/order-result'], {

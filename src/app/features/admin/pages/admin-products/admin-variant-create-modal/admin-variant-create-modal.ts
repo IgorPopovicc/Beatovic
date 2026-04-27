@@ -438,7 +438,7 @@ export class AdminVariantCreateModal {
 
   formatPrice(value: number | null | undefined): string {
     if (value === null || value === undefined) return '-';
-    return new Intl.NumberFormat('sr-RS', {
+    return new Intl.NumberFormat('bs-BA', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(Number(value));

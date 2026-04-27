@@ -32,7 +32,7 @@
       <div class="filters-body">
         <div class="filter-block">
           <div class="filter-title">Sekcija</div>
-          <div class="muted">{{ heading() }}</div>
+          <div class="muted">{{ sectionLabel() }}</div>
         </div>
 
         <div class="filter-block">
@@ -132,7 +132,7 @@
 
           <div class="muted">
             Raspon: {{ priceBounds().min | number: '1.0-0' }} –
-            {{ priceBounds().max | number: '1.0-0' }} RSD
+            {{ priceBounds().max | number: '1.0-0' }} KM
           </div>
         </div>
 
@@ -192,11 +192,16 @@
               <div class="empty-card">
                 <div class="empty-icon" aria-hidden="true">🛍️</div>
 
-                <div class="empty-title">Nema proizvoda</div>
-                <div class="empty-text">
-                  Trenutno nema proizvoda za izabrane filtere. Pokušaj da ukloniš neke filtere ili
-                  promijeniš sortiranje.
-                </div>
+                @if (isSearchMode()) {
+                  <div class="empty-title">Nema pronađenih proizvoda za “{{ searchTerm() }}”.</div>
+                  <div class="empty-text">Pokušajte sa drugim nazivom proizvoda.</div>
+                } @else {
+                  <div class="empty-title">Nema proizvoda</div>
+                  <div class="empty-text">
+                    Trenutno nema proizvoda za izabrane filtere. Pokušaj ukloniti neke filtere ili
+                    promijeniš sortiranje.
+                  </div>
+                }
 
                 <button type="button" class="btn ghost empty-cta" (click)="resetFilters(false)">
                   Očisti filtere
@@ -224,7 +229,7 @@
             (click)="goPage(page() + 1)"
             [disabled]="page() === totalPages()"
           >
-            Sledeća
+            Sljedeća
           </button>
         </div>
       }

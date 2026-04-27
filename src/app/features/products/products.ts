@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Subscription, combineLatest, of } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription, combineLatest, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { ProductsApiService } from '../../core/api/products-api.service';
@@ -27,6 +27,7 @@ type RouteContext = {
   genderSlug: string;
   categorySlug: string;
   searchQuery: string;
+  searchMode: boolean;
   forceSale: boolean;
   initialCategoryFilters: Record<string, string[]>;
 };
@@ -70,6 +71,7 @@ const DEFAULT_PAGE_SIZE = 24;
 })
 export class Products implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly catalogApi = inject(CatalogApiService);
   private readonly productsApi = inject(ProductsApiService);
   private readonly seo = inject(SeoService);
@@ -88,12 +90,32 @@ export class Products implements OnInit, OnDestroy {
   private readonly genderSlug = signal('');
   private readonly categorySlug = signal('');
 
+  searchTerm = computed(() => this.requestState()?.searchQuery?.trim() ?? '');
+  isSearchMode = computed(() => this.searchTerm().length > 0);
+  isAllProductsMode = computed(() => {
+    if (this.isSearchMode()) return false;
+    return !this.genderSlug() && !this.categorySlug();
+  });
+
   heading = computed(() => {
+    if (this.isSearchMode()) {
+      return `Rezultati pretrage za "${this.searchTerm()}"`;
+    }
+
+    if (this.isAllProductsMode()) {
+      return 'Svi proizvodi';
+    }
+
     const gender = this.genderSlug();
     const category = this.categorySlug();
     const g = gender ? toLabel(fromSlug(gender)) : '';
     const c = category ? toLabel(fromSlug(category)) : '';
     return [g, c].filter(Boolean).join(' / ');
+  });
+
+  sectionLabel = computed(() => {
+    if (this.isSearchMode() || this.isAllProductsMode()) return 'Sve kategorije';
+    return this.heading();
   });
 
   private readonly brandCategoryGroup = computed(() => {
@@ -177,68 +199,101 @@ export class Products implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    const polId$ = this.catalogApi.getCategoryIdByName('POL');
-    const katId$ = this.catalogApi.getCategoryIdByName('KATEGORIJA');
-
-    this.routeSub = combineLatest([polId$, katId$, this.route.paramMap, this.route.queryParamMap])
+    this.routeSub = combineLatest([this.route.paramMap, this.route.queryParamMap])
       .pipe(
-        switchMap(([polId, katId, params, queryParams]) => {
+        switchMap(([params, queryParams]) => {
           const genderSlug = params.get('gender') ?? '';
           const categorySlug = params.get('category') ?? '';
-          const searchQuery = (queryParams.get('q') ?? '').trim();
+          const searchQuery = (queryParams.get('search') ?? queryParams.get('q') ?? '').trim();
           const forceSale = this.queryParamToBool(queryParams.get('sale'));
 
           this.genderSlug.set(genderSlug);
           this.categorySlug.set(categorySlug);
 
-          if (!polId || !katId) {
+          if (searchQuery) {
             return of<RouteResolution>({
-              ok: false,
-              reason: 'catalog_unavailable',
-              message: 'Katalog trenutno nije dostupan.',
-              genderSlug,
-              categorySlug,
+              ok: true,
+              context: {
+                genderSlug,
+                categorySlug,
+                searchQuery,
+                searchMode: true,
+                forceSale,
+                initialCategoryFilters: {},
+              },
             });
           }
 
-          return combineLatest([
-            this.catalogApi.getCategoryValues(polId),
-            this.catalogApi.getCategoryValues(katId),
+          if (!genderSlug && !categorySlug) {
+            return of<RouteResolution>({
+              ok: true,
+              context: {
+                genderSlug,
+                categorySlug,
+                searchQuery: '',
+                searchMode: false,
+                forceSale,
+                initialCategoryFilters: {},
+              },
+            });
+          }
+
+          return forkJoin([
+            this.catalogApi.getCategoryIdByName('POL'),
+            this.catalogApi.getCategoryIdByName('KATEGORIJA'),
           ]).pipe(
-            map(([polValues, katValues]) => {
-              const genderApiValue = fromSlug(genderSlug);
-              const categoryApiValue = fromSlug(categorySlug);
-
-              const genderValue = polValues.find(
-                (v) => this.normalizeKey(v.value) === this.normalizeKey(genderApiValue),
-              );
-              const categoryValue = katValues.find(
-                (v) => this.normalizeKey(v.value) === this.normalizeKey(categoryApiValue),
-              );
-
-              if (!genderValue || !categoryValue) {
-                return {
+            switchMap(([polId, katId]) => {
+              if (!polId || !katId) {
+                return of<RouteResolution>({
                   ok: false,
-                  reason: 'category_not_found',
-                  message: 'Tražena kategorija nije pronađena.',
+                  reason: 'catalog_unavailable',
+                  message: 'Katalog trenutno nije dostupan.',
                   genderSlug,
                   categorySlug,
-                } satisfies RouteResolution;
+                });
               }
 
-              return {
-                ok: true,
-                context: {
-                  genderSlug,
-                  categorySlug,
-                  searchQuery,
-                  forceSale,
-                  initialCategoryFilters: {
-                    [polId]: [genderValue.id],
-                    [katId]: [categoryValue.id],
-                  },
-                },
-              } satisfies RouteResolution;
+              return combineLatest([
+                this.catalogApi.getCategoryValues(polId),
+                this.catalogApi.getCategoryValues(katId),
+              ]).pipe(
+                map(([polValues, katValues]) => {
+                  const genderApiValue = fromSlug(genderSlug);
+                  const categoryApiValue = fromSlug(categorySlug);
+
+                  const genderValue = polValues.find(
+                    (v) => this.normalizeKey(v.value) === this.normalizeKey(genderApiValue),
+                  );
+                  const categoryValue = katValues.find(
+                    (v) => this.normalizeKey(v.value) === this.normalizeKey(categoryApiValue),
+                  );
+
+                  if (!genderValue || !categoryValue) {
+                    return {
+                      ok: false,
+                      reason: 'category_not_found',
+                      message: 'Tražena kategorija nije pronađena.',
+                      genderSlug,
+                      categorySlug,
+                    } satisfies RouteResolution;
+                  }
+
+                  return {
+                    ok: true,
+                    context: {
+                      genderSlug,
+                      categorySlug,
+                      searchQuery,
+                      searchMode: false,
+                      forceSale,
+                      initialCategoryFilters: {
+                        [polId]: [genderValue.id],
+                        [katId]: [categoryValue.id],
+                      },
+                    },
+                  } satisfies RouteResolution;
+                }),
+              );
             }),
             catchError(() =>
               of<RouteResolution>({
@@ -262,7 +317,11 @@ export class Products implements OnInit, OnDestroy {
         this.response.set(null);
         this.currentContext.set(resolution.context);
         this.requestState.set(this.createDefaultRequestState(resolution.context));
-        this.applySeo(resolution.context.genderSlug, resolution.context.categorySlug);
+        if (resolution.context.searchMode) {
+          this.applySearchSeo(resolution.context.searchQuery);
+        } else {
+          this.applySeo(resolution.context.genderSlug, resolution.context.categorySlug);
+        }
         this.runSearch();
       });
   }
@@ -495,6 +554,18 @@ export class Products implements OnInit, OnDestroy {
   }
 
   private applySeo(genderSlug: string, categorySlug: string): void {
+    const path = this.currentPath();
+    if (!genderSlug && !categorySlug) {
+      this.seo.setPage({
+        title: 'Svi proizvodi | Planeta',
+        description:
+          'Pregled kompletne ponude uz filtere po brendu, veličini i cijeni u Planeta webshopu.',
+        path,
+        ogType: 'website',
+      });
+      return;
+    }
+
     const genderLabel = genderSlug ? toLabel(fromSlug(genderSlug)) : 'Proizvodi';
     const categoryLabel = categorySlug ? toLabel(fromSlug(categorySlug)) : '';
     const joined = [genderLabel, categoryLabel].filter(Boolean).join(' / ');
@@ -502,7 +573,18 @@ export class Products implements OnInit, OnDestroy {
     this.seo.setPage({
       title: `${joined} | Planeta`,
       description: `Pregled ponude za ${joined.toLowerCase()} uz filtere po veličini, brendu i cijeni.`,
-      path: `/catalog/${genderSlug}/${categorySlug}`,
+      path,
+      ogType: 'website',
+    });
+  }
+
+  private applySearchSeo(searchQuery: string): void {
+    const encoded = encodeURIComponent(searchQuery);
+    const path = this.currentPath();
+    this.seo.setPage({
+      title: `Rezultati pretrage za "${searchQuery}" | Planeta`,
+      description: `Pregled rezultata pretrage za "${searchQuery}" u Planeta webshopu.`,
+      path: `${path}?search=${encoded}`,
       ogType: 'website',
     });
   }
@@ -514,9 +596,9 @@ export class Products implements OnInit, OnDestroy {
       return;
     }
 
-    const gender = this.genderSlug();
-    const category = this.categorySlug();
-    const path = gender && category ? `/catalog/${gender}/${category}` : '/catalog';
+    const path = this.currentPath();
+    const search = this.searchTerm();
+    const withQuery = search ? `${path}?search=${encodeURIComponent(search)}` : path;
 
     const listItems = products.map((p, i) => ({
       '@type': 'ListItem',
@@ -529,12 +611,16 @@ export class Products implements OnInit, OnDestroy {
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
       name: this.heading() || 'Katalog',
-      url: this.seo.absoluteUrl(path),
+      url: this.seo.absoluteUrl(withQuery),
       mainEntity: {
         '@type': 'ItemList',
         itemListElement: listItems,
       },
     });
+  }
+
+  private currentPath(): string {
+    return this.router.url.split('?')[0] || '/catalog';
   }
 
   private selectedCategoryValueIds(groupId: string): Set<string> {

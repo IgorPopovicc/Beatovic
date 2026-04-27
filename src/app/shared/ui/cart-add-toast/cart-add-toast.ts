@@ -21,7 +21,7 @@ export class CartAddToastComponent implements OnDestroy {
 
   readonly rendered = signal(false);
   readonly visible = signal(false);
-  readonly title = signal('Proizvod je dodat u korpu');
+  readonly title = signal('Proizvod je dodan u korpu');
   readonly subtitle = signal<string | null>(null);
 
   constructor() {
@@ -46,7 +46,7 @@ export class CartAddToastComponent implements OnDestroy {
   }
 
   private open(productName: string, size: string | null): void {
-    this.title.set('Proizvod je dodat u korpu');
+    this.title.set('Proizvod je dodan u korpu');
     this.subtitle.set(this.buildSubtitle(productName, size));
     this.rendered.set(true);
     this.clearUnmountTimer();

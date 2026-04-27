@@ -33,10 +33,11 @@
           #searchInputInline
           type="text"
           class="search-input-inline"
-          placeholder="Pretražite ovde"
+          placeholder="Pretražite ovdje"
           [formControl]="search"
           autocomplete="off"
           (keydown.escape)="closeSearch()"
+          (keydown.enter)="onSearchSubmit($event)"
           (focus)="searchOpen.set(true)"
         />
         <button
@@ -62,19 +63,23 @@
                 @if (loadingSearch()) {
                   <span class="sr-spinner" aria-hidden="true"></span>
                 }
-                <span>Rezultati</span>
+                <span>Rezultati pretrage</span>
               </div>
               <div class="sr-meta">
-                @if (totalVariants() > 0) {
-                  <span class="sr-count">{{ totalVariants() }}</span>
+                @if (!loadingSearch() && !needsMoreChars()) {
+                  <span class="sr-count">{{ resultCountLabel() }}</span>
                 }
               </div>
             </div>
 
             @if (searchError()) {
               <div class="sr-state err">{{ searchError() }}</div>
-            } @else if (!loadingSearch() && shownVariants().length === 0) {
-              <div class="sr-state">Nema rezultata za “{{ query() }}”.</div>
+            } @else if (needsMoreChars()) {
+              <div class="sr-state">Unesite najmanje 3 slova za prijedloge proizvoda.</div>
+            } @else if (loadingSearch()) {
+              <div class="sr-state">Pretražujemo proizvode...</div>
+            } @else if (shownVariants().length === 0) {
+              <div class="sr-state">Nema pronađenih proizvoda za “{{ query() }}”.</div>
             } @else {
               <div class="sr-list" role="presentation">
                 @for (v of shownVariants(); track v.id) {
@@ -99,10 +104,12 @@
                       <div class="sr-price">
                         @if (hasDiscount(v)) {
                           <span class="sr-old"
-                            >{{ v.originalPrice || 0 | number: '1.0-0' }} RSD</span
+                            >{{ v.originalPrice || 0 | number: '1.0-0' }} {{ currencyLabel(v.currency) }}</span
                           >
                         }
-                        <span class="sr-new">{{ formatPrice(v) | number: '1.0-0' }} RSD</span>
+                        <span class="sr-new">
+                          {{ formatPrice(v) | number: '1.0-0' }} {{ currencyLabel(v.currency) }}
+                        </span>
                       </div>
                     </div>
 
@@ -110,13 +117,12 @@
                   </button>
                 }
               </div>
+            }
 
+            @if (canViewAll()) {
               <div class="sr-actions">
-                <button type="button" class="sr-btn ghost" (click)="showMoreInDropdown()">
-                  Prikaži više
-                </button>
                 <button type="button" class="sr-btn primary" (click)="viewAllResults()">
-                  Pregledaj sve
+                  Pogledaj sve rezultate za: “{{ query() }}”
                 </button>
               </div>
             }
@@ -140,10 +146,11 @@
         #searchInputMobile
         type="text"
         class="search-input-mobile"
-        placeholder="Unesite najmanje 3 slova..."
+        placeholder="Pretražite proizvode"
         [formControl]="search"
         autocomplete="off"
         (keydown.escape)="closeSearch()"
+        (keydown.enter)="onSearchSubmit($event)"
         (focus)="searchOpen.set(true)"
       />
 
@@ -154,19 +161,23 @@
               @if (loadingSearch()) {
                 <span class="sr-spinner" aria-hidden="true"></span>
               }
-              <span>Rezultati</span>
+              <span>Rezultati pretrage</span>
             </div>
             <div class="sr-meta">
-              @if (totalVariants() > 0) {
-                <span class="sr-count">{{ totalVariants() }}</span>
+              @if (!loadingSearch() && !needsMoreChars()) {
+                <span class="sr-count">{{ resultCountLabel() }}</span>
               }
             </div>
           </div>
 
           @if (searchError()) {
             <div class="sr-state err">{{ searchError() }}</div>
-          } @else if (!loadingSearch() && shownVariants().length === 0) {
-            <div class="sr-state">Nema rezultata za “{{ query() }}”.</div>
+          } @else if (needsMoreChars()) {
+            <div class="sr-state">Unesite najmanje 3 slova za prijedloge proizvoda.</div>
+          } @else if (loadingSearch()) {
+            <div class="sr-state">Pretražujemo proizvode...</div>
+          } @else if (shownVariants().length === 0) {
+            <div class="sr-state">Nema pronađenih proizvoda za “{{ query() }}”.</div>
           } @else {
             <div class="sr-list" role="presentation">
               @for (v of shownVariants(); track v.id) {
@@ -190,9 +201,13 @@
 
                     <div class="sr-price">
                       @if (hasDiscount(v)) {
-                        <span class="sr-old">{{ v.originalPrice || 0 | number: '1.0-0' }} RSD</span>
+                        <span class="sr-old">
+                          {{ v.originalPrice || 0 | number: '1.0-0' }} {{ currencyLabel(v.currency) }}
+                        </span>
                       }
-                      <span class="sr-new">{{ formatPrice(v) | number: '1.0-0' }} RSD</span>
+                      <span class="sr-new">
+                        {{ formatPrice(v) | number: '1.0-0' }} {{ currencyLabel(v.currency) }}
+                      </span>
                     </div>
                   </div>
 
@@ -200,13 +215,12 @@
                 </button>
               }
             </div>
+          }
 
+          @if (canViewAll()) {
             <div class="sr-actions">
-              <button type="button" class="sr-btn ghost" (click)="showMoreInDropdown()">
-                Prikaži više
-              </button>
               <button type="button" class="sr-btn primary" (click)="viewAllResults()">
-                Pregledaj sve
+                Pogledaj sve rezultate za: “{{ query() }}”
               </button>
             </div>
           }

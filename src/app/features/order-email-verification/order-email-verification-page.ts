@@ -46,15 +46,15 @@ export class OrderEmailVerificationPageComponent implements OnInit {
       return {
         tone: 'info',
         icon: 'i',
-        title: 'Provjeravamo potvrdu porudžbine',
+        title: 'Provjeravamo potvrdu narudžbe',
         message: 'Sačekajte trenutak dok obradimo vašu potvrdu iz email poruke.',
         details: null,
         primaryText: 'Početna',
         primaryLink: '/',
         secondaryText: 'Katalog',
         secondaryLink: '/catalog/muskarci/obuca',
-        seoTitle: 'Potvrda porudžbine | Planeta',
-        seoDescription: 'Provjera email potvrde porudžbine.',
+        seoTitle: 'Potvrda narudžbe | Planeta',
+        seoDescription: 'Provjera email potvrde narudžbe.',
       };
     }
 
@@ -62,16 +62,16 @@ export class OrderEmailVerificationPageComponent implements OnInit {
       return {
         tone: 'success',
         icon: '✓',
-        title: 'Porudžbina je uspješno potvrđena',
+        title: 'Narudžba je uspješno potvrđena',
         message:
-          'Hvala vam. Vaša porudžbina je potvrđena i prelazi u dalju obradu. O narednim koracima ćemo vas obavijestiti email porukom.',
+          'Hvala vam. Vaša narudžba je potvrđena i prelazi u dalju obradu. O narednim koracima ćemo vas obavijestiti email porukom.',
         details,
         primaryText: 'Nazad na početnu',
         primaryLink: '/',
         secondaryText: 'Nastavi kupovinu',
         secondaryLink: '/catalog/muskarci/obuca',
-        seoTitle: 'Porudžbina potvrđena | Planeta',
-        seoDescription: 'Email potvrda porudžbine je uspješno završena.',
+        seoTitle: 'Narudžba potvrđena | Planeta',
+        seoDescription: 'Email potvrda narudžbe je uspješno završena.',
       };
     }
 
@@ -81,16 +81,16 @@ export class OrderEmailVerificationPageComponent implements OnInit {
         icon: '!',
         title: 'Rok za potvrdu je istekao',
         message:
-          'Ovu porudžbinu više nije moguće potvrditi jer je istekao vremenski rok za potvrdu putem email-a.',
+          'Ovu narudžbu više nije moguće potvrditi jer je istekao vremenski rok za potvrdu putem email-a.',
         details:
           details ??
-          'Ako i dalje želite iste proizvode, potrebno je da napravite novu porudžbinu kroz webshop.',
-        primaryText: 'Napravi novu porudžbinu',
+          'Ako i dalje želite iste proizvode, potrebno je napraviti novu narudžbu kroz webshop.',
+        primaryText: 'Napravi novu narudžbu',
         primaryLink: '/catalog/muskarci/obuca',
         secondaryText: 'Nazad na početnu',
         secondaryLink: '/',
-        seoTitle: 'Potvrda porudžbine je istekla | Planeta',
-        seoDescription: 'Rok za potvrdu porudžbine putem email-a je istekao.',
+        seoTitle: 'Potvrda narudžbe je istekla | Planeta',
+        seoDescription: 'Rok za potvrdu narudžbe putem email-a je istekao.',
       };
     }
 
@@ -99,14 +99,14 @@ export class OrderEmailVerificationPageComponent implements OnInit {
       icon: '!',
       title: 'Link za potvrdu nije važeći',
       message:
-        'Link koji ste otvorili nije validan ili je već iskorišten. Otvorite najnoviji email za porudžbinu i pokušajte ponovo.',
+        'Link koji ste otvorili nije validan ili je već iskorišten. Otvorite najnoviji email za narudžbu i pokušajte ponovo.',
       details,
       primaryText: 'Nazad na početnu',
       primaryLink: '/',
       secondaryText: 'Otvori katalog',
       secondaryLink: '/catalog/muskarci/obuca',
-      seoTitle: 'Potvrda porudžbine nije uspjela | Planeta',
-      seoDescription: 'Link za potvrdu porudžbine nije važeći.',
+      seoTitle: 'Potvrda narudžbe nije uspjela | Planeta',
+      seoDescription: 'Link za potvrdu narudžbe nije važeći.',
     };
   });
 
@@ -139,7 +139,7 @@ export class OrderEmailVerificationPageComponent implements OnInit {
       }
 
       this.state.set('invalid');
-      this.details.set('Nedostaje token za potvrdu porudžbine.');
+      this.details.set('Nedostaje token za potvrdu narudžbe.');
       return;
     }
 
@@ -181,7 +181,7 @@ export class OrderEmailVerificationPageComponent implements OnInit {
 
     if (this.looksAlreadyConfirmed(body)) {
       this.state.set('success');
-      this.details.set(detail ?? 'Porudžbina je već potvrđena.');
+      this.details.set(detail ?? 'Narudžba je već potvrđena.');
       return;
     }
 
@@ -203,7 +203,7 @@ export class OrderEmailVerificationPageComponent implements OnInit {
 
     if (httpError?.status === 409 && this.looksAlreadyConfirmed(normalized)) {
       this.state.set('success');
-      this.details.set(message ?? 'Porudžbina je već potvrđena.');
+      this.details.set(message ?? 'Narudžba je već potvrđena.');
       return;
     }
 
@@ -214,7 +214,7 @@ export class OrderEmailVerificationPageComponent implements OnInit {
     }
 
     this.state.set('invalid');
-    this.details.set(message ?? 'Potvrda porudžbine trenutno nije moguća. Pokušajte ponovo kasnije.');
+    this.details.set(message ?? 'Potvrda narudžbe trenutno nije moguća. Pokušajte ponovo kasnije.');
   }
 
   private readToken(): string {

@@ -1,0 +1,320 @@
+{
+  "version": 1,
+  "status": "completed",
+  "createdAt": "2026-04-25T17:03:01.963Z",
+  "targetDir": "/Users/igpopovic/Desktop/Beatovic/slike/Slika_PlanetSport",
+  "moves": [
+    {
+      "sku": "FQ0908-002",
+      "sourceRelative": "FQ0908-002_1.webp",
+      "destinationRelative": "FQ0908-002/FQ0908-002_1.webp",
+      "requestedDestinationRelative": "FQ0908-002/FQ0908-002_1.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "FQ0908-002",
+      "sourceRelative": "FQ0908-002_2.webp",
+      "destinationRelative": "FQ0908-002/FQ0908-002_2.webp",
+      "requestedDestinationRelative": "FQ0908-002/FQ0908-002_2.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "FQ0908-002",
+      "sourceRelative": "FQ0908-002.webp",
+      "destinationRelative": "FQ0908-002/FQ0908-002.webp",
+      "requestedDestinationRelative": "FQ0908-002/FQ0908-002.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "FQ8289-600",
+      "sourceRelative": "FQ8289-600_1.jpg",
+      "destinationRelative": "FQ8289-600/FQ8289-600_1.jpg",
+      "requestedDestinationRelative": "FQ8289-600/FQ8289-600_1.jpg",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "FQ8289-600",
+      "sourceRelative": "FQ8289-600_2.jpg",
+      "destinationRelative": "FQ8289-600/FQ8289-600_2.jpg",
+      "requestedDestinationRelative": "FQ8289-600/FQ8289-600_2.jpg",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "FQ8289-600",
+      "sourceRelative": "FQ8289-600.jpg",
+      "destinationRelative": "FQ8289-600/FQ8289-600.jpg",
+      "requestedDestinationRelative": "FQ8289-600/FQ8289-600.jpg",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "FQ8438-400",
+      "sourceRelative": "FQ8438-400_1.webp",
+      "destinationRelative": "FQ8438-400/FQ8438-400_1.webp",
+      "requestedDestinationRelative": "FQ8438-400/FQ8438-400_1.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "FQ8438-400",
+      "sourceRelative": "FQ8438-400_2.webp",
+      "destinationRelative": "FQ8438-400/FQ8438-400_2.webp",
+      "requestedDestinationRelative": "FQ8438-400/FQ8438-400_2.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "FQ8438-400",
+      "sourceRelative": "FQ8438-400.webp",
+      "destinationRelative": "FQ8438-400/FQ8438-400.webp",
+      "requestedDestinationRelative": "FQ8438-400/FQ8438-400.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI2725",
+      "sourceRelative": "JI2725_1.webp",
+      "destinationRelative": "JI2725/JI2725_1.webp",
+      "requestedDestinationRelative": "JI2725/JI2725_1.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI2725",
+      "sourceRelative": "JI2725_2.webp",
+      "destinationRelative": "JI2725/JI2725_2.webp",
+      "requestedDestinationRelative": "JI2725/JI2725_2.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI2725",
+      "sourceRelative": "JI2725.webp",
+      "destinationRelative": "JI2725/JI2725.webp",
+      "requestedDestinationRelative": "JI2725/JI2725.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI3456",
+      "sourceRelative": "JI3456_1.avif",
+      "destinationRelative": "JI3456/JI3456_1.avif",
+      "requestedDestinationRelative": "JI3456/JI3456_1.avif",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI3456",
+      "sourceRelative": "JI3456_2.avif",
+      "destinationRelative": "JI3456/JI3456_2.avif",
+      "requestedDestinationRelative": "JI3456/JI3456_2.avif",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI3456",
+      "sourceRelative": "JI3456.avif",
+      "destinationRelative": "JI3456/JI3456.avif",
+      "requestedDestinationRelative": "JI3456/JI3456.avif",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI3468",
+      "sourceRelative": "JI3468_1.webp",
+      "destinationRelative": "JI3468/JI3468_1.webp",
+      "requestedDestinationRelative": "JI3468/JI3468_1.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI3468",
+      "sourceRelative": "JI3468_2.webp",
+      "destinationRelative": "JI3468/JI3468_2.webp",
+      "requestedDestinationRelative": "JI3468/JI3468_2.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI3468",
+      "sourceRelative": "JI3468.webp",
+      "destinationRelative": "JI3468/JI3468.webp",
+      "requestedDestinationRelative": "JI3468/JI3468.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI4084",
+      "sourceRelative": "JI4084_1.jpg",
+      "destinationRelative": "JI4084/JI4084_1.jpg",
+      "requestedDestinationRelative": "JI4084/JI4084_1.jpg",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI4084",
+      "sourceRelative": "JI4084_2.jpg",
+      "destinationRelative": "JI4084/JI4084_2.jpg",
+      "requestedDestinationRelative": "JI4084/JI4084_2.jpg",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI4084",
+      "sourceRelative": "JI4084.jpg",
+      "destinationRelative": "JI4084/JI4084.jpg",
+      "requestedDestinationRelative": "JI4084/JI4084.jpg",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI4601",
+      "sourceRelative": "JI4601_1.jpg",
+      "destinationRelative": "JI4601/JI4601_1.jpg",
+      "requestedDestinationRelative": "JI4601/JI4601_1.jpg",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI4601",
+      "sourceRelative": "JI4601_2.jpg",
+      "destinationRelative": "JI4601/JI4601_2.jpg",
+      "requestedDestinationRelative": "JI4601/JI4601_2.jpg",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI4601",
+      "sourceRelative": "JI4601.jpg",
+      "destinationRelative": "JI4601/JI4601.jpg",
+      "requestedDestinationRelative": "JI4601/JI4601.jpg",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI4607",
+      "sourceRelative": "JI4607_1.jpg",
+      "destinationRelative": "JI4607/JI4607_1.jpg",
+      "requestedDestinationRelative": "JI4607/JI4607_1.jpg",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI4607",
+      "sourceRelative": "JI4607_2.jpg",
+      "destinationRelative": "JI4607/JI4607_2.jpg",
+      "requestedDestinationRelative": "JI4607/JI4607_2.jpg",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI4607",
+      "sourceRelative": "JI4607.jpg",
+      "destinationRelative": "JI4607/JI4607.jpg",
+      "requestedDestinationRelative": "JI4607/JI4607.jpg",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI6065",
+      "sourceRelative": "JI6065_1.jpg",
+      "destinationRelative": "JI6065/JI6065_1.jpg",
+      "requestedDestinationRelative": "JI6065/JI6065_1.jpg",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI6065",
+      "sourceRelative": "JI6065_2.webp",
+      "destinationRelative": "JI6065/JI6065_2.webp",
+      "requestedDestinationRelative": "JI6065/JI6065_2.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI6065",
+      "sourceRelative": "JI6065.webp",
+      "destinationRelative": "JI6065/JI6065.webp",
+      "requestedDestinationRelative": "JI6065/JI6065.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI6067",
+      "sourceRelative": "JI6067_1.avif",
+      "destinationRelative": "JI6067/JI6067_1.avif",
+      "requestedDestinationRelative": "JI6067/JI6067_1.avif",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI6067",
+      "sourceRelative": "JI6067_2.avif",
+      "destinationRelative": "JI6067/JI6067_2.avif",
+      "requestedDestinationRelative": "JI6067/JI6067_2.avif",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI6067",
+      "sourceRelative": "JI6067.avif",
+      "destinationRelative": "JI6067/JI6067.avif",
+      "requestedDestinationRelative": "JI6067/JI6067.avif",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI6204",
+      "sourceRelative": "JI6204_1.webp",
+      "destinationRelative": "JI6204/JI6204_1.webp",
+      "requestedDestinationRelative": "JI6204/JI6204_1.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI6204",
+      "sourceRelative": "JI6204_2.webp",
+      "destinationRelative": "JI6204/JI6204_2.webp",
+      "requestedDestinationRelative": "JI6204/JI6204_2.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI6204",
+      "sourceRelative": "JI6204.webp",
+      "destinationRelative": "JI6204/JI6204.webp",
+      "requestedDestinationRelative": "JI6204/JI6204.webp",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI6208",
+      "sourceRelative": "JI6208_1.avif",
+      "destinationRelative": "JI6208/JI6208_1.avif",
+      "requestedDestinationRelative": "JI6208/JI6208_1.avif",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI6208",
+      "sourceRelative": "JI6208_2.avif",
+      "destinationRelative": "JI6208/JI6208_2.avif",
+      "requestedDestinationRelative": "JI6208/JI6208_2.avif",
+      "destinationDirExists": false,
+      "conflict": false
+    },
+    {
+      "sku": "JI6208",
+      "sourceRelative": "JI6208.avif",
+      "destinationRelative": "JI6208/JI6208.avif",
+      "requestedDestinationRelative": "JI6208/JI6208.avif",
+      "destinationDirExists": false,
+      "conflict": false
+    }
+  ]
+}

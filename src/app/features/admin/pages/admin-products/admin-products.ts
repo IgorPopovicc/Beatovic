@@ -82,8 +82,8 @@ export class AdminProducts {
     const st = this.deleteState();
     if (!st) return '';
     return st.type === 'variant'
-      ? `Da li želite da obrišete model “${st.name}”?`
-      : `Da li želite da obrišete proizvod “${st.name}”?`;
+      ? `Želite li obrisati model “${st.name}”?`
+      : `Želite li obrisati proizvod “${st.name}”?`;
   });
 
   readonly query = toSignal(
@@ -228,7 +228,7 @@ export class AdminProducts {
 
   formatPrice(value: number | null | undefined): string {
     if (value === null || value === undefined) return '-';
-    return new Intl.NumberFormat('sr-RS', {
+    return new Intl.NumberFormat('bs-BA', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(Number(value));

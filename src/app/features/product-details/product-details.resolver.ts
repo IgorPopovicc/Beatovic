@@ -5,6 +5,7 @@ import { catchError, map } from 'rxjs/operators';
 import { ProductsApiService } from '../../core/api/products-api.service';
 import { ProductDetailsModel } from '../../shared/data/products.mock';
 import { environment } from '../../../environments/environment';
+import { normalizeCurrencyCode } from '../../shared/utils/currency';
 
 const PRODUCT_PLACEHOLDER = 'assets/images/products/test.webp';
 
@@ -198,7 +199,7 @@ function toResolvedProduct(dto: any, id: string): ProductDetailsResolved {
     sku,
     price: finalPrice,
     oldPrice,
-    currency: normalize(dto?.currency) || 'RSD',
+    currency: normalizeCurrencyCode(dto?.currency),
     brand,
     inStock,
     sizes,

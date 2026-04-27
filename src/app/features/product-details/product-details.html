@@ -47,7 +47,7 @@
             <button class="nav prev" type="button" (click)="prev()" aria-label="Prethodna slika">
               ‹
             </button>
-            <button class="nav next" type="button" (click)="next()" aria-label="Sledeća slika">
+            <button class="nav next" type="button" (click)="next()" aria-label="Sljedeća slika">
               ›
             </button>
 
@@ -86,9 +86,9 @@
             }
 
             <div class="price">
-              <div class="current">{{ p.price | number: '1.0-0' }} {{ p.currency || 'RSD' }}</div>
+              <div class="current">{{ p.price | number: '1.0-0' }} {{ currencyLabel(p.currency) }}</div>
               @if (hasDiscount()) {
-                <div class="old">{{ p.oldPrice! | number: '1.0-0' }} {{ p.currency || 'RSD' }}</div>
+                <div class="old">{{ p.oldPrice! | number: '1.0-0' }} {{ currencyLabel(p.currency) }}</div>
               }
             </div>
 
@@ -119,14 +119,25 @@
                       type="button"
                       class="size"
                       [class.active]="selectedSize() === '' + s"
-                      [disabled]="sizeQty(s) <= 0"
-                      [attr.aria-disabled]="sizeQty(s) <= 0"
+                      [class.out-of-stock]="sizeIsOutOfStock(s)"
+                      [class.active-out-of-stock]="selectedSize() === '' + s && sizeIsOutOfStock(s)"
+                      [attr.aria-pressed]="selectedSize() === '' + s"
+                      [attr.aria-label]="'Veličina ' + s + (sizeIsOutOfStock(s) ? ', nema na stanju' : ', dostupno')"
                       (click)="selectSize('' + s)"
                     >
-                      {{ s }}
+                      <span class="size-value">{{ s }}</span>
+                      @if (sizeIsOutOfStock(s)) {
+                        <span class="size-stock-label">Nema</span>
+                      }
                     </button>
                   }
                 </div>
+
+                @if (selectedSizeOutOfStock()) {
+                  <div class="size-status" role="status" aria-live="polite">
+                    Odabrana veličina trenutno nije na stanju.
+                  </div>
+                }
               </div>
             }
 
@@ -135,13 +146,31 @@
                 type="button"
                 class="add"
                 (click)="addToCart()"
-                [disabled]="!inStockUi() || ((p.sizes?.length || 0) > 0 && !selectedSize())"
+                [disabled]="!canAddToCart()"
               >
                 Dodaj u korpu
               </button>
 
-              <button type="button" class="wish" aria-label="Dodaj u omiljene">♡</button>
+              <button
+                type="button"
+                class="share"
+                aria-label="Podijeli proizvod"
+                title="Podijeli proizvod"
+                (click)="shareProduct()"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7a3.3 3.3 0 0 0 0-1.39l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .23.03.46.08.67L8.03 9.78a3 3 0 1 0 0 4.44l7.12 4.17c-.04.18-.06.37-.06.56a2.91 2.91 0 1 0 2.91-2.87Z"
+                  />
+                </svg>
+              </button>
             </div>
+
+            @if (shareNotice(); as notice) {
+              <div class="share-notice" [class.error]="notice.kind === 'error'" role="status">
+                {{ notice.text }}
+              </div>
+            }
 
             @if (p.shortDescription) {
               <div class="desc">

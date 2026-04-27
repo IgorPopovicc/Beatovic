@@ -30,8 +30,8 @@ export class OrderResultComponent implements OnInit {
   ngOnInit(): void {
     if (this.status() === 'success') {
       this.seo.setPage({
-        title: 'Porudžbina uspješna | Planeta',
-        description: 'Vaša porudžbina je uspješno primljena.',
+        title: 'Narudžba uspješna | Planeta',
+        description: 'Vaša narudžba je uspješno primljena.',
         path: '/order-result',
         noindex: true,
       });
@@ -39,8 +39,8 @@ export class OrderResultComponent implements OnInit {
     }
 
     this.seo.setPage({
-      title: 'Porudžbina nije uspješna | Planeta',
-      description: 'Došlo je do greške prilikom slanja porudžbine.',
+      title: 'Narudžba nije uspješna | Planeta',
+      description: 'Došlo je do greške prilikom slanja narudžbe.',
       path: '/order-result',
       noindex: true,
     });

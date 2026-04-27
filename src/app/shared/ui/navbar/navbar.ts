@@ -31,6 +31,7 @@ import { CartStore } from '../../../core/cart/cart.store';
 import { environment } from '../../../../environments/environment';
 import { ProductsApiService } from '../../../core/api/products-api.service';
 import { Variant } from '../../../core/api/catalog.models';
+import { currencyDisplayLabel } from '../../utils/currency';
 
 @Component({
   selector: 'app-navbar',
@@ -88,7 +89,8 @@ export class Navbar implements OnInit, OnDestroy {
   loadingSearch = signal(false);
   searchError = signal<string | null>(null);
 
-  // u dropdown-u prikaz je 5 uz scroll; ovde povučemo 10 da ima smisla “Prikaži više”
+  private readonly minCharsForSuggestions = 3;
+  // U dropdownu prikazujemo ograničen broj, a puna lista ide kroz "Pogledaj sve".
   private readonly _pageSize = 10;
 
   variants = signal<Variant[]>([]);
@@ -112,7 +114,7 @@ export class Navbar implements OnInit, OnDestroy {
       distinctUntilChanged(),
       tap(() => this.searchError.set(null)),
       switchMap((q) => {
-        if (q.length < 3) {
+        if (q.length < this.minCharsForSuggestions) {
           this.loadingSearch.set(false);
           this.variants.set([]);
           this.totalVariants.set(0);
@@ -154,13 +156,23 @@ export class Navbar implements OnInit, OnDestroy {
 
   shownVariants = computed(() => this.variants());
 
-  showResults = computed(() => {
+  canViewAll = computed(() => this.query().length > 0);
+
+  needsMoreChars = computed(() => {
     const q = this.query();
-    return (
-      this.searchOpen() &&
-      q.length >= 3 &&
-      (this.variants().length > 0 || this.loadingSearch() || !!this.searchError())
-    );
+    if (!q) return false;
+    return q.length < this.minCharsForSuggestions;
+  });
+
+  resultCountLabel = computed(() => {
+    const total = this.totalVariants();
+    if (total <= 0) return '0 rezultata';
+    if (total === 1) return '1 rezultat';
+    return `${total} rezultata`;
+  });
+
+  showResults = computed(() => {
+    return this.searchOpen() && this.query().length > 0;
   });
 
   ngOnInit() {
@@ -271,17 +283,16 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   viewAllResults() {
-    const q = this.query().trim();
-    if (q.length < 3) return;
+    const q = String(this.search.value ?? '').trim();
+    if (!q) return;
 
-    const target = this.resolveCatalogTargetFromCurrentUrl();
-    this.router.navigate(target, { queryParams: { q } });
+    this.router.navigate(['/products'], { queryParams: { search: q } });
     this.closeSearch();
   }
 
-  showMoreInDropdown() {
-    // UX dugme: pošto je “Pregledaj sve” prava opcija.
-    // Ako želiš stvarno da paginira, dodaću page++ i append.
+  onSearchSubmit(event: Event): void {
+    event.preventDefault();
+    this.viewAllResults();
   }
 
   // ===== UI helpers =====
@@ -302,6 +313,10 @@ export class Navbar implements OnInit, OnDestroy {
   formatPrice(v: any): number {
     const p = v?.finalPrice ?? v?.originalPrice ?? 0;
     return Number(p || 0);
+  }
+
+  currencyLabel(currency?: unknown): string {
+    return currencyDisplayLabel(currency);
   }
 
   pickMetaLine(v: any): string {
@@ -345,21 +360,10 @@ export class Navbar implements OnInit, OnDestroy {
     const base = (environment as any).mediaProductBaseUrl as string | undefined;
     if (!base) return filename; // fail-safe
 
-    // obezbedi tačno jedan "/"
+    // obezbijedi tačno jedan "/"
     const normalizedBase = base.endsWith('/') ? base : `${base}/`;
     const cleanFile = filename.startsWith('/') ? filename.slice(1) : filename;
     return `${normalizedBase}${cleanFile}`;
-  }
-
-  private resolveCatalogTargetFromCurrentUrl(): string[] {
-    const path = String(this.router.url ?? '').split('?')[0];
-    const segments = path.split('/').filter(Boolean);
-
-    if (segments[0] === 'catalog' && segments[1] && segments[2]) {
-      return ['/catalog', segments[1], segments[2]];
-    }
-
-    return ['/catalog', 'muskarci', 'obuca'];
   }
 
   @HostListener('window:scroll')

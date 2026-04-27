@@ -286,17 +286,84 @@
 }
 
 .size {
-  height: 40px;
+  min-height: 52px;
   border-radius: 10px;
   border: 1px solid #ddd;
   background: #fff;
-  font-weight: 950;
+  color: #111;
+  font-weight: 900;
   cursor: pointer;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 1px;
+  padding: 7px 6px;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.size:hover {
+  border-color: #b8b8b8;
+  transform: translateY(-1px);
+}
+
+.size:focus-visible {
+  outline: 2px solid rgba(17, 17, 17, 0.32);
+  outline-offset: 2px;
+}
+
+.size-value {
+  font-size: 0.96rem;
+  line-height: 1.15;
 }
 
 .size.active {
   border-color: #111;
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+  background: #f8f8f8;
+}
+
+.size.out-of-stock {
+  color: #797979;
+  border-color: #d7d7d7;
+  background: linear-gradient(180deg, #fbfbfb, #f4f4f4);
+}
+
+.size-stock-label {
+  font-size: 0.62rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #777;
+  font-weight: 800;
+}
+
+.size.active.out-of-stock,
+.size.active-out-of-stock {
+  color: #8f1f2d;
+  border-color: rgba(168, 33, 48, 0.62);
+  background: #fff3f3;
+  box-shadow: 0 0 0 3px rgba(194, 31, 31, 0.14);
+}
+
+.size.active.out-of-stock .size-stock-label,
+.size.active-out-of-stock .size-stock-label {
+  color: #8f1f2d;
+}
+
+.size-status {
+  margin-top: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(194, 31, 31, 0.2);
+  background: rgba(194, 31, 31, 0.07);
+  color: #a10f18;
+  padding: 9px 11px;
+  font-size: 0.86rem;
+  font-weight: 800;
 }
 
 .cta {
@@ -323,14 +390,42 @@
   cursor: default;
 }
 
-.wish {
+.share {
   height: 46px;
   border-radius: 12px;
   border: 1px solid #ddd;
   background: #fff;
   font-weight: 950;
   cursor: pointer;
-  font-size: 20px;
+  display: grid;
+  place-items: center;
+}
+
+.share svg {
+  width: 20px;
+  height: 20px;
+  fill: #111;
+}
+
+.share:hover {
+  border-color: #c21f1f;
+}
+
+.share-notice {
+  margin-top: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(11, 122, 42, 0.2);
+  background: rgba(11, 122, 42, 0.08);
+  color: #0b7a2a;
+  padding: 10px 12px;
+  font-weight: 800;
+  font-size: 0.92rem;
+}
+
+.share-notice.error {
+  border-color: rgba(194, 31, 31, 0.22);
+  background: rgba(194, 31, 31, 0.08);
+  color: #a10f18;
 }
 
 .desc {

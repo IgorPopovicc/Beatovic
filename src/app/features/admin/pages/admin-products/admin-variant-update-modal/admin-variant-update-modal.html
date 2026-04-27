@@ -1,9 +1,9 @@
-<div class="overlay" role="dialog" aria-modal="true" aria-label="Edit model" (mousedown)="close()">
+<div class="overlay" role="dialog" aria-modal="true" aria-label="Izmijeni model" (mousedown)="close()">
   <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
     <header class="head">
       <div class="title-wrap">
-        <h2 class="title">Edit model</h2>
-        <p class="sub">Update varijante: cijena, boja, veličine/količine, popusti, slike.</p>
+        <h2 class="title">Izmijeni model</h2>
+        <p class="sub">Ažurirajte model: cijenu, boju, veličine/količine, popuste i slike.</p>
       </div>
       <button class="icon-btn" type="button" (click)="close()" aria-label="Zatvori">✕</button>
     </header>
@@ -263,7 +263,7 @@
             </div>
 
             <div class="images">
-              <div class="section-title small">Postojeće slike (čekiraj za brisanje)</div>
+              <div class="section-title small">Postojeće slike (označi za brisanje)</div>
 
               @if (existingImages().length === 0) {
                 <div class="hint">Nema postojećih slika.</div>
@@ -305,7 +305,7 @@
                   <span>Dodaj slike</span>
                 </label>
 
-                <div class="hint">Dodate slike će biti poslate u "images".</div>
+                <div class="hint">Dodane slike će biti poslane u "images".</div>
               </div>
 
               @if (fileError()) {

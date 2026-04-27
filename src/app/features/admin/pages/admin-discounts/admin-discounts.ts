@@ -135,11 +135,11 @@ export class AdminDiscounts {
   }
 
   valueLabel(d: DiscountListItem): string {
-    return d.type === 'PERCENTAGE' ? `${d.value}%` : `${this.formatPrice(d.value)} RSD`;
+    return d.type === 'PERCENTAGE' ? `${d.value}%` : `${this.formatPrice(d.value)} KM`;
   }
 
   formatPrice(v: number): string {
-    return new Intl.NumberFormat('sr-RS', {
+    return new Intl.NumberFormat('bs-BA', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(v);
@@ -148,7 +148,7 @@ export class AdminDiscounts {
   formatDate(iso: string): string {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
-    return new Intl.DateTimeFormat('sr-RS', {
+    return new Intl.DateTimeFormat('bs-BA', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',

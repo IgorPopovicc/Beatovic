@@ -83,7 +83,7 @@
 
             <div class="price">
               <div class="label">Ukupno</div>
-              <div class="value">{{ formatPrice(o.totalPrice) }} RSD</div>
+              <div class="value">{{ formatPrice(o.totalPrice) }} KM</div>
             </div>
 
             <div class="status" [ngClass]="statusClass(o.status)">
@@ -96,7 +96,7 @@
                   class="action-btn ok"
                   type="button"
                   (click)="completeOrder(o)"
-                  aria-label="Odobri narudžbinu"
+                  aria-label="Odobri narudžbu"
                   [disabled]="isRowBusy(o)"
                 >
                   {{ isActionBusy(o, 'complete') ? 'Obrada...' : 'Odobri' }}
@@ -108,7 +108,7 @@
                   class="action-btn danger"
                   type="button"
                   (click)="cancelOrder(o)"
-                  aria-label="Otkaži narudžbinu"
+                  aria-label="Otkaži narudžbu"
                   [disabled]="isRowBusy(o)"
                 >
                   {{ isActionBusy(o, 'cancel') ? 'Obrada...' : 'Otkaži' }}
@@ -150,7 +150,7 @@
                   <span>Adresa:</span> <strong>{{ o.userDetails.address }}</strong>
                 </div>
                 <div class="dline">
-                  <span>Opština:</span> <strong>{{ o.userDetails.municipality }}</strong>
+                  <span>Općina:</span> <strong>{{ o.userDetails.municipality }}</strong>
                 </div>
                 <div class="dline">
                   <span>Poštanski:</span> <strong>{{ o.userDetails.postalCode }}</strong>
@@ -173,7 +173,7 @@
 
                       <div class="it-right">
                         <div class="it-qty">x{{ i.quantity }}</div>
-                        <div class="it-price">{{ formatPrice(i.totalItemPrice) }} RSD</div>
+                        <div class="it-price">{{ formatPrice(i.totalItemPrice) }} KM</div>
                       </div>
                     </div>
                   }

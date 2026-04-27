@@ -4,6 +4,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CartStore } from '../../core/cart/cart.store';
 import { ConfirmDialog } from '../../shared/ui/confirm-dialog/confirm-dialog';
+import { currencyDisplayLabel } from '../../shared/utils/currency';
 
 @Component({
   selector: 'app-cart',
@@ -27,7 +28,11 @@ export class CartComponent {
 
   confirmOpen = signal(false);
   private pendingRemoveId = signal<string | null>(null);
-  confirmMessage = signal('Da li želite da uklonite ovaj proizvod iz korpe?');
+  confirmMessage = signal('Želite li ukloniti ovaj proizvod iz korpe?');
+
+  currencyLabel(currency: unknown): string {
+    return currencyDisplayLabel(currency);
+  }
 
   goCheckout() {
     this.router.navigateByUrl('/checkout');
@@ -37,8 +42,8 @@ export class CartComponent {
     this.pendingRemoveId.set(id);
     this.confirmMessage.set(
       name
-        ? `Da li želite da uklonite „${name}“ iz korpe?`
-        : 'Da li želite da uklonite ovaj proizvod iz korpe?',
+        ? `Želite li ukloniti „${name}“ iz korpe?`
+        : 'Želite li ukloniti ovaj proizvod iz korpe?',
     );
     this.confirmOpen.set(true);
   }

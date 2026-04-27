@@ -1,17 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
-import { OrderResult } from './order-result';
+import { OrderResultComponent } from './order-result';
 
-describe('OrderResult', () => {
-  let component: OrderResult;
-  let fixture: ComponentFixture<OrderResult>;
+describe('OrderResultComponent', () => {
+  let component: OrderResultComponent;
+  let fixture: ComponentFixture<OrderResultComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [OrderResult],
+      imports: [OrderResultComponent],
+      providers: [provideRouter([])],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(OrderResult);
+    fixture = TestBed.createComponent(OrderResultComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
