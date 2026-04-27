@@ -1,0 +1,16 @@
+services:
+  app:
+    container_name: beatovic-ssr
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        API_BASE_URL: ${API_BASE_URL}
+        MEDIA_PRODUCT_BASE_URL: ${MEDIA_PRODUCT_BASE_URL}
+        SITE_URL: ${SITE_URL}
+    environment:
+      NODE_ENV: production
+      PORT: ${PORT:-4000}
+    ports:
+      - "127.0.0.1:${PORT:-4000}:${PORT:-4000}"
+    restart: unless-stopped

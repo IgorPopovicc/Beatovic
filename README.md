@@ -51,6 +51,14 @@ Node.js Version: 20.19
 
 The included vercel.json routes all requests to dist/Beatovic/server/server.mjs for SSR rendering.
 
+--------------------
+
+## 🖥️ Deployment (Hetzner VPS)
+
+For production deployment on Hetzner with SSR + Docker + Nginx reverse proxy, see:
+
+`DEPLOYMENT.md`
+
 🛠️ Project Structure
 src/app/shared/ui → shared UI components (navbar, hero slider, product card, discount slider, etc.)
 
