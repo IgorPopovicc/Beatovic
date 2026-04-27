@@ -49,7 +49,7 @@ Install Command: npm install
 
 Node.js Version: 20.19
 
-The included vercel.json routes all requests to dist/Beatovic/server/server.mjs for SSR rendering.
+The included `vercel.json` routes all requests to `api/index.mjs`, which forwards requests to the built Angular SSR handler in `dist/Beatovic/server/server.mjs`.
 
 --------------------
 

@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, REQUEST } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { environment } from '../../../environments/environment';
 
@@ -21,6 +21,7 @@ export class SeoService {
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
   private readonly document = inject(DOCUMENT);
+  private readonly request = inject(REQUEST, { optional: true });
 
   private readonly structuredDataId = 'app-structured-data';
   private readonly defaultSocialImagePath = '/assets/images/logo/planets_main_logo.png';
@@ -164,12 +165,51 @@ export class SeoService {
     return 'image/png';
   }
 
+  private requestHeader(name: string): string {
+    const headers = (this.request as any)?.headers;
+    if (!headers) return '';
+
+    if (typeof headers.get === 'function') {
+      return String(headers.get(name) ?? headers.get(name.toLowerCase()) ?? '')
+        .trim()
+        .split(',')[0]
+        .trim();
+    }
+
+    const raw =
+      headers[name] ??
+      headers[name.toLowerCase()] ??
+      headers[name.toUpperCase()] ??
+      '';
+
+    if (Array.isArray(raw)) return String(raw[0] ?? '').trim();
+    return String(raw).trim().split(',')[0].trim();
+  }
+
   private resolveSiteUrl(): string {
-    const fromEnv = String(environment.siteUrl || '').trim().replace(/\/+$/, '');
-    if (fromEnv) return fromEnv;
+    const forwardedHost = this.requestHeader('x-forwarded-host') || this.requestHeader('host');
+    if (forwardedHost) {
+      const forwardedProto = this.requestHeader('x-forwarded-proto');
+      const protocol =
+        forwardedProto ||
+        (forwardedHost.startsWith('localhost') || forwardedHost.startsWith('127.0.0.1')
+          ? 'http'
+          : 'https');
+      return `${protocol}://${forwardedHost}`.replace(/\/+$/, '');
+    }
+
+    const requestUrl = String((this.request as any)?.url ?? '').trim();
+    if (/^https?:\/\//i.test(requestUrl)) {
+      try {
+        return new URL(requestUrl).origin.replace(/\/+$/, '');
+      } catch {}
+    }
 
     const origin = String(this.document?.location?.origin ?? '').trim().replace(/\/+$/, '');
     if (origin && origin !== 'null') return origin;
+
+    const fromEnv = String(environment.siteUrl || '').trim().replace(/\/+$/, '');
+    if (fromEnv) return fromEnv;
 
     return '';
   }
