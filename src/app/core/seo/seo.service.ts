@@ -22,7 +22,6 @@ export class SeoService {
   private readonly meta = inject(Meta);
   private readonly document = inject(DOCUMENT);
 
-  private readonly siteUrl = String(environment.siteUrl || '').replace(/\/+$/, '');
   private readonly structuredDataId = 'app-structured-data';
   private readonly defaultSocialImagePath = '/assets/images/logo/planets_main_logo.png';
   private readonly defaultSocialImageAlt = 'Planeta webshop logo';
@@ -109,11 +108,16 @@ export class SeoService {
 
   absoluteUrl(pathOrUrl?: string): string {
     const raw = (pathOrUrl ?? '').trim();
-    if (!raw) return `${this.siteUrl}/`;
+    const siteUrl = this.resolveSiteUrl();
+
+    if (!raw) {
+      return siteUrl ? `${siteUrl}/` : '/';
+    }
+
     if (/^https?:\/\//i.test(raw)) return raw;
 
     const prefixed = raw.startsWith('/') ? raw : `/${raw}`;
-    return `${this.siteUrl}${prefixed}`;
+    return siteUrl ? `${siteUrl}${prefixed}` : prefixed;
   }
 
   private resolveCanonical(config: SeoPageConfig): string {
@@ -158,5 +162,15 @@ export class SeoService {
     if (path.endsWith('.webp')) return 'image/webp';
     if (path.endsWith('.jpg') || path.endsWith('.jpeg')) return 'image/jpeg';
     return 'image/png';
+  }
+
+  private resolveSiteUrl(): string {
+    const fromEnv = String(environment.siteUrl || '').trim().replace(/\/+$/, '');
+    if (fromEnv) return fromEnv;
+
+    const origin = String(this.document?.location?.origin ?? '').trim().replace(/\/+$/, '');
+    if (origin && origin !== 'null') return origin;
+
+    return '';
   }
 }

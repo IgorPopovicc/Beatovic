@@ -3,6 +3,6 @@
   "version": 2,
   "routes": [
     { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/dist/Beatovic/server/server.mjs" }
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
