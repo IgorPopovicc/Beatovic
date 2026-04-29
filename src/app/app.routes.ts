@@ -102,6 +102,21 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'newsletter/unsubscribe-failed',
+    loadComponent: () =>
+      import('./features/newsletter-unsubscribe-failed/newsletter-unsubscribe-failed-page').then(
+        (m) => m.NewsletterUnsubscribeFailedPageComponent,
+      ),
+    data: {
+      seo: {
+        title: 'Odjava nije uspjela | Planeta',
+        description: 'Odjava sa newsletter liste nije uspjela.',
+        noindex: true,
+      },
+    },
+  },
+  { path: 'newsletter/unsubscribe-error', redirectTo: 'newsletter/unsubscribe-failed', pathMatch: 'full' },
+  {
     path: 'newsletter/unsubscribe',
     loadComponent: () =>
       import('./features/newsletter-unsubscribe/newsletter-unsubscribe-page').then(
@@ -129,6 +144,21 @@ export const routes: Routes = [
       },
     },
   },
+  {
+    path: 'order/verification-failed',
+    loadComponent: () =>
+      import('./features/order-verification-failed/order-verification-failed-page').then(
+        (m) => m.OrderVerificationFailedPageComponent,
+      ),
+    data: {
+      seo: {
+        title: 'Potvrda nije uspjela | Planeta',
+        description: 'Potvrda narudžbe nije uspjela.',
+        noindex: true,
+      },
+    },
+  },
+  { path: 'orders/verify-failed', redirectTo: 'order/verification-failed', pathMatch: 'full' },
   {
     path: 'order/verify',
     loadComponent: () =>
@@ -253,6 +283,32 @@ export const routes: Routes = [
           seo: {
             title: 'Admin Newsletter | Planeta',
             description: 'Upravljanje newsletter sadržajem.',
+            noindex: true,
+          },
+        },
+      },
+      {
+        path: 'contact',
+        loadComponent: () =>
+          import('./features/admin/pages/admin-contact/admin-contact').then((m) => m.AdminContact),
+        data: {
+          seo: {
+            title: 'Admin Kontakt | Planeta',
+            description: 'Pregled kontakt poruka korisnika.',
+            noindex: true,
+          },
+        },
+      },
+      {
+        path: 'coupons',
+        loadComponent: () =>
+          import('./features/admin/pages/admin-coupons/admin-coupons').then(
+            (m) => m.AdminCoupons,
+          ),
+        data: {
+          seo: {
+            title: 'Admin Kuponi | Planeta',
+            description: 'Upravljanje kuponima.',
             noindex: true,
           },
         },

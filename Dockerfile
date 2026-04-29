@@ -15,7 +15,7 @@ COPY . .
 RUN API_BASE_URL="$API_BASE_URL" \
     MEDIA_PRODUCT_BASE_URL="$MEDIA_PRODUCT_BASE_URL" \
     SITE_URL="$SITE_URL" \
-    node -e "const fs=require('node:fs');const p='src/environments/environment.prod.ts';let t=fs.readFileSync(p,'utf8');const repl=(k,v)=>{const esc=v.replace(/\\/g,'\\\\').replace(/'/g,\"\\\\'\");t=t.replace(new RegExp(k+\":\\\\s*'[^']*'\"),k+\": '\"+esc+\"'\");};repl('apiBaseUrl',process.env.API_BASE_URL||'');repl('mediaProductBaseUrl',process.env.MEDIA_PRODUCT_BASE_URL||'');repl('siteUrl',process.env.SITE_URL||'');fs.writeFileSync(p,t);"
+    node scripts/inject-env-prod.cjs
 
 RUN npm run build:ssr
 

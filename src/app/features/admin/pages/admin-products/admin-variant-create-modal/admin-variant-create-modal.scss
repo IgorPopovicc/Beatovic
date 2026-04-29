@@ -276,6 +276,41 @@
   letter-spacing: 0.04em;
 }
 
+.sku-prefix {
+  margin-top: -2px;
+  font-size: 12px;
+  color: rgba(17, 17, 17, 0.66);
+  font-weight: 800;
+}
+
+.sku-prefix strong {
+  color: #111;
+  font-weight: 900;
+}
+
+.sku-help {
+  margin-top: -2px;
+  font-size: 12px;
+  color: rgba(17, 17, 17, 0.6);
+  font-weight: 700;
+}
+
+.sku-preview {
+  font-size: 12px;
+  color: rgba(17, 17, 17, 0.76);
+  font-weight: 800;
+}
+
+.sku-preview strong {
+  color: #111;
+  font-weight: 900;
+}
+
+.sku-preview.bad,
+.sku-preview.bad strong {
+  color: #a10f18;
+}
+
 .add-variant-btn {
   height: 40px;
   padding: 0 14px;

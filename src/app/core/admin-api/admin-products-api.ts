@@ -7,6 +7,8 @@ import { catchError } from 'rxjs/operators';
 import {
   CreateProductRequest,
   Product,
+  ProductIdSkuPair,
+  ProductVariantIdSkuPair,
   SearchMainRequest,
   SearchMainResponse,
   SearchProductRequest,
@@ -221,6 +223,40 @@ export class AdminProductsApi {
         console.error('[AdminProductsApi] deleteVariant failed:', err);
         return throwError(() => err);
       }),
-    );
+      );
+  }
+
+  getProductIdSkuPairs(): Observable<ProductIdSkuPair[]> {
+    const token = this.auth.accessToken();
+    if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+
+    return this.http
+      .get<ProductIdSkuPair[]>(`${environment.apiBaseUrl}/products/admin/id-sku-pairs`, { headers })
+      .pipe(
+        catchError((err) => {
+          console.error('[AdminProductsApi] getProductIdSkuPairs failed:', err);
+          return throwError(() => err);
+        }),
+      );
+  }
+
+  getVariantIdSkuPairs(): Observable<ProductVariantIdSkuPair[]> {
+    const token = this.auth.accessToken();
+    if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+
+    return this.http
+      .get<ProductVariantIdSkuPair[]>(`${environment.apiBaseUrl}/products/admin/variants/id-sku-pairs`, {
+        headers,
+      })
+      .pipe(
+        catchError((err) => {
+          console.error('[AdminProductsApi] getVariantIdSkuPairs failed:', err);
+          return throwError(() => err);
+        }),
+      );
   }
 }

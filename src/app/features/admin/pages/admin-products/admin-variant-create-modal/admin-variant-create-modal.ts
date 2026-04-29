@@ -99,7 +99,7 @@ export class AdminVariantCreateModal {
   readonly hasProductResults = computed(() => this.productResults().length > 0);
 
   readonly form = this.fb.group({
-    sku: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
+    sku: this.fb.nonNullable.control('', [Validators.required]),
     price: this.fb.nonNullable.control<number>(0, [Validators.required, Validators.min(0)]),
     isNew: this.fb.nonNullable.control<boolean>(true),
     isOutlet: this.fb.nonNullable.control<boolean>(false),
@@ -113,11 +113,37 @@ export class AdminVariantCreateModal {
     { initialValue: this.form.status },
   );
 
+  private readonly skuInputSig = toSignal(
+    this.form.controls.sku.valueChanges.pipe(startWith(this.form.controls.sku.value)),
+    { initialValue: this.form.controls.sku.value },
+  );
+
+  readonly skuPrefix = computed(() => String(this.selectedProduct()?.productSku ?? '').trim());
+
+  readonly skuSuffix = computed(() =>
+    this.normalizeSkuSuffix(this.skuInputSig(), this.skuPrefix()),
+  );
+
+  readonly generatedSku = computed(() => this.composeSku(this.skuPrefix(), this.skuSuffix()));
+
+  readonly duplicateGeneratedSku = computed(() => {
+    const target = this.normalizeSkuForCompare(this.generatedSku());
+    if (!target) return false;
+
+    return this.variants().some((variant) => this.normalizeSkuForCompare(variant.sku) === target);
+  });
+
+  readonly generatedSkuInvalid = computed(() => {
+    const sku = this.generatedSku();
+    return !sku || sku.length < 2 || this.duplicateGeneratedSku();
+  });
+
   readonly invalid = computed(
     () =>
       this.submitting() ||
       !this.selectedProduct()?.id ||
       this.formStatusSig() === 'INVALID' ||
+      this.generatedSkuInvalid() ||
       this.sizesInvalid() ||
       this.files().length === 0,
   );
@@ -306,6 +332,16 @@ export class AdminVariantCreateModal {
     this.selectedSizes.set(current);
   }
 
+  onSkuInputBlur(): void {
+    const control = this.form.controls.sku;
+    const current = String(control.value ?? '').trim();
+    const normalized = this.normalizeSkuSuffix(current, this.skuPrefix());
+
+    if (normalized !== current) {
+      control.setValue(normalized);
+    }
+  }
+
   sizesInvalid(): boolean {
     const entries = Object.entries(this.selectedSizes());
     if (entries.length === 0) return true;
@@ -362,6 +398,19 @@ export class AdminVariantCreateModal {
     }
 
     const v = this.form.getRawValue();
+    const finalSku = this.generatedSku();
+
+    if (!finalSku || finalSku.length < 2) {
+      this.submitError.set('SKU modela je obavezan.');
+      this.form.controls.sku.markAsTouched();
+      return;
+    }
+
+    if (this.duplicateGeneratedSku()) {
+      this.submitError.set('Model sa ovim SKU kodom već postoji za izabrani proizvod.');
+      this.form.controls.sku.markAsTouched();
+      return;
+    }
 
     const colorValueId = v.colorValueId!;
     const colorValue = this.colorOptions().find((x) => x.id === colorValueId)?.value ?? '';
@@ -389,7 +438,7 @@ export class AdminVariantCreateModal {
 
     const dto: CreateProductVariantDTO = {
       productId: product.id,
-      sku: v.sku.trim(),
+      sku: finalSku,
       price: Number(v.price),
       isNew: !!v.isNew,
       isOutlet: !!v.isOutlet,
@@ -512,5 +561,44 @@ export class AdminVariantCreateModal {
       .replace(/\p{M}+/gu, '')
       .toUpperCase()
       .trim();
+  }
+
+  private composeSku(prefixRaw: string, suffixRaw: string): string {
+    const prefix = String(prefixRaw ?? '').trim();
+    const suffix = String(suffixRaw ?? '')
+      .trim()
+      .replace(/^[-_\s]+/, '');
+
+    if (!prefix) return suffix;
+    if (!suffix) return prefix;
+
+    return `${prefix}-${suffix}`;
+  }
+
+  private normalizeSkuSuffix(raw: unknown, prefixRaw: string): string {
+    const value = String(raw ?? '').trim();
+    if (!value) return '';
+
+    const prefix = String(prefixRaw ?? '').trim();
+    if (!prefix) {
+      return value.replace(/^[-_\s]+/, '');
+    }
+
+    const escapedPrefix = this.escapeRegExp(prefix);
+    const stripped = value.replace(new RegExp(`^${escapedPrefix}(?:[-_\\s]*)`, 'i'), '');
+    return stripped.trim().replace(/^[-_\s]+/, '');
+  }
+
+  private normalizeSkuForCompare(value: unknown): string {
+    return String(value ?? '')
+      .trim()
+      .replace(/[\s_]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .toUpperCase();
+  }
+
+  private escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }

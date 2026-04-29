@@ -1,0 +1,13 @@
+@if (view(); as vm) {
+  <app-status-page
+    badge="Narudžba"
+    [tone]="vm.tone"
+    [icon]="vm.icon"
+    [title]="vm.title"
+    [message]="vm.message"
+    [primaryCtaText]="vm.primaryText"
+    [primaryCtaLink]="vm.primaryLink"
+    [secondaryCtaText]="vm.secondaryText"
+    [secondaryCtaLink]="vm.secondaryLink"
+  />
+}

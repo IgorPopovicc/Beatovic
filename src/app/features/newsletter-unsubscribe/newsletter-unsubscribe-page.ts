@@ -1,7 +1,7 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { CustomerEmailActionsApiService } from '../../core/api/customer-email-actions-api.service';
 import { SeoService } from '../../core/seo/seo.service';
@@ -32,6 +32,7 @@ type NewsletterViewModel = {
 })
 export class NewsletterUnsubscribePageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly emailActionsApi = inject(CustomerEmailActionsApiService);
   private readonly seo = inject(SeoService);
   private readonly platformId = inject(PLATFORM_ID);
@@ -109,12 +110,18 @@ export class NewsletterUnsubscribePageComponent implements OnInit {
 
   private startFlow(): void {
     const explicitStatus = this.normalizeStatusParam(this.route.snapshot.queryParamMap.get('status'));
+    const queryReason = this.failureReasonFromQuery();
     const token = this.readToken();
 
     if (!token) {
       if (explicitStatus === 'success') {
         this.state.set('success');
         this.details.set(null);
+        return;
+      }
+
+      if (isPlatformBrowser(this.platformId)) {
+        this.redirectToFailure(queryReason ?? 'missing-token');
         return;
       }
 
@@ -143,6 +150,7 @@ export class NewsletterUnsubscribePageComponent implements OnInit {
   }
 
   private handleUnsubscribeError(err: unknown): void {
+    const httpError = err instanceof HttpErrorResponse ? err : null;
     const message = this.extractErrorMessage(err);
     const normalized = this.normalizeText(message);
 
@@ -151,19 +159,35 @@ export class NewsletterUnsubscribePageComponent implements OnInit {
       (normalized.includes('vec') && normalized.includes('odjav')) ||
       (normalized.includes('već') && normalized.includes('odjav'))
     ) {
-      this.state.set('success');
-      this.details.set('E-mail adresa je već odjavljena sa newsletter liste.');
+      this.redirectToFailure('already-unsubscribed');
       return;
     }
 
-    this.state.set('invalid');
-
-    if (message) {
-      this.details.set(message);
+    if (
+      normalized.includes('expired') ||
+      normalized.includes('istek') ||
+      normalized.includes('istekao')
+    ) {
+      this.redirectToFailure('expired-token');
       return;
     }
 
-    this.details.set('Odjava nije uspjela. Otvorite link iz najnovijeg email-a i pokušajte ponovo.');
+    if (
+      normalized.includes('invalid') ||
+      normalized.includes('not valid') ||
+      normalized.includes('nevalid') ||
+      normalized.includes('bad token')
+    ) {
+      this.redirectToFailure('invalid-token');
+      return;
+    }
+
+    if (httpError?.status && httpError.status >= 500) {
+      this.redirectToFailure('backend-error');
+      return;
+    }
+
+    this.redirectToFailure('request-failed');
   }
 
   private readToken(): string {
@@ -177,6 +201,67 @@ export class NewsletterUnsubscribePageComponent implements OnInit {
   private normalizeStatusParam(value: string | null): 'success' | null {
     const status = this.normalizeText(value);
     if (status === 'success' || status === 'ok') return 'success';
+    return null;
+  }
+
+  private failureReasonFromQuery():
+    | 'invalid-token'
+    | 'expired-token'
+    | 'already-unsubscribed'
+    | 'backend-error'
+    | 'request-failed'
+    | null {
+    const query = this.route.snapshot.queryParamMap;
+    const tokenExpired = this.normalizeText(query.get('tokenExpired'));
+    if (tokenExpired === '1' || tokenExpired === 'true' || tokenExpired === 'yes') {
+      return 'expired-token';
+    }
+
+    const combined = this.normalizeText(
+      [
+        query.get('reason'),
+        query.get('status'),
+        query.get('error'),
+        query.get('errorCode'),
+        query.get('code'),
+        query.get('message'),
+      ]
+        .filter(Boolean)
+        .join(' '),
+    );
+
+    if (!combined) return null;
+
+    if (
+      combined.includes('already unsubscribed') ||
+      combined.includes('already-unsubscribed') ||
+      (combined.includes('vec') && combined.includes('odjav')) ||
+      (combined.includes('već') && combined.includes('odjav'))
+    ) {
+      return 'already-unsubscribed';
+    }
+
+    if (combined.includes('expired') || combined.includes('istek') || combined.includes('istekao')) {
+      return 'expired-token';
+    }
+
+    if (
+      combined.includes('invalid') ||
+      combined.includes('not valid') ||
+      combined.includes('nevalid') ||
+      combined.includes('bad token')
+    ) {
+      return 'invalid-token';
+    }
+
+    if (combined.includes('backend') || combined.includes('server') || combined.includes('500')) {
+      return 'backend-error';
+    }
+
+    if (combined.includes('failed') || combined.includes('error') || combined.includes('gresk')) {
+      return 'request-failed';
+    }
+
     return null;
   }
 
@@ -216,5 +301,30 @@ export class NewsletterUnsubscribePageComponent implements OnInit {
       .replace(/\p{M}+/gu, '')
       .toLowerCase()
       .trim();
+  }
+
+  private redirectToFailure(
+    reason:
+      | 'invalid-token'
+      | 'expired-token'
+      | 'missing-token'
+      | 'already-unsubscribed'
+      | 'backend-error'
+      | 'request-failed',
+  ): void {
+    const queryParams: Record<string, string | boolean> = { reason };
+    if (reason === 'expired-token') {
+      queryParams['tokenExpired'] = true;
+    }
+
+    void this.router
+      .navigate(['/newsletter/unsubscribe-failed'], {
+        queryParams,
+        replaceUrl: true,
+      })
+      .catch(() => {
+        this.state.set('invalid');
+        this.details.set('Odjava trenutno nije dostupna. Pokušajte ponovo kasnije.');
+      });
   }
 }

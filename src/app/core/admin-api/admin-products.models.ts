@@ -128,6 +128,16 @@ export interface Product {
   }>;
 }
 
+export interface ProductIdSkuPair {
+  id: string;
+  sku: string;
+}
+
+export interface ProductVariantIdSkuPair {
+  id: string;
+  sku: string;
+}
+
 export interface UpdateProductRequest {
   id: string;
   productName: string;

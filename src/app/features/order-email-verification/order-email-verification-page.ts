@@ -1,13 +1,20 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { CustomerEmailActionsApiService } from '../../core/api/customer-email-actions-api.service';
 import { SeoService } from '../../core/seo/seo.service';
 import { StatusPageComponent, StatusTone } from '../../shared/ui/status-page/status-page';
 
 type OrderVerifyState = 'loading' | 'success' | 'expired' | 'invalid';
+type VerificationFailedReason =
+  | 'expired-token'
+  | 'invalid-token'
+  | 'missing-token'
+  | 'already-verified'
+  | 'backend-error'
+  | 'verification-failed';
 
 type OrderVerifyViewModel = {
   tone: StatusTone;
@@ -32,6 +39,7 @@ type OrderVerifyViewModel = {
 })
 export class OrderEmailVerificationPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly emailActionsApi = inject(CustomerEmailActionsApiService);
   private readonly seo = inject(SeoService);
   private readonly platformId = inject(PLATFORM_ID);
@@ -129,17 +137,25 @@ export class OrderEmailVerificationPageComponent implements OnInit {
   private startFlow(): void {
     const explicitState = this.stateFromStatusParam(this.route.snapshot.queryParamMap.get('status'));
     const explicitMessage = this.normalizeMessage(this.route.snapshot.queryParamMap.get('message'));
+    const queryReason = this.failureReasonFromQuery();
     const token = this.readToken();
 
     if (!token) {
-      if (explicitState && explicitState !== 'loading') {
-        this.state.set(explicitState);
+      if (explicitState === 'success') {
+        this.state.set('success');
         this.details.set(explicitMessage);
         return;
       }
 
-      this.state.set('invalid');
-      this.details.set('Nedostaje token za potvrdu narudžbe.');
+      const explicitFailure = this.reasonFromState(explicitState);
+      const reason = queryReason ?? explicitFailure ?? 'missing-token';
+
+      if (isPlatformBrowser(this.platformId)) {
+        this.redirectToFailure(reason);
+        return;
+      }
+
+      this.applyLocalFailureState(reason);
       return;
     }
 
@@ -157,31 +173,61 @@ export class OrderEmailVerificationPageComponent implements OnInit {
   }
 
   private handleVerifySuccess(response: HttpResponse<string>): void {
+    const reasonFromUrl = this.failureReasonFromUrl(response.url);
+    if (reasonFromUrl) {
+      if (isPlatformBrowser(this.platformId)) {
+        this.redirectToFailure(reasonFromUrl);
+      } else {
+        this.applyLocalFailureState(reasonFromUrl);
+      }
+      return;
+    }
+
     const stateFromUrl = this.stateFromResponseUrl(response.url);
+    const detail = this.normalizeMessage(response.body);
+
     if (stateFromUrl && stateFromUrl !== 'loading') {
-      this.state.set(stateFromUrl);
-      this.details.set(this.normalizeMessage(response.body));
+      if (stateFromUrl === 'success') {
+        this.state.set('success');
+        this.details.set(detail);
+        return;
+      }
+
+      const reason = this.reasonFromState(stateFromUrl) ?? 'verification-failed';
+      if (isPlatformBrowser(this.platformId)) {
+        this.redirectToFailure(reason);
+      } else {
+        this.applyLocalFailureState(reason);
+      }
       return;
     }
 
     const body = this.normalizeText(response.body);
-    const detail = this.normalizeMessage(response.body);
 
     if (this.looksExpired(body)) {
-      this.state.set('expired');
-      this.details.set(detail);
+      if (isPlatformBrowser(this.platformId)) {
+        this.redirectToFailure('expired-token');
+      } else {
+        this.applyLocalFailureState('expired-token');
+      }
       return;
     }
 
     if (this.looksInvalid(body)) {
-      this.state.set('invalid');
-      this.details.set(detail);
+      if (isPlatformBrowser(this.platformId)) {
+        this.redirectToFailure('invalid-token');
+      } else {
+        this.applyLocalFailureState('invalid-token');
+      }
       return;
     }
 
     if (this.looksAlreadyConfirmed(body)) {
-      this.state.set('success');
-      this.details.set(detail ?? 'Narudžba je već potvrđena.');
+      if (isPlatformBrowser(this.platformId)) {
+        this.redirectToFailure('already-verified');
+      } else {
+        this.applyLocalFailureState('already-verified');
+      }
       return;
     }
 
@@ -194,27 +240,81 @@ export class OrderEmailVerificationPageComponent implements OnInit {
     const message = this.extractErrorMessage(err);
     const normalized = this.normalizeText(message);
 
-    const stateFromUrl = this.stateFromResponseUrl(httpError?.url ?? null);
-    if (stateFromUrl && stateFromUrl !== 'loading') {
-      this.state.set(stateFromUrl);
-      this.details.set(message);
+    const reasonFromUrl = this.failureReasonFromUrl(httpError?.url ?? null);
+    if (reasonFromUrl) {
+      if (isPlatformBrowser(this.platformId)) {
+        this.redirectToFailure(reasonFromUrl);
+      } else {
+        this.applyLocalFailureState(reasonFromUrl);
+      }
       return;
     }
 
+    const stateFromUrl = this.stateFromResponseUrl(httpError?.url ?? null);
+    if (stateFromUrl && stateFromUrl !== 'loading') {
+      const reason = this.reasonFromState(stateFromUrl);
+      if (stateFromUrl === 'success') {
+        this.state.set('success');
+        this.details.set(message);
+        return;
+      }
+
+      if (reason && isPlatformBrowser(this.platformId)) {
+        this.redirectToFailure(reason);
+        return;
+      }
+
+      if (reason) {
+        this.applyLocalFailureState(reason);
+        return;
+      }
+    }
+
     if (httpError?.status === 409 && this.looksAlreadyConfirmed(normalized)) {
-      this.state.set('success');
-      this.details.set(message ?? 'Narudžba je već potvrđena.');
+      if (isPlatformBrowser(this.platformId)) {
+        this.redirectToFailure('already-verified');
+      } else {
+        this.applyLocalFailureState('already-verified');
+      }
       return;
     }
 
     if (httpError?.status === 410 || (httpError?.status === 400 && this.looksExpired(normalized))) {
-      this.state.set('expired');
-      this.details.set(message);
+      if (isPlatformBrowser(this.platformId)) {
+        this.redirectToFailure('expired-token');
+      } else {
+        this.applyLocalFailureState('expired-token');
+      }
       return;
     }
 
-    this.state.set('invalid');
-    this.details.set(message ?? 'Potvrda narudžbe trenutno nije moguća. Pokušajte ponovo kasnije.');
+    if (
+      httpError?.status === 400 &&
+      (normalized.includes('missing token') || normalized.includes('nedostaje token'))
+    ) {
+      if (isPlatformBrowser(this.platformId)) {
+        this.redirectToFailure('missing-token');
+      } else {
+        this.applyLocalFailureState('missing-token');
+      }
+      return;
+    }
+
+    if (httpError?.status && httpError.status >= 500) {
+      if (isPlatformBrowser(this.platformId)) {
+        this.redirectToFailure('backend-error');
+      } else {
+        this.applyLocalFailureState('backend-error');
+      }
+      return;
+    }
+
+    if (isPlatformBrowser(this.platformId)) {
+      this.redirectToFailure('verification-failed');
+      return;
+    }
+
+    this.applyLocalFailureState('verification-failed');
   }
 
   private readToken(): string {
@@ -261,6 +361,141 @@ export class OrderEmailVerificationPageComponent implements OnInit {
     }
 
     return null;
+  }
+
+  private failureReasonFromQuery(): VerificationFailedReason | null {
+    const query = this.route.snapshot.queryParamMap;
+
+    const tokenExpired = this.normalizeText(query.get('tokenExpired'));
+    if (tokenExpired === '1' || tokenExpired === 'true' || tokenExpired === 'yes') {
+      return 'expired-token';
+    }
+
+    return this.failureReasonFromCombinedText(
+      this.normalizeText(
+        [
+          query.get('reason'),
+          query.get('status'),
+          query.get('error'),
+          query.get('errorCode'),
+          query.get('code'),
+          query.get('message'),
+        ]
+          .filter(Boolean)
+          .join(' '),
+      ),
+    );
+  }
+
+  private failureReasonFromUrl(url: string | null): VerificationFailedReason | null {
+    if (!url) return null;
+
+    try {
+      const parsed = new URL(url, 'https://planeta.local');
+      const tokenExpired = this.normalizeText(parsed.searchParams.get('tokenExpired'));
+      if (tokenExpired === '1' || tokenExpired === 'true' || tokenExpired === 'yes') {
+        return 'expired-token';
+      }
+
+      return this.failureReasonFromCombinedText(
+        this.normalizeText(
+          [
+            parsed.pathname,
+            parsed.searchParams.get('reason'),
+            parsed.searchParams.get('status'),
+            parsed.searchParams.get('error'),
+            parsed.searchParams.get('errorCode'),
+            parsed.searchParams.get('code'),
+            parsed.searchParams.get('message'),
+          ]
+            .filter(Boolean)
+            .join(' '),
+        ),
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  private failureReasonFromCombinedText(combined: string): VerificationFailedReason | null {
+    if (!combined) return null;
+
+    if (this.looksExpired(combined)) return 'expired-token';
+    if (this.looksAlreadyConfirmed(combined)) return 'already-verified';
+
+    if (
+      combined.includes('missing token') ||
+      combined.includes('missing-token') ||
+      combined.includes('token missing') ||
+      combined.includes('nedostaje token')
+    ) {
+      return 'missing-token';
+    }
+
+    if (this.looksInvalid(combined)) return 'invalid-token';
+
+    if (combined.includes('backend') || combined.includes('server') || combined.includes('500')) {
+      return 'backend-error';
+    }
+
+    if (combined.includes('failed') || combined.includes('error') || combined.includes('gresk')) {
+      return 'verification-failed';
+    }
+
+    return null;
+  }
+
+  private reasonFromState(state: OrderVerifyState | null): VerificationFailedReason | null {
+    if (state === 'expired') return 'expired-token';
+    if (state === 'invalid') return 'invalid-token';
+    return null;
+  }
+
+  private applyLocalFailureState(reason: VerificationFailedReason): void {
+    if (reason === 'expired-token') {
+      this.state.set('expired');
+      this.details.set(
+        'Link za potvrdu je istekao. Ako i dalje želite iste proizvode, napravite novu narudžbu.',
+      );
+      return;
+    }
+
+    if (reason === 'already-verified') {
+      this.state.set('invalid');
+      this.details.set('Narudžba je već potvrđena i ovaj link više nije aktivan.');
+      return;
+    }
+
+    if (reason === 'missing-token') {
+      this.state.set('invalid');
+      this.details.set('Nedostaje token za potvrdu narudžbe.');
+      return;
+    }
+
+    if (reason === 'backend-error') {
+      this.state.set('invalid');
+      this.details.set('Potvrda narudžbe trenutno nije dostupna. Pokušajte ponovo kasnije.');
+      return;
+    }
+
+    this.state.set('invalid');
+    this.details.set('Link za potvrdu nije važeći ili je već iskorišten.');
+  }
+
+  private redirectToFailure(reason: VerificationFailedReason): void {
+    const queryParams: Record<string, string | boolean> = { reason };
+    if (reason === 'expired-token') {
+      queryParams['tokenExpired'] = true;
+    }
+
+    void this.router
+      .navigate(['/order/verification-failed'], {
+        queryParams,
+        replaceUrl: true,
+      })
+      .catch(() => {
+        this.applyLocalFailureState(reason);
+      });
   }
 
   private extractErrorMessage(err: unknown): string | null {

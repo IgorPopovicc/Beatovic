@@ -30,6 +30,7 @@ export interface AdminOrder {
   couponValue: number | null;
   couponType: CouponType | null;
   userDetails: AdminOrderUserDetails;
+  orderDate?: string | null;
   items: AdminOrderItem[];
 }
 

@@ -1,0 +1,107 @@
+<section class="card">
+  <div class="head">
+    <div class="head-left">
+      <h1 class="title">Kuponi</h1>
+      <p class="sub">Upravljanje aktivnim kuponima (create/deactivate).</p>
+    </div>
+
+    <div class="head-right">
+      <button class="btn-add" type="button" (click)="openCreate()">
+        <span class="plus">+</span>
+        <span>Dodaj kupon</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="meta">
+    @if (error()) {
+      <div class="error">{{ error() }}</div>
+    } @else if (loading()) {
+      <div class="hint">Učitavanje kupona...</div>
+    } @else if (hasCoupons()) {
+      <div class="count">
+        Rezultati: <strong>{{ coupons().length }}</strong>
+      </div>
+    } @else {
+      <div class="hint">Nema aktivnih kupona.</div>
+    }
+  </div>
+
+  <div class="list">
+    @if (loading()) {
+      <div class="empty">Učitavanje...</div>
+    } @else if (!hasCoupons()) {
+      <div class="empty">Lista je prazna.</div>
+    } @else {
+      <div class="rows" role="list">
+        @for (coupon of coupons(); track trackByCouponId($index, coupon)) {
+          <article class="row" role="listitem">
+            <div class="main">
+              <div class="name">{{ coupon.code }}</div>
+
+              <div class="meta-line">
+                <span>Popust:</span>
+                <strong>{{ formatDiscount(coupon) }}</strong>
+              </div>
+
+              <div class="meta-line">
+                <span>Tip:</span>
+                <strong>{{ coupon.discountType }}</strong>
+                <span class="sep">·</span>
+                <span>Korištenje:</span>
+                <strong>{{ usageLabel(coupon) }}</strong>
+              </div>
+
+              <div class="meta-line">
+                <span>Limit:</span>
+                <strong>{{ coupon.maxUsageCount }}</strong>
+                <span class="sep">·</span>
+                <span>Preostalo:</span>
+                <strong>{{ coupon.remainingUsageCount }}</strong>
+              </div>
+
+              <div class="id">
+                ID: <span>{{ coupon.id }}</span>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button
+                type="button"
+                class="icon-btn danger"
+                title="Deaktiviraj kupon"
+                aria-label="Deaktiviraj kupon"
+                (click)="askDeactivate(coupon)"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 7h12l-1 14H7L6 7Zm3-3h6l1 2H8l1-2Zm-3 2h12v2H6V6Z" />
+                </svg>
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </div>
+</section>
+
+@if (createOpen()) {
+  <app-admin-coupon-create-modal (closed)="closeCreate()" (saved)="onCreated()" />
+}
+
+<app-confirm-dialog
+  [open]="confirmOpen()"
+  [title]="'Deaktivacija kupona'"
+  [message]="
+    selectedCoupon()
+      ? 'Da li ste sigurni da želite deaktivirati kupon ' + selectedCoupon()!.code + '?'
+      : ''
+  "
+  [confirmText]="'Da, deaktiviraj'"
+  [cancelText]="'Ne'"
+  [variant]="'danger'"
+  [icon]="'⚠'"
+  [busy]="confirmBusy()"
+  (confirm)="confirmDeactivate()"
+  (cancel)="closeConfirm()"
+/>

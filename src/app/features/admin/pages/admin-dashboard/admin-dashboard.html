@@ -1,4 +1,371 @@
-<section class="card">
-  <h1 class="title">Dashboard</h1>
-  <p class="sub">Ovdje ćemo dodati pregled statistike i brzih akcija.</p>
+<section class="dashboard">
+  <article class="card hero">
+    <div class="hero-left">
+      <h1 class="title">Dashboard prodaje</h1>
+      <p class="sub">Brzi pregled narudžbi, prihoda i operativnih stavki za tekući period.</p>
+
+      @if (lastRefreshedAt(); as refreshedAt) {
+        <div class="stamp">Zadnje osvježavanje: {{ formatDateTime(refreshedAt.toISOString()) }}</div>
+      }
+    </div>
+
+    <div class="hero-actions">
+      <button class="btn-refresh" type="button" (click)="refresh()" [disabled]="anyLoading()">
+        {{ anyLoading() ? 'Osvježavanje...' : 'Osvježi podatke' }}
+      </button>
+    </div>
+  </article>
+
+  <section class="kpi-grid">
+    @for (card of kpiCards(); track card.title) {
+      <article class="kpi" [class.good]="card.tone === 'good'" [class.warn]="card.tone === 'warn'" [class.danger]="card.tone === 'danger'">
+        <div class="kpi-title">{{ card.title }}</div>
+        <div class="kpi-value">{{ card.value }}</div>
+        <div class="kpi-hint">{{ card.hint }}</div>
+      </article>
+    }
+  </section>
+
+  <section class="grid two">
+    <article class="card panel">
+      <div class="panel-head">
+        <h2>Order Performance</h2>
+        <a routerLink="/admin/orders" class="head-link">Otvori narudžbe</a>
+      </div>
+
+      @if (ordersLoading()) {
+        <div class="state">Učitavanje narudžbi...</div>
+      } @else if (ordersError()) {
+        <div class="error">{{ ordersError() }}</div>
+      } @else if (orderAnalytics().totalOrders === 0) {
+        <div class="empty">Nema narudžbi za prikaz.</div>
+      } @else {
+        @if (!orderAnalytics().hasAnyOrderDate) {
+          <div class="warning">Narudžbe nemaju dostupan `orderDate`, pa periodi nisu dostupni.</div>
+        } @else if (orderAnalytics().ordersWithMissingDate > 0) {
+          <div class="warning">
+            {{ orderAnalytics().ordersWithMissingDate }} narudžbi nema datum i nisu uključene u periodne KPI-je.
+          </div>
+        }
+
+        <div class="stats-grid">
+          <div class="s">
+            <span>Posljednjih 7 dana</span>
+            <strong>{{ orderAnalytics().last7DaysOrders }}</strong>
+          </div>
+          <div class="s">
+            <span>Narudžbe ovaj mjesec</span>
+            <strong>{{ orderAnalytics().monthOrders }}</strong>
+          </div>
+          <div class="s">
+            <span>Narudžbe ova godina</span>
+            <strong>{{ orderAnalytics().yearOrders }}</strong>
+          </div>
+          <div class="s">
+            <span>Ukupan prihod</span>
+            <strong>{{ formatCurrency(orderAnalytics().totalRevenue) }}</strong>
+          </div>
+          <div class="s">
+            <span>Prihod ovaj mjesec</span>
+            <strong>{{ formatCurrency(orderAnalytics().monthRevenue) }}</strong>
+          </div>
+          <div class="s">
+            <span>Prihod ova godina</span>
+            <strong>{{ formatCurrency(orderAnalytics().yearRevenue) }}</strong>
+          </div>
+          <div class="s">
+            <span>Prosječna narudžba</span>
+            <strong>{{ formatCurrency(orderAnalytics().avgOrderValue) }}</strong>
+          </div>
+          <div class="s">
+            <span>Najveća narudžba</span>
+            <strong>{{ formatCurrency(orderAnalytics().largestOrderAmount) }}</strong>
+          </div>
+          <div class="s">
+            <span>Najmanja narudžba</span>
+            <strong>{{ formatCurrency(orderAnalytics().smallestOrderAmount) }}</strong>
+          </div>
+        </div>
+      }
+    </article>
+
+    <article class="card panel">
+      <div class="panel-head">
+        <h2>Status narudžbi</h2>
+      </div>
+
+      @if (ordersLoading()) {
+        <div class="state">Učitavanje statusa...</div>
+      } @else if (ordersError()) {
+        <div class="error">{{ ordersError() }}</div>
+      } @else if (orderAnalytics().totalOrders === 0) {
+        <div class="empty">Nema statusa za prikaz.</div>
+      } @else {
+        <div class="status-list">
+          @for (metric of orderAnalytics().statusMetrics; track metric.key) {
+            <div class="status-row">
+              <div class="status-top">
+                <div class="status-label">{{ metric.label }}</div>
+                <div class="status-count">{{ metric.count }}</div>
+              </div>
+              <div class="bar">
+                <div class="fill" [ngClass]="statusClass(metric.key)" [style.width.%]="metric.ratio"></div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </article>
+  </section>
+
+  <article class="card panel">
+    <div class="panel-head">
+      <h2>Najnovije narudžbe</h2>
+      <a routerLink="/admin/orders" class="head-link">Otvori sve</a>
+    </div>
+
+    @if (ordersLoading()) {
+      <div class="state">Učitavanje tabele...</div>
+    } @else if (ordersError()) {
+      <div class="error">{{ ordersError() }}</div>
+    } @else if (orderAnalytics().latestOrders.length === 0) {
+      <div class="empty">Nema narudžbi za prikaz.</div>
+    } @else {
+      <div class="table-wrap">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>ID narudžbe</th>
+              <th>Kupac</th>
+              <th>Datum</th>
+              <th>Status</th>
+              <th>Ukupno</th>
+              <th>Akcija</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (o of orderAnalytics().latestOrders; track trackByOrderId($index, o)) {
+              <tr>
+                <td class="mono">{{ o.orderId }}</td>
+                <td>{{ orderCustomer(o) }}</td>
+                <td>{{ formatDateTime(o.orderDate) }}</td>
+                <td>
+                  <span class="status-pill" [ngClass]="statusClass(o.status)">
+                    {{ statusLabel(o.status) }}
+                  </span>
+                </td>
+                <td>{{ formatCurrency(o.totalPrice) }}</td>
+                <td>
+                  <a routerLink="/admin/orders" class="table-link">Detalji</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </article>
+
+  <section class="grid two">
+    <article class="card panel">
+      <div class="panel-head">
+        <h2>Best-selling uvid</h2>
+      </div>
+
+      @if (ordersLoading()) {
+        <div class="state">Učitavanje product insights...</div>
+      } @else if (ordersError()) {
+        <div class="error">{{ ordersError() }}</div>
+      } @else if (!hasOrderInsights()) {
+        <div class="empty">Product-level prodajni podaci nisu dostupni iz trenutno učitanih narudžbi.</div>
+      } @else {
+        <div class="insight-meta">
+          Ukupno prodanih jedinica: <strong>{{ orderAnalytics().totalSoldUnits }}</strong>
+        </div>
+
+        <div class="insight-columns">
+          <div class="insight-col">
+            <h3>Top po količini</h3>
+            <ul>
+              @for (item of orderAnalytics().topByQuantity; track item.key) {
+                <li>
+                  <div class="insight-name">{{ topInsightLabel(item) }}</div>
+                  <div class="insight-val">{{ item.quantity }} kom</div>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <div class="insight-col">
+            <h3>Top po prihodu</h3>
+            <ul>
+              @for (item of orderAnalytics().topByRevenue; track item.key) {
+                <li>
+                  <div class="insight-name">{{ topInsightLabel(item) }}</div>
+                  <div class="insight-val">{{ formatCurrency(item.revenue) }}</div>
+                </li>
+              }
+            </ul>
+          </div>
+        </div>
+      }
+    </article>
+
+    <article class="card panel">
+      <div class="panel-head">
+        <h2>Kuponi i popusti</h2>
+        <div class="links">
+          <a routerLink="/admin/coupons">Kuponi</a>
+          <a routerLink="/admin/discounts">Popusti</a>
+        </div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="s">
+          <span>Aktivni kuponi</span>
+          @if (couponsLoading()) {
+            <strong>...</strong>
+          } @else if (couponsError()) {
+            <strong>-</strong>
+          } @else {
+            <strong>{{ coupons().length }}</strong>
+          }
+        </div>
+
+        <div class="s">
+          <span>Aktivni popusti</span>
+          @if (discountsLoading()) {
+            <strong>...</strong>
+          } @else if (discountsError()) {
+            <strong>-</strong>
+          } @else {
+            <strong>{{ discountSummary().active }}</strong>
+          }
+        </div>
+
+        <div class="s">
+          <span>Nadolazeći popusti</span>
+          @if (discountsLoading() || discountsError()) {
+            <strong>-</strong>
+          } @else {
+            <strong>{{ discountSummary().upcoming }}</strong>
+          }
+        </div>
+
+        <div class="s">
+          <span>Istekli popusti</span>
+          @if (discountsLoading() || discountsError()) {
+            <strong>-</strong>
+          } @else {
+            <strong>{{ discountSummary().expired }}</strong>
+          }
+        </div>
+      </div>
+
+      @if (couponsError()) {
+        <div class="error">{{ couponsError() }}</div>
+      }
+      @if (discountsError()) {
+        <div class="error">{{ discountsError() }}</div>
+      }
+    </article>
+  </section>
+
+  <section class="grid two">
+    <article class="card panel">
+      <div class="panel-head">
+        <h2>Newsletter</h2>
+        <a routerLink="/admin/newsletter" class="head-link">Pregled</a>
+      </div>
+
+      @if (newsletterLoading()) {
+        <div class="state">Učitavanje newsletter podataka...</div>
+      } @else if (newsletterError()) {
+        <div class="error">{{ newsletterError() }}</div>
+      } @else {
+        <div class="summary-grid">
+          <div class="s">
+            <span>Ukupno pretplatnika</span>
+            <strong>{{ newsletterTotal() ?? 0 }}</strong>
+          </div>
+          <div class="s">
+            <span>Novi ovaj mjesec</span>
+            <strong>{{ newsletterMonthNew() ?? '-' }}</strong>
+          </div>
+        </div>
+
+        @if (newsletterMonthNew() === null) {
+          <div class="hint">Mjesečni broj nije dostupan jer endpoint vraća samo paginirani subset.</div>
+        }
+
+        <div class="mini-list">
+          <h3>Najnoviji pretplatnici</h3>
+          @if (latestSubscribers().length === 0) {
+            <div class="empty small">Nema pretplatnika za prikaz.</div>
+          } @else {
+            <ul>
+              @for (sub of latestSubscribers(); track trackBySubscriberId($index, sub)) {
+                <li>
+                  <span class="primary">{{ sub.email }}</span>
+                  <span class="secondary">{{ formatDateTime(sub.subscribedAt || sub.createdAt || null) }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </article>
+
+    <article class="card panel">
+      <div class="panel-head">
+        <h2>Kontakt poruke</h2>
+        <a routerLink="/admin/contact" class="head-link">Pregled</a>
+      </div>
+
+      @if (contactsLoading()) {
+        <div class="state">Učitavanje kontakt poruka...</div>
+      } @else if (contactsError()) {
+        <div class="error">{{ contactsError() }}</div>
+      } @else {
+        <div class="summary-grid">
+          <div class="s">
+            <span>Ukupno (30 dana)</span>
+            <strong>{{ contacts().length }}</strong>
+          </div>
+        </div>
+
+        <div class="mini-list">
+          <h3>Najnovije poruke</h3>
+          @if (latestContacts().length === 0) {
+            <div class="empty small">Nema poruka za prikaz.</div>
+          } @else {
+            <ul>
+              @for (msg of latestContacts(); track trackByMessageIndex($index)) {
+                <li>
+                  <span class="primary">{{ msg.email }}</span>
+                  <span class="secondary">{{ formatDateTime(msg.submittedAt) }}</span>
+                  <span class="tertiary">{{ msg.subject || (msg.message | slice: 0 : 90) }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </article>
+  </section>
+
+  <article class="card panel">
+    <div class="panel-head">
+      <h2>Quick actions</h2>
+    </div>
+
+    <div class="quick-grid">
+      @for (action of quickActions; track action.link) {
+        <a [routerLink]="action.link" class="quick-card">
+          <span class="quick-title">{{ action.title }}</span>
+          <span class="quick-hint">{{ action.hint }}</span>
+        </a>
+      }
+    </div>
+  </article>
 </section>

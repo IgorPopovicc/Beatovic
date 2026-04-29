@@ -166,15 +166,27 @@
               <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
                 <div class="grid2">
                   <div class="field">
-                    <label class="label">SKU modela</label>
+                    <label class="label">SKU modela (suffix)</label>
+                    <div class="sku-prefix">
+                      Prefiks proizvoda:
+                      <strong>{{ skuPrefix() || '-' }}</strong>
+                    </div>
                     <input
                       class="input"
                       type="text"
                       formControlName="sku"
-                      placeholder="npr. TSHIRT-BLACK-M"
+                      placeholder="npr. BLACK-M ili 42"
+                      (blur)="onSkuInputBlur()"
                     />
+                    <div class="sku-help">Unesite samo završni dio SKU-a. Prefiks se dodaje automatski.</div>
+                    <div class="sku-preview" [class.bad]="duplicateGeneratedSku()">
+                      Finalni SKU: <strong>{{ generatedSku() || '-' }}</strong>
+                    </div>
                     @if (form.controls.sku.touched && form.controls.sku.invalid) {
                       <div class="field-err">SKU je obavezan.</div>
+                    }
+                    @if ((form.controls.sku.touched || submitting()) && duplicateGeneratedSku()) {
+                      <div class="field-err">Ovaj SKU već postoji za izabrani proizvod.</div>
                     }
                   </div>
 

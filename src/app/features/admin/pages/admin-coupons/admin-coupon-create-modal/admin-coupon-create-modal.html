@@ -1,0 +1,95 @@
+<div
+  class="overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Dodaj kupon"
+  (mousedown)="onOverlayMouseDown()"
+>
+  <div class="modal" (mousedown)="$event.stopPropagation()" (click)="$event.stopPropagation()">
+    <header class="head">
+      <div class="title-wrap">
+        <h2 class="title">Dodaj kupon</h2>
+        <p class="sub">Unesite kod, tip popusta i limit korištenja.</p>
+      </div>
+
+      <button class="icon-btn" type="button" (click)="close()" aria-label="Zatvori">✕</button>
+    </header>
+
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="grid2">
+        <div class="field full">
+          <label class="label">Kod kupona</label>
+          <input class="input" type="text" formControlName="code" placeholder="npr. PLANETA10" />
+          @if (form.controls.code.touched && form.controls.code.invalid) {
+            <div class="field-err">Kod kupona je obavezan.</div>
+          }
+        </div>
+
+        <div class="field">
+          <label class="label">Tip popusta</label>
+          <select class="input" formControlName="discountType">
+            <option value="PERCENTAGE">PERCENTAGE (%)</option>
+            <option value="FIXED_AMOUNT">FIXED_AMOUNT (KM)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="label">
+            Vrijednost
+            @if (isPercentage()) {
+              <span class="hint-inline">(0.01–100)</span>
+            } @else {
+              <span class="hint-inline">(KM)</span>
+            }
+          </label>
+          <input
+            class="input"
+            type="number"
+            formControlName="discountValue"
+            min="0.01"
+            step="0.01"
+            [attr.max]="isPercentage() ? 100 : null"
+          />
+          @if (form.controls.discountValue.touched && form.controls.discountValue.invalid) {
+            <div class="field-err">
+              @if (isPercentage()) {
+                Vrijednost mora biti između 0.01 i 100.
+              } @else {
+                Vrijednost mora biti najmanje 0.01.
+              }
+            </div>
+          }
+        </div>
+
+        <div class="field">
+          <label class="label">Način korištenja</label>
+          <select class="input" formControlName="usageType">
+            <option value="SINGLE_USE">SINGLE_USE</option>
+            <option value="PER_USER">PER_USER</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="label">Maksimalan broj korištenja</label>
+          <input class="input" type="number" formControlName="maxUsageCount" min="1" step="1" />
+          @if (form.controls.maxUsageCount.touched && maxUsageInvalid()) {
+            <div class="field-err">Maksimalan broj korištenja mora biti cijeli broj veći od 0.</div>
+          }
+        </div>
+      </div>
+
+      @if (error()) {
+        <div class="error">{{ error() }}</div>
+      }
+
+      <footer class="actions">
+        <button class="btn ghost" type="button" (click)="close()" [disabled]="submitting()">
+          Otkaži
+        </button>
+        <button class="btn" type="submit" [disabled]="invalid()">
+          {{ submitting() ? 'Kreiranje...' : 'Sačuvaj kupon' }}
+        </button>
+      </footer>
+    </form>
+  </div>
+</div>

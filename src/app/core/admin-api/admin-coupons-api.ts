@@ -1,0 +1,134 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+
+import { environment } from '../../../environments/environment';
+import { AuthService } from '../auth/auth.service';
+import { CouponDetails, CreateCouponRequest } from './admin-coupons.models';
+
+type RawCouponDetails = Partial<CouponDetails>;
+
+function normalizeCoupon(raw: RawCouponDetails | null | undefined): CouponDetails | null {
+  const id = String(raw?.id ?? '').trim();
+  const code = String(raw?.code ?? '').trim();
+  const discountType = String(raw?.discountType ?? '').trim();
+  const usageType = String(raw?.usageType ?? '').trim();
+
+  if (!id || !code) return null;
+  if (discountType !== 'PERCENTAGE' && discountType !== 'FIXED_AMOUNT') return null;
+  if (usageType !== 'SINGLE_USE' && usageType !== 'PER_USER') return null;
+
+  return {
+    id,
+    code,
+    discountType,
+    usageType,
+    discountValue: Number(raw?.discountValue ?? 0),
+    maxUsageCount: Number(raw?.maxUsageCount ?? 0),
+    remainingUsageCount: Number(raw?.remainingUsageCount ?? 0),
+  };
+}
+
+function toRawCouponArray(response: unknown): RawCouponDetails[] {
+  if (Array.isArray(response)) return response as RawCouponDetails[];
+
+  if (response && typeof response === 'object') {
+    const objectResponse = response as Record<string, unknown>;
+
+    if (Array.isArray(objectResponse['content'])) {
+      return objectResponse['content'] as RawCouponDetails[];
+    }
+
+    const single = normalizeCoupon(objectResponse as RawCouponDetails);
+    if (single) return [single];
+  }
+
+  return [];
+}
+
+@Injectable({ providedIn: 'root' })
+export class AdminCouponsApi {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+
+  private headersOrThrow(): HttpHeaders | never {
+    const token = this.auth.accessToken();
+    if (!token) throw new Error('Nema tokena. Prijavite se kao admin.');
+
+    return new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    });
+  }
+
+  getActiveCoupons(): Observable<CouponDetails[]> {
+    let headers: HttpHeaders;
+
+    try {
+      headers = this.headersOrThrow();
+    } catch (err) {
+      return throwError(() => err);
+    }
+
+    return this.http.get<unknown>(`${environment.apiBaseUrl}/admin/coupons/active`, { headers }).pipe(
+      map((response) =>
+        toRawCouponArray(response)
+          .map((item) => normalizeCoupon(item))
+          .filter((item): item is CouponDetails => item !== null),
+      ),
+      catchError((err) => {
+        console.error('[AdminCouponsApi] getActiveCoupons failed:', err);
+        return throwError(() => err);
+      }),
+    );
+  }
+
+  createCoupon(body: CreateCouponRequest): Observable<CouponDetails> {
+    let headers: HttpHeaders;
+
+    try {
+      headers = this.headersOrThrow();
+    } catch (err) {
+      return throwError(() => err);
+    }
+
+    return this.http.post<unknown>(`${environment.apiBaseUrl}/admin/coupons`, body, { headers }).pipe(
+      map((response) => {
+        const normalized = normalizeCoupon(response as RawCouponDetails);
+        if (!normalized) {
+          throw new Error('Neočekivan odgovor backend-a za kupon.');
+        }
+        return normalized;
+      }),
+      catchError((err) => {
+        console.error('[AdminCouponsApi] createCoupon failed:', err);
+        return throwError(() => err);
+      }),
+    );
+  }
+
+  deactivateCoupon(couponId: string): Observable<void> {
+    let headers: HttpHeaders;
+
+    try {
+      headers = this.headersOrThrow();
+    } catch (err) {
+      return throwError(() => err);
+    }
+
+    const safeId = encodeURIComponent(couponId);
+    return this.http
+      .delete(`${environment.apiBaseUrl}/admin/coupons/${safeId}`, {
+        headers,
+        responseType: 'text',
+      })
+      .pipe(
+        map(() => void 0),
+        catchError((err) => {
+          console.error('[AdminCouponsApi] deactivateCoupon failed:', err);
+          return throwError(() => err);
+        }),
+      );
+  }
+}
