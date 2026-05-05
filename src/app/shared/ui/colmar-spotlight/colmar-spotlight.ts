@@ -91,8 +91,12 @@ export class ColmarSpotlight {
           this.loading.set(false);
         }),
         catchError((err) => {
-          console.error('[ColmarSpotlight] load failed', err);
-          this.error.set(`${this.config.brandName} sekcija trenutno nije dostupna.`);
+          const status = Number((err as { status?: unknown })?.status ?? 0);
+          this.error.set(
+            status >= 500
+              ? `${this.config.brandName} sekcija je privremeno nedostupna.`
+              : `${this.config.brandName} sekcija trenutno nije dostupna.`,
+          );
           this.product.set(null);
           this.loading.set(false);
           return of(null);

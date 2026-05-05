@@ -75,6 +75,8 @@ interface OrderAnalytics {
 const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PENDING: 'Čeka email potvrdu',
   EMAIL_VERIFIED: 'Email potvrđen',
+  WAITING_FOR_CUSTOMER_RECONFIRMATION: 'Čeka ponovnu potvrdu kupca',
+  CUSTOMER_RECONFIRMED: 'Kupac ponovo potvrdio',
   COMPLETED: 'Završena',
   CANCELED: 'Otkazana',
   EXPIRED: 'Istekla potvrda',
@@ -83,6 +85,8 @@ const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 const ORDER_STATUS_PRIORITY: OrderStatus[] = [
   'PENDING',
   'EMAIL_VERIFIED',
+  'WAITING_FOR_CUSTOMER_RECONFIRMATION',
+  'CUSTOMER_RECONFIRMED',
   'COMPLETED',
   'CANCELED',
   'EXPIRED',
@@ -392,7 +396,14 @@ export class AdminDashboard {
   statusClass(status: string): string {
     const key = this.normalizeStatus(status);
     if (key === 'COMPLETED') return 'good';
-    if (key === 'PENDING' || key === 'EMAIL_VERIFIED') return 'warn';
+    if (
+      key === 'PENDING' ||
+      key === 'EMAIL_VERIFIED' ||
+      key === 'WAITING_FOR_CUSTOMER_RECONFIRMATION' ||
+      key === 'CUSTOMER_RECONFIRMED'
+    ) {
+      return 'warn';
+    }
     if (key === 'CANCELED' || key === 'EXPIRED') return 'danger';
     return 'default';
   }
@@ -400,7 +411,7 @@ export class AdminDashboard {
   orderCustomer(order: AdminOrder): string {
     const fullName = String(order.userDetails?.fullName ?? '').trim();
     if (fullName) return fullName;
-    return String(order.userDetails?.email ?? '').trim() || 'Kupac';
+    return String(order.userDetails?.email ?? '').trim() || 'Anonimizovan korisnik';
   }
 
   formatCurrency(value: number | null | undefined): string {

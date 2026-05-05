@@ -1,5 +1,5 @@
 export type CouponDiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT';
-export type CouponUsageType = 'SINGLE_USE' | 'PER_USER';
+export type CouponUsageType = 'GLOBAL_LIMIT' | 'LIMIT_PER_USER';
 
 export interface CreateCouponRequest {
   code: string;

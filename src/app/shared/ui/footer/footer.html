@@ -39,8 +39,17 @@
         Ako ste zainteresirani za saradnju ili želite postati dio našeg tima, slobodno nam se
         javite.
       </p>
-      <a class="job-button" href="mailto:igorpopovic999@gmail.com"> Prijavite se </a>
+      <button
+        class="job-button"
+        type="button"
+        (click)="openContactModal()"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="contactOpen()"
+      >
+        Prijavite se
+      </button>
     </div>
+
   </div>
 
   <div class="footer-bottom">
@@ -52,3 +61,98 @@
     © 2025 Planeta. Sva prava zadržana.
   </div>
 </footer>
+
+@if (contactOpen()) {
+  <div class="contact-backdrop" (click)="onBackdropClick()" aria-hidden="true"></div>
+
+  <section class="contact-modal-wrap" role="dialog" aria-modal="true" aria-label="Kontakt forma">
+    <div class="contact-modal" (click)="$event.stopPropagation()">
+      <div class="contact-head">
+        <div>
+          <h3>Pošaljite poruku</h3>
+          <p>
+            Vaša poruka će biti proslijeđena našem timu i vidljiva u administratorskom pregledu.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="contact-close"
+          (click)="closeContactModal()"
+          [disabled]="submitting()"
+          aria-label="Zatvori kontakt formu"
+        >
+          ×
+        </button>
+      </div>
+
+      @if (submitError()) {
+        <div class="contact-status error" role="alert">{{ submitError() }}</div>
+      }
+
+      <form class="contact-form" [formGroup]="form" (ngSubmit)="submitContactMessage()" novalidate>
+        <div class="form-grid">
+          <label class="field">
+            <span>Ime i prezime</span>
+            <input type="text" formControlName="name" placeholder="npr. Amar Hadžić" />
+            <span class="field-msg" [class.error]="hasFieldError('name')">{{ fieldError('name') }}</span>
+          </label>
+
+          <label class="field">
+            <span>E-mail *</span>
+            <input type="email" formControlName="email" placeholder="vas@email.com" />
+            <span class="field-msg" [class.error]="hasFieldError('email')">{{ fieldError('email') }}</span>
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Telefon</span>
+            <input type="text" formControlName="phoneNumber" placeholder="+387 61 123 456" />
+            <span class="field-msg" [class.error]="hasFieldError('phoneNumber')">
+              {{ fieldError('phoneNumber') }}
+            </span>
+          </label>
+
+          <label class="field">
+            <span>Naslov</span>
+            <input type="text" formControlName="subject" placeholder="Kratak naslov poruke" />
+            <span class="field-msg" [class.error]="hasFieldError('subject')">
+              {{ fieldError('subject') }}
+            </span>
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Poruka *</span>
+          <textarea
+            formControlName="message"
+            rows="5"
+            placeholder="Unesite sadržaj poruke..."
+          ></textarea>
+          <span class="field-msg" [class.error]="hasFieldError('message')">{{ fieldError('message') }}</span>
+        </label>
+
+        <label class="field privacy-field">
+          <span class="privacy-check">
+            <input type="checkbox" formControlName="privacyPolicyAccepted" />
+            <span>Prihvatam politiku privatnosti i obradu podataka za odgovor na upit.</span>
+          </span>
+          <span class="field-msg" [class.error]="hasFieldError('privacyPolicyAccepted')">
+            {{ fieldError('privacyPolicyAccepted') }}
+          </span>
+        </label>
+
+        <div class="contact-actions">
+          <button type="button" class="btn ghost" (click)="closeContactModal()" [disabled]="submitting()">
+            Zatvori
+          </button>
+
+          <button type="submit" class="btn primary" [disabled]="submitting()">
+            {{ submitting() ? 'Slanje...' : 'Pošalji poruku' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+}

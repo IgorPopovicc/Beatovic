@@ -229,6 +229,7 @@ export class ProductDetails implements OnDestroy {
         amount: Number(p.price ?? 0),
         currency: normalizeCurrencyCode(p.currency),
       },
+      maxQty: hasSizes ? Number(this.sizeQtyMap()[sizeValue] ?? 0) : null,
       qty: 1,
     });
   }

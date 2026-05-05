@@ -107,8 +107,12 @@ export class NewCollection implements AfterViewInit, OnDestroy {
           this.loading.set(false);
         }),
         catchError((err) => {
-          console.error('[NewCollection] featured products load failed', err);
-          this.error.set('Trenutno ne možemo učitati izdvojene modele.');
+          const status = Number((err as { status?: unknown })?.status ?? 0);
+          this.error.set(
+            status >= 500
+              ? 'Izdvojeni modeli su privremeno nedostupni. Pokušajte ponovo kasnije.'
+              : 'Trenutno ne možemo učitati izdvojene modele.',
+          );
           this.products.set([]);
           this.loading.set(false);
           return of(null);

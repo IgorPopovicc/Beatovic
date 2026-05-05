@@ -88,14 +88,19 @@
 
 .badge {
   position: absolute;
-  top: 14px;
-  left: 14px;
-  background: #e53935;
+  top: 0;
+  left: 0;
+  background: linear-gradient(135deg, #ef2d24 0%, #c91517 100%);
   color: #fff;
   font-weight: 900;
-  border-radius: 10px;
+  border-radius: 12px 0 14px 0;
   padding: 8px 10px;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  box-shadow:
+    0 10px 18px rgba(154, 20, 24, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
   z-index: 2;
 }
 

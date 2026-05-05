@@ -87,8 +87,14 @@
               </div>
             }
 
-            <div class="body">
+            <div class="body body-preview">
               {{ message.message }}
+            </div>
+
+            <div class="row-actions">
+              <button class="btn ghost preview-btn" type="button" (click)="openMessagePreview(message)">
+                Pregled poruke
+              </button>
             </div>
           </article>
         }
@@ -96,3 +102,61 @@
     }
   </div>
 </section>
+
+@if (selectedMessage(); as selected) {
+  <div class="preview-backdrop" (click)="closeMessagePreview()" aria-hidden="true"></div>
+
+  <section class="preview-wrap" role="dialog" aria-modal="true" aria-label="Detalji kontakt poruke">
+    <article class="preview-card" (click)="$event.stopPropagation()">
+      <header class="preview-head">
+        <div>
+          <h2>Kontakt poruka</h2>
+          <p>Detaljan pregled zaprimljene poruke.</p>
+        </div>
+
+        <button type="button" class="preview-close" (click)="closeMessagePreview()" aria-label="Zatvori">
+          ×
+        </button>
+      </header>
+
+      <div class="preview-meta">
+        <div class="meta-line">
+          <span>Ime</span>
+          <strong>{{ nonEmpty(selected.name) }}</strong>
+        </div>
+
+        <div class="meta-line">
+          <span>E-mail</span>
+          <strong>{{ nonEmpty(selected.email) }}</strong>
+        </div>
+
+        @if (selected.phoneNumber) {
+          <div class="meta-line">
+            <span>Telefon</span>
+            <strong>{{ selected.phoneNumber }}</strong>
+          </div>
+        }
+
+        @if (selected.subject) {
+          <div class="meta-line">
+            <span>Naslov</span>
+            <strong>{{ selected.subject }}</strong>
+          </div>
+        }
+
+        <div class="meta-line">
+          <span>Vrijeme prijema</span>
+          <strong>{{ formatDateTime(selected.submittedAt) }}</strong>
+        </div>
+      </div>
+
+      <div class="preview-body">
+        {{ selected.message }}
+      </div>
+
+      <div class="preview-actions">
+        <button type="button" class="btn" (click)="closeMessagePreview()">Zatvori</button>
+      </div>
+    </article>
+  </section>
+}

@@ -9,15 +9,25 @@ import { CouponDetails, CreateCouponRequest } from './admin-coupons.models';
 
 type RawCouponDetails = Partial<CouponDetails>;
 
+function normalizeUsageType(value: unknown): CouponDetails['usageType'] | null {
+  const normalized = String(value ?? '')
+    .trim()
+    .toUpperCase();
+
+  if (normalized === 'GLOBAL_LIMIT' || normalized === 'SINGLE_USE') return 'GLOBAL_LIMIT';
+  if (normalized === 'LIMIT_PER_USER' || normalized === 'PER_USER') return 'LIMIT_PER_USER';
+  return null;
+}
+
 function normalizeCoupon(raw: RawCouponDetails | null | undefined): CouponDetails | null {
   const id = String(raw?.id ?? '').trim();
   const code = String(raw?.code ?? '').trim();
   const discountType = String(raw?.discountType ?? '').trim();
-  const usageType = String(raw?.usageType ?? '').trim();
+  const usageType = normalizeUsageType(raw?.usageType);
 
   if (!id || !code) return null;
   if (discountType !== 'PERCENTAGE' && discountType !== 'FIXED_AMOUNT') return null;
-  if (usageType !== 'SINGLE_USE' && usageType !== 'PER_USER') return null;
+  if (!usageType) return null;
 
   return {
     id,

@@ -1,0 +1,162 @@
+:host {
+  display: block;
+}
+
+.home-newsletter {
+  width: min(1200px, 100% - clamp(24px, 6vw, 80px));
+  margin: 0 auto clamp(14px, 2vw, 26px);
+}
+
+.newsletter-shell {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: clamp(18px, 3vw, 34px);
+  border: 1px solid rgba(224, 24, 36, 0.2);
+  background: linear-gradient(125deg, #ffffff 0%, #fff4f3 100%);
+  border-radius: 16px;
+  padding: clamp(18px, 3vw, 30px);
+}
+
+.newsletter-copy {
+  display: grid;
+  gap: 10px;
+  align-content: center;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #e01824;
+}
+
+h2 {
+  margin: 0;
+  color: #111;
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  line-height: 1.15;
+}
+
+p {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.72);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.newsletter-form {
+  display: grid;
+  align-content: center;
+  gap: 8px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+input[type='email'] {
+  width: 100%;
+  height: 46px;
+  border: 1px solid #d7d7d7;
+  border-radius: 12px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+  background: #fff;
+}
+
+input[type='email']:focus {
+  outline: none;
+  border-color: rgba(224, 24, 36, 0.55);
+  box-shadow: 0 0 0 4px rgba(224, 24, 36, 0.1);
+}
+
+.privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: rgba(17, 17, 17, 0.85);
+  cursor: pointer;
+}
+
+.privacy input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+
+.field-msg {
+  min-height: 16px;
+  color: rgba(17, 17, 17, 0.62);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.field-msg.error {
+  color: #b3121b;
+}
+
+.status {
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.status.error {
+  color: #a10f18;
+  border: 1px solid rgba(224, 24, 36, 0.24);
+  background: rgba(224, 24, 36, 0.1);
+}
+
+.submit-btn {
+  margin-top: 2px;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: #d5271d;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.submit-btn:hover {
+  background: #e04940;
+  color: #111;
+}
+
+.submit-btn:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .newsletter-shell {
+    grid-template-columns: 1fr;
+  }
+}

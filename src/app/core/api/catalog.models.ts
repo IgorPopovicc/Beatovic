@@ -8,6 +8,7 @@ export interface ApiCategoryValue {
   value: string;
   displayValue?: string;
   parent?: { id?: string; value?: string; displayValue?: string } | null;
+  hasChildren?: boolean;
 }
 
 export interface ProductsSearchRequest {

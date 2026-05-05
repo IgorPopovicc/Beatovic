@@ -98,12 +98,14 @@
   margin-top: 12px;
   display: inline-block;
   background-color: #d5271d;
+  border: 0;
   color: white !important;
   font-weight: 600;
   padding: 8px 20px;
   border-radius: 4px;
   text-decoration: none;
   transition: background-color 0.3s;
+  cursor: pointer;
 
   &:hover {
     background-color: #e04940;
@@ -121,4 +123,233 @@
 .footer-bottom a:hover {
   color: #010101;
   text-decoration: none;
+}
+
+.contact-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(2px);
+  z-index: 4500;
+}
+
+.contact-modal-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 4501;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.contact-modal {
+  width: min(760px, 100%);
+  max-height: min(92vh, 860px);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.2);
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.contact-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+
+  h3 {
+    margin: 0;
+    font-size: 26px;
+    letter-spacing: -0.02em;
+    font-weight: 900;
+    color: #111;
+  }
+
+  p {
+    margin: 6px 0 0;
+    color: rgba(17, 17, 17, 0.72);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+}
+
+.contact-close {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  background: #fff;
+  color: #111;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.contact-status {
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.contact-status.success {
+  color: #0f6f2a;
+  border: 1px solid rgba(15, 111, 42, 0.24);
+  background: rgba(15, 111, 42, 0.1);
+}
+
+.contact-status.error {
+  color: #a10f18;
+  border: 1px solid rgba(224, 24, 36, 0.24);
+  background: rgba(224, 24, 36, 0.1);
+}
+
+.contact-form {
+  display: grid;
+  gap: 10px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+
+  > span:first-child {
+    font-size: 12px;
+    font-weight: 900;
+    color: rgba(17, 17, 17, 0.72);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    border: 1px solid #d7d7d7;
+    border-radius: 12px;
+    background: #fff;
+    padding: 0 12px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: #111;
+  }
+
+  input {
+    height: 44px;
+  }
+
+  textarea {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: none;
+    border-color: rgba(224, 24, 36, 0.55);
+    box-shadow: 0 0 0 4px rgba(224, 24, 36, 0.1);
+  }
+}
+
+.field-msg {
+  min-height: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(17, 17, 17, 0.6);
+}
+
+.field-msg:empty::before {
+  content: '\00a0';
+}
+
+.field-msg.error {
+  color: #b3121b;
+}
+
+.privacy-field {
+  gap: 6px;
+}
+
+.privacy-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: rgba(17, 17, 17, 0.85);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.privacy-check input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  flex: 0 0 auto;
+}
+
+.contact-actions {
+  margin-top: 4px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.contact-actions .btn {
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  background: #fff;
+  color: #111;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  padding: 0 16px;
+}
+
+.contact-actions .btn.primary {
+  background: #e01824;
+  border-color: #e01824;
+  color: #fff;
+}
+
+.contact-actions .btn:disabled,
+.contact-close:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .contact-modal {
+    padding: 14px;
+  }
+
+  .contact-head h3 {
+    font-size: 22px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-actions {
+    flex-direction: column-reverse;
+  }
+
+  .contact-actions .btn {
+    width: 100%;
+  }
 }

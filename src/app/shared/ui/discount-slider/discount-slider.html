@@ -1,7 +1,7 @@
 <section class="discount-slider" aria-label="Proizvodi na popustu">
   <div class="head">
     <h2 class="title">Na popustu</h2>
-    <a class="head-link" [routerLink]="['/catalog', 'muskarci', 'obuca']" [queryParams]="{ sale: 1 }">
+    <a class="head-link" [routerLink]="['/products']" [queryParams]="{ sale: 1 }">
       Pogledajte sve akcije
     </a>
   </div>
@@ -26,7 +26,7 @@
 
       <a
         class="discount-item more-card"
-        [routerLink]="['/catalog', 'muskarci', 'obuca']"
+        [routerLink]="['/products']"
         [queryParams]="{ sale: 1 }"
         aria-label="Pogledajte više proizvoda na popustu"
         role="listitem"

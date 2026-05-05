@@ -184,6 +184,132 @@
   word-break: break-word;
 }
 
+.body-preview {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.preview-btn {
+  height: 36px;
+  border-radius: 10px;
+  padding: 0 14px;
+}
+
+.preview-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2400;
+}
+
+.preview-wrap {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  z-index: 2401;
+}
+
+.preview-card {
+  width: min(760px, 100%);
+  max-height: min(92vh, 920px);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 18px;
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.preview-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+
+  h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 900;
+    color: #111;
+  }
+
+  p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: rgba(17, 17, 17, 0.65);
+  }
+}
+
+.preview-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: rgba(17, 17, 17, 0.7);
+}
+
+.preview-meta {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #ececec;
+  background: #fcfcfc;
+}
+
+.meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+
+  span {
+    color: rgba(17, 17, 17, 0.65);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 11px;
+  }
+
+  strong {
+    color: #111;
+    font-weight: 800;
+  }
+}
+
+.preview-body {
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid #ececec;
+  background: #fff;
+  min-height: 140px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.55;
+  color: rgba(17, 17, 17, 0.86);
+  font-size: 14px;
+}
+
+.preview-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (max-width: 960px) {
   .filters {
     grid-template-columns: 1fr 1fr;
@@ -214,5 +340,17 @@
 
   .filters {
     grid-template-columns: 1fr;
+  }
+
+  .preview-card {
+    padding: 14px;
+  }
+
+  .preview-head h2 {
+    font-size: 22px;
+  }
+
+  .preview-actions .btn {
+    width: 100%;
   }
 }

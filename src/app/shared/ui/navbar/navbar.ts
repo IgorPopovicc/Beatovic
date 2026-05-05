@@ -204,36 +204,62 @@ export class Navbar implements OnInit, OnDestroy {
 
       forkJoin([
         this.catalogApi.getCategoryValues(polId),
-        this.catalogApi.getCategoryValues(katId),
-      ]).subscribe(([polValues, kategorije]) => {
-        const normalizeMenuValue = (value: unknown): { slug: string; label: string } | null => {
+        this.catalogApi.getCategoryValues(katId, { onlyRoot: true }),
+      ]).subscribe(([polValues, rootCategories]) => {
+        const toMenuValue = (value: unknown): { slug: string; label: string } | null => {
           const slug = toSlug(value);
           const label = toLabel(value);
           return slug && label ? { slug, label } : null;
         };
 
-        const categoryItems = kategorije
-          .map((k) => normalizeMenuValue(k?.value))
-          .filter((item): item is { slug: string; label: string } => item !== null);
+        const buildMenu = (categorySource: Array<{ value?: string; displayValue?: string }>) => {
+          const categoryItems = categorySource
+            .map((k) => toMenuValue(k?.displayValue ?? k?.value))
+            .filter((item): item is { slug: string; label: string } => item !== null);
 
-        const genderItems: MenuItem[] = polValues
-          .map((g) => normalizeMenuValue(g?.value))
-          .filter((item): item is { slug: string; label: string } => item !== null)
-          .map((gender) => ({
-            label: gender.label,
-            children: categoryItems.map((category) => ({
-              label: category.label,
-              link: `/catalog/${gender.slug}/${category.slug}`,
-            })),
-          }));
+          const genderItems: MenuItem[] = polValues
+            .map((g) => toMenuValue(g?.displayValue ?? g?.value))
+            .filter((item): item is { slug: string; label: string } => item !== null)
+            .map((gender) => ({
+              label: gender.label,
+              children: categoryItems.map((category) => ({
+                label: category.label,
+                link: `/catalog/${gender.slug}/${category.slug}`,
+              })),
+            }));
 
-        const base: MenuItem[] = [
-          { label: 'Početna', link: '/' },
-          ...genderItems,
-          { label: 'Brendovi', link: '/brands' },
-        ];
+          const base: MenuItem[] = [
+            { label: 'Početna', link: '/' },
+            ...genderItems,
+            { label: 'Brendovi', link: '/brands' },
+          ];
 
-        this.menu.set(base);
+          this.menu.set(base);
+        };
+
+        const rootsWithChildren = rootCategories.filter((value) => value.hasChildren === true);
+        if (rootsWithChildren.length === 0) {
+          buildMenu(rootCategories);
+          return;
+        }
+
+        const childrenRequests = rootsWithChildren.map((root) =>
+          this.catalogApi.getCategoryValueChildren(root.id).pipe(
+            catchError(() => of([])),
+            map((children) => ({ rootId: root.id, children })),
+          ),
+        );
+
+        forkJoin(childrenRequests).subscribe((childrenGroups) => {
+          const flatChildren = childrenGroups.flatMap((group) => group.children);
+          if (flatChildren.length === 0) {
+            buildMenu(rootCategories);
+            return;
+          }
+
+          const rootsWithoutChildren = rootCategories.filter((root) => root.hasChildren !== true);
+          buildMenu([...rootsWithoutChildren, ...flatChildren]);
+        });
       });
     });
   }

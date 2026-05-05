@@ -24,8 +24,10 @@ export class SeoService {
   private readonly request = inject(REQUEST, { optional: true });
 
   private readonly structuredDataId = 'app-structured-data';
-  private readonly defaultSocialImagePath = '/assets/images/logo/planets_main_logo.png';
+  private readonly defaultSocialImagePath = '/planeta-share.png';
   private readonly defaultSocialImageAlt = 'Planeta webshop logo';
+  private readonly defaultSocialImageWidth = 1200;
+  private readonly defaultSocialImageHeight = 630;
 
   setPage(config: SeoPageConfig): void {
     const pageTitle = config.title.trim();
@@ -51,6 +53,7 @@ export class SeoService {
     this.updateMetaByName('twitter:description', description);
     this.updateMetaByName('twitter:url', canonical);
 
+    const hasCustomImage = !!config.image?.trim();
     const image = (config.image?.trim() || this.defaultSocialImagePath).trim();
     const imageAlt = (config.imageAlt?.trim() || this.defaultSocialImageAlt).trim();
     if (image) {
@@ -62,8 +65,12 @@ export class SeoService {
       this.updateMetaByName('twitter:image', absoluteImage);
       this.updateMetaByName('twitter:image:alt', imageAlt);
 
-      const width = Number(config.imageWidth ?? 0);
-      const height = Number(config.imageHeight ?? 0);
+      const width = Number(
+        config.imageWidth ?? (hasCustomImage ? 0 : this.defaultSocialImageWidth),
+      );
+      const height = Number(
+        config.imageHeight ?? (hasCustomImage ? 0 : this.defaultSocialImageHeight),
+      );
 
       if (width > 0) {
         this.updateMetaByProperty('og:image:width', String(width));
@@ -186,9 +193,39 @@ export class SeoService {
     return String(raw).trim().split(',')[0].trim();
   }
 
+  private isLocalHost(hostOrUrl: string): boolean {
+    const value = String(hostOrUrl ?? '').trim().toLowerCase();
+    if (!value) return false;
+
+    let host = value;
+
+    if (/^https?:\/\//i.test(host)) {
+      try {
+        host = new URL(host).hostname.toLowerCase();
+      } catch {
+        return false;
+      }
+    } else {
+      host = host.split('/')[0];
+      host = host.split('@').pop() ?? host;
+      host = host.split(':')[0];
+    }
+
+    return (
+      host === 'localhost' ||
+      host === '0.0.0.0' ||
+      host === '::1' ||
+      host === '[::1]' ||
+      host.startsWith('127.') ||
+      host.endsWith('.local')
+    );
+  }
+
   private resolveSiteUrl(): string {
+    const fromEnv = String(environment.siteUrl || '').trim().replace(/\/+$/, '');
+
     const forwardedHost = this.requestHeader('x-forwarded-host') || this.requestHeader('host');
-    if (forwardedHost) {
+    if (forwardedHost && !this.isLocalHost(forwardedHost)) {
       const forwardedProto = this.requestHeader('x-forwarded-proto');
       const protocol =
         forwardedProto ||
@@ -201,14 +238,30 @@ export class SeoService {
     const requestUrl = String((this.request as any)?.url ?? '').trim();
     if (/^https?:\/\//i.test(requestUrl)) {
       try {
-        return new URL(requestUrl).origin.replace(/\/+$/, '');
+        const requestOrigin = new URL(requestUrl).origin.replace(/\/+$/, '');
+        if (!this.isLocalHost(requestOrigin)) {
+          return requestOrigin;
+        }
       } catch {}
     }
 
     const origin = String(this.document?.location?.origin ?? '').trim().replace(/\/+$/, '');
+    if (origin && origin !== 'null' && !this.isLocalHost(origin)) return origin;
+
+    if (fromEnv && !this.isLocalHost(fromEnv)) return fromEnv;
+
+    if (forwardedHost) {
+      const forwardedProto = this.requestHeader('x-forwarded-proto');
+      const protocol =
+        forwardedProto ||
+        (forwardedHost.startsWith('localhost') || forwardedHost.startsWith('127.0.0.1')
+          ? 'http'
+          : 'https');
+      return `${protocol}://${forwardedHost}`.replace(/\/+$/, '');
+    }
+
     if (origin && origin !== 'null') return origin;
 
-    const fromEnv = String(environment.siteUrl || '').trim().replace(/\/+$/, '');
     if (fromEnv) return fromEnv;
 
     return '';

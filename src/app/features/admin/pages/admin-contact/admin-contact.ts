@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, startWith, tap } from 'rxjs/operators';
@@ -53,8 +53,10 @@ export class AdminContact {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly messages = signal<ContactMessage[]>([]);
+  readonly selectedMessage = signal<ContactMessage | null>(null);
 
   readonly hasResults = computed(() => this.messages().length > 0);
+  readonly previewOpen = computed(() => this.selectedMessage() !== null);
 
   readonly normalizedFrom = computed(() => String(this.fromDateSig() ?? '').trim());
   readonly normalizedTo = computed(() => String(this.toDateSig() ?? '').trim());
@@ -128,6 +130,21 @@ export class AdminContact {
     this.search();
   }
 
+  openMessagePreview(message: ContactMessage): void {
+    this.selectedMessage.set(message);
+  }
+
+  closeMessagePreview(): void {
+    this.selectedMessage.set(null);
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscape(event: Event): void {
+    if (!this.previewOpen()) return;
+    event.preventDefault();
+    this.closeMessagePreview();
+  }
+
   formatDateTime(value: string): string {
     if (!value) return '-';
 
@@ -145,6 +162,11 @@ export class AdminContact {
 
   trackByIndex(index: number): number {
     return index;
+  }
+
+  nonEmpty(value: string): string {
+    const trimmed = String(value ?? '').trim();
+    return trimmed || '-';
   }
 
   private buildPayload(): ContactSearchRequest {

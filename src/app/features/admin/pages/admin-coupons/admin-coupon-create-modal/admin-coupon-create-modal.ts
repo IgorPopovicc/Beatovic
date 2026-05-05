@@ -33,7 +33,7 @@ export class AdminCouponCreateModal {
     code: this.fb.nonNullable.control('', [Validators.required]),
     discountType: this.fb.control<CouponDiscountType | null>('PERCENTAGE', [Validators.required]),
     discountValue: this.fb.nonNullable.control<number>(1, [Validators.required, Validators.min(0.01)]),
-    usageType: this.fb.control<CouponUsageType | null>('SINGLE_USE', [Validators.required]),
+    usageType: this.fb.control<CouponUsageType | null>('GLOBAL_LIMIT', [Validators.required]),
     maxUsageCount: this.fb.nonNullable.control<number>(1, [Validators.required, Validators.min(1)]),
   });
 

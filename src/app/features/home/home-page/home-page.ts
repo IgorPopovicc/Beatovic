@@ -5,6 +5,7 @@ import { NewCollection } from '../../../shared/ui/new-collection/new-collection'
 import { DiscountSlider } from '../../../shared/ui/discount-slider/discount-slider';
 import { ColmarSpotlight } from '../../../shared/ui/colmar-spotlight/colmar-spotlight';
 import { HomeBenefitsStrip } from '../../../shared/ui/home-benefits-strip/home-benefits-strip';
+import { HomeNewsletter } from '../../../shared/ui/home-newsletter/home-newsletter';
 import { SeoService } from '../../../core/seo/seo.service';
 
 @Component({
@@ -16,6 +17,7 @@ import { SeoService } from '../../../core/seo/seo.service';
     DiscountSlider,
     ColmarSpotlight,
     HomeBenefitsStrip,
+    HomeNewsletter,
   ],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss',
@@ -25,7 +27,8 @@ export class HomePage implements OnInit {
 
   ngOnInit(): void {
     const homeUrl = this.seo.absoluteUrl('/');
-    const brandImage = this.seo.absoluteUrl('/assets/images/logo/planets_main_logo.png');
+    const brandLogo = this.seo.absoluteUrl('/assets/images/logo/planets_main_logo.png');
+    const shareImage = this.seo.absoluteUrl('/planeta-share.png');
 
     this.seo.setPage({
       title: 'Planeta webshop | Patike, odjeća i oprema online',
@@ -33,7 +36,7 @@ export class HomePage implements OnInit {
         'Planeta webshop nudi patike, odjeću i sportsku opremu uz sigurnu kupovinu, brzu isporuku i aktuelne akcije.',
       path: '/',
       ogType: 'website',
-      image: brandImage,
+      image: shareImage,
       imageAlt: 'Planeta webshop logo',
     });
 
@@ -56,13 +59,13 @@ export class HomePage implements OnInit {
           url: homeUrl,
           description:
             'Patike, odjeća i sportska oprema za muškarce i žene sa redovno osvježenim kolekcijama.',
-          primaryImageOfPage: brandImage,
+          primaryImageOfPage: shareImage,
         },
         {
           '@type': 'Organization',
           name: 'Planeta',
           url: homeUrl,
-          logo: brandImage,
+          logo: brandLogo,
         },
       ],
     });

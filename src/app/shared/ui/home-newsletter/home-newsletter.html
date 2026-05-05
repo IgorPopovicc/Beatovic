@@ -1,0 +1,41 @@
+<section class="home-newsletter" aria-labelledby="home-newsletter-title">
+  <div class="newsletter-shell">
+    <div class="newsletter-copy">
+      <p class="eyebrow">Newsletter</p>
+      <h2 id="home-newsletter-title">Budi prvi koji sazna za nove kolekcije i akcije</h2>
+      <p>
+        Prijavi se na newsletter i nakon potvrde dobij jedinstveni kod za 10% popusta na email.
+      </p>
+    </div>
+
+    <form class="newsletter-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <label class="field">
+        <span class="sr-only">Email adresa</span>
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="vas@email.com"
+          autocomplete="email"
+          aria-label="Email za newsletter prijavu"
+        />
+        <span class="field-msg" [class.error]="hasFieldError('email')">{{ fieldError('email') }}</span>
+      </label>
+
+      <label class="privacy">
+        <input type="checkbox" formControlName="privacyPolicyAccepted" />
+        <span>Prihvatam politiku privatnosti.</span>
+      </label>
+      <span class="field-msg" [class.error]="hasFieldError('privacyPolicyAccepted')">
+        {{ fieldError('privacyPolicyAccepted') }}
+      </span>
+
+      @if (submitError()) {
+        <div class="status error" role="alert">{{ submitError() }}</div>
+      }
+
+      <button type="submit" class="submit-btn" [disabled]="submitting()">
+        {{ submitting() ? 'Slanje...' : 'Prijavi se' }}
+      </button>
+    </form>
+  </div>
+</section>

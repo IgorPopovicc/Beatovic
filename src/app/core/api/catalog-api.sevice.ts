@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError, map, shareReplay, switchMap } from 'rxjs/operators';
 import { Observable, of, throwError } from 'rxjs';
 import { ApiCategory, ApiCategoryValue } from './catalog.models';
@@ -16,6 +16,7 @@ type RawApiCategoryValue = Partial<ApiCategoryValue> & {
   id?: string;
   value?: string | null;
   displayValue?: string | null;
+  hasChildren?: boolean | null;
   parent?: {
     id?: string;
     value?: string | null;
@@ -49,8 +50,9 @@ function normalizeCategoryValue(raw: RawApiCategoryValue): ApiCategoryValue | nu
         displayValue: String(raw.parent.displayValue ?? '').trim() || undefined,
       }
     : null;
+  const hasChildren = typeof raw?.hasChildren === 'boolean' ? raw.hasChildren : undefined;
 
-  return { id, value, displayValue, parent };
+  return { id, value, displayValue, parent, hasChildren };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -87,12 +89,22 @@ export class CatalogApiService {
 
   private valuesCache = new Map<string, Observable<ApiCategoryValue[]>>();
 
-  getCategoryValues(categoryId: string): Observable<ApiCategoryValue[]> {
-    const existing = this.valuesCache.get(categoryId);
+  getCategoryValues(
+    categoryId: string,
+    options?: { onlyRoot?: boolean; onlyChildren?: boolean },
+  ): Observable<ApiCategoryValue[]> {
+    const onlyRoot = options?.onlyRoot === true;
+    const onlyChildren = options?.onlyChildren === true;
+    const cacheKey = `${categoryId}|root=${onlyRoot ? '1' : '0'}|children=${onlyChildren ? '1' : '0'}`;
+    const existing = this.valuesCache.get(cacheKey);
     if (existing) return existing;
 
+    let params = new HttpParams();
+    if (onlyRoot) params = params.set('onlyRoot', 'true');
+    if (onlyChildren) params = params.set('onlyChildren', 'true');
+
     const req$ = this.http
-      .get<RawApiCategoryValue[]>(`${this.baseUrl}/categories/${categoryId}/values`)
+      .get<RawApiCategoryValue[]>(`${this.baseUrl}/categories/${categoryId}/values`, { params })
       .pipe(
         map((items) =>
           items
@@ -100,13 +112,39 @@ export class CatalogApiService {
             .filter((item): item is ApiCategoryValue => item !== null),
         ),
         catchError((error) => {
-          this.valuesCache.delete(categoryId);
+          this.valuesCache.delete(cacheKey);
           return throwError(() => error);
         }),
         shareReplay({ bufferSize: 1, refCount: false }),
       );
 
-    this.valuesCache.set(categoryId, req$);
+    this.valuesCache.set(cacheKey, req$);
+    return req$;
+  }
+
+  getCategoryValueChildren(parentCategoryValueId: string): Observable<ApiCategoryValue[]> {
+    const cacheKey = `children|${parentCategoryValueId}`;
+    const existing = this.valuesCache.get(cacheKey);
+    if (existing) return existing;
+
+    const req$ = this.http
+      .get<RawApiCategoryValue[]>(
+        `${this.baseUrl}/categories/values/${parentCategoryValueId}/children`,
+      )
+      .pipe(
+        map((items) =>
+          items
+            .map(normalizeCategoryValue)
+            .filter((item): item is ApiCategoryValue => item !== null),
+        ),
+        catchError((error) => {
+          this.valuesCache.delete(cacheKey);
+          return throwError(() => error);
+        }),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
+
+    this.valuesCache.set(cacheKey, req$);
     return req$;
   }
 

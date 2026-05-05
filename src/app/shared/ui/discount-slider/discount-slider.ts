@@ -55,8 +55,12 @@ export class DiscountSlider {
           this.loading.set(false);
         }),
         catchError((err) => {
-          console.error('[DiscountSlider] discounted products load failed', err);
-          this.error.set('Trenutno ne možemo učitati proizvode na popustu.');
+          const status = Number((err as { status?: unknown })?.status ?? 0);
+          this.error.set(
+            status >= 500
+              ? 'Sekcija sa popustima je privremeno nedostupna. Pokušajte ponovo kasnije.'
+              : 'Trenutno ne možemo učitati proizvode na popustu.',
+          );
           this.products.set([]);
           this.loading.set(false);
           return of(null);

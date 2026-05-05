@@ -1,9 +1,9 @@
 <section class="co" aria-label="Naplata">
   <header class="co-head">
     <div class="left">
-      <a class="back" (click)="goBack()" role="button" tabindex="0" aria-label="Nazad na korpu"
-        >← Nazad</a
-      >
+      <button class="back" type="button" (click)="goBack()" aria-label="Nazad na korpu">
+        ← Nazad
+      </button>
       <h1>Naplata</h1>
       <p class="muted">Popuni podatke za isporuku i potvrdi narudžbu.</p>
     </div>
@@ -32,113 +32,208 @@
       <section class="card form-card" aria-label="Podaci za narudžbu">
         <div class="card-head">
           <div class="title">Podaci kupca</div>
-          <div class="hint">Sva polja su obavezna.</div>
+          <div class="hint">Kupon i napomena su opcionalni.</div>
         </div>
 
         @if (errorMsg()) {
           <div class="alert" role="alert">{{ errorMsg() }}</div>
         }
 
+        <div class="delivery-note" role="status" aria-live="polite">
+          Dostava je trenutno dostupna samo na teritoriji Bosne i Hercegovine.
+        </div>
+
         <form class="form" [formGroup]="form" (ngSubmit)="submit()">
           <div class="row2">
             <div class="field">
               <label>Ime i prezime</label>
-              <input
-                type="text"
-                formControlName="fullName"
-                placeholder="npr. Amar Hadžić"
-                autocomplete="name"
-              />
-              @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
-                <div class="err">Unesi ispravno ime i prezime.</div>
-              }
+              <div class="field-control">
+                <input
+                  type="text"
+                  formControlName="fullName"
+                  placeholder="npr. Amar Hadžić"
+                  autocomplete="name"
+                />
+              </div>
+              <div class="field-message" [class.error]="hasFieldError('fullName')">
+                {{ fieldMessage('fullName') }}
+              </div>
             </div>
 
             <div class="field">
               <label>E-mail</label>
-              <input
-                type="email"
-                formControlName="email"
-                placeholder="customer@example.com"
-                autocomplete="email"
-              />
-              @if (form.controls.email.touched && form.controls.email.invalid) {
-                <div class="err">Unesi ispravan e-mail.</div>
-              }
+              <div class="field-control">
+                <input
+                  type="email"
+                  formControlName="email"
+                  placeholder="customer@example.com"
+                  autocomplete="email"
+                />
+              </div>
+              <div class="field-message" [class.error]="hasFieldError('email')">
+                {{ fieldMessage('email') }}
+              </div>
             </div>
           </div>
 
           <div class="row2">
             <div class="field">
               <label>Telefon</label>
-              <input
-                type="tel"
-                formControlName="phoneNumber"
-                placeholder="+387 61 123 456"
-                autocomplete="tel"
-              />
-              @if (form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid) {
-                <div class="err">Unesi ispravan broj telefona.</div>
-              }
+              <div class="field-control">
+                <input
+                  type="tel"
+                  formControlName="phoneNumber"
+                  placeholder="+387 61 123 456"
+                  autocomplete="tel"
+                />
+              </div>
+              <div class="field-message" [class.error]="hasFieldError('phoneNumber')">
+                {{ fieldMessage('phoneNumber') }}
+              </div>
             </div>
 
             <div class="field">
-              <label>Općina</label>
-              <input
-                type="text"
-                formControlName="municipality"
-                placeholder="npr. Centar Sarajevo"
-                autocomplete="address-level2"
-              />
-              @if (form.controls.municipality.touched && form.controls.municipality.invalid) {
-                <div class="err">Općina je obavezna.</div>
-              }
+              <label>Država dostave</label>
+              <div class="field-control">
+                <input
+                  type="text"
+                  [value]="deliveryCountry"
+                  class="country-readonly"
+                  readonly
+                  aria-readonly="true"
+                />
+              </div>
+              <div class="field-message">Dostava izvan BiH trenutno nije moguća.</div>
             </div>
           </div>
 
           <div class="row2">
-            <div class="field wide">
-              <label>Adresa</label>
-              <input
-                type="text"
-                formControlName="address"
-                placeholder="Ulica i broj"
-                autocomplete="street-address"
-              />
-              @if (form.controls.address.touched && form.controls.address.invalid) {
-                <div class="err">Adresa je obavezna.</div>
-              }
+            <div class="field">
+              <label>Grad</label>
+              <div class="field-control">
+                <input
+                  type="text"
+                  formControlName="municipality"
+                  placeholder="Unesite grad (npr. Sarajevo)"
+                  autocomplete="address-level2"
+                />
+              </div>
+              <div class="field-message" [class.error]="hasFieldError('municipality')">
+                {{ fieldMessage('municipality') }}
+              </div>
             </div>
 
             <div class="field">
               <label>Poštanski broj</label>
-              <input
-                type="text"
-                formControlName="postalCode"
-                placeholder="71000"
-                autocomplete="postal-code"
-              />
-              @if (form.controls.postalCode.touched && form.controls.postalCode.invalid) {
-                <div class="err">Poštanski broj je obavezan.</div>
-              }
+              <div class="field-control">
+                <input
+                  type="text"
+                  formControlName="postalCode"
+                  placeholder="71000"
+                  autocomplete="postal-code"
+                />
+              </div>
+              <div class="field-message" [class.error]="hasFieldError('postalCode')">
+                {{ fieldMessage('postalCode') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field wide-full">
+              <label>Adresa</label>
+              <div class="field-control">
+                <input
+                  type="text"
+                  formControlName="address"
+                  placeholder="Ulica i broj"
+                  autocomplete="street-address"
+                />
+              </div>
+              <div class="field-message" [class.error]="hasFieldError('address')">
+                {{ fieldMessage('address') }}
+              </div>
             </div>
           </div>
 
           <div class="row2">
             <div class="field">
               <label>Kupon</label>
-              <input type="text" formControlName="couponCode" placeholder="npr. 10KMPOPUST" />
-              @if (form.controls.couponCode.touched && form.controls.couponCode.invalid) {
-                <div class="err">Kupon je obavezan.</div>
+              <div class="field-control coupon-control">
+                <input
+                  type="text"
+                  formControlName="couponCode"
+                  placeholder="npr. 10KMPOPUST"
+                  [readonly]="hasAppliedCoupon()"
+                />
+                <button
+                  type="button"
+                  class="btn coupon-apply"
+                  (click)="applyCoupon()"
+                  [disabled]="couponApplying() || submitting() || hasAppliedCoupon()"
+                >
+                  @if (couponApplying()) {
+                    <span class="spinner dark" aria-hidden="true"></span>
+                    <span>Provjera...</span>
+                  } @else {
+                    <span>Primijeni</span>
+                  }
+                </button>
+              </div>
+
+              @if (appliedCoupon(); as coupon) {
+                <div class="coupon-chip-row">
+                  <span class="coupon-chip">
+                    <span class="code">{{ coupon.code }}</span>
+                    <span class="meta">{{ discountLabel() }}</span>
+                    <button
+                      type="button"
+                      class="coupon-chip-remove"
+                      (click)="removeCoupon()"
+                      aria-label="Ukloni kupon"
+                    >
+                      ×
+                    </button>
+                  </span>
+                </div>
               }
+
+              <div
+                class="field-message"
+                [class.error]="
+                  hasFieldError('couponCode') || helperMessageKind('couponCode') === 'error'
+                "
+                [class.success]="helperMessageKind('couponCode') === 'success'"
+                [class.info]="helperMessageKind('couponCode') === 'info'"
+              >
+                {{ fieldMessage('couponCode') || helperMessage('couponCode') }}
+              </div>
             </div>
 
             <div class="field">
               <label>Napomena</label>
-              <input type="text" formControlName="description" placeholder="npr. Dostaviti poslije 17h" />
-              @if (form.controls.description.touched && form.controls.description.invalid) {
-                <div class="err">Napomena je obavezna.</div>
-              }
+              <div class="field-control">
+                <input
+                  type="text"
+                  formControlName="description"
+                  placeholder="npr. Dostaviti poslije 17h"
+                />
+              </div>
+              <div class="field-message" [class.error]="hasFieldError('description')">
+                {{ fieldMessage('description') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field wide-full privacy-field">
+              <label class="privacy-check">
+                <input type="checkbox" formControlName="privacyPolicyAccepted" />
+                <span>Prihvatam politiku privatnosti i obradu podataka za realizaciju narudžbe.</span>
+              </label>
+              <div class="field-message" [class.error]="hasFieldError('privacyPolicyAccepted')">
+                {{ fieldMessage('privacyPolicyAccepted') }}
+              </div>
             </div>
           </div>
 
@@ -209,6 +304,15 @@
               {{ subtotal().amount | number: '1.2-2' }} {{ currencyLabel(subtotal().currency) }}
             </div>
           </div>
+
+          @if (appliedCoupon(); as coupon) {
+            <div class="trow coupon-line">
+              <div class="muted">Kupon {{ coupon.code }}</div>
+              <div class="val discount">
+                -{{ discountAmount() | number: '1.2-2' }} {{ currencyLabel(total().currency) }}
+              </div>
+            </div>
+          }
 
           <div class="trow big">
             <div>Ukupno</div>

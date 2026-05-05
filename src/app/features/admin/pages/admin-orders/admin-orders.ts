@@ -5,12 +5,20 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { catchError, finalize, startWith, tap } from 'rxjs/operators';
 import { AdminOrder, OrderStatus } from '../../../../core/admin-api/admin-orders.models';
-import { AdminOrdersApi } from '../../../../core/admin-api/admin-prders-api';
+import { AdminOrdersApi, UpdateOrderItemRequest } from '../../../../core/admin-api/admin-prders-api';
 import { ConfirmDialog, ConfirmVariant } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
 
 type OrderAction = 'approve' | 'cancel' | 'details';
-type OrderStatusTone = 'pending' | 'email-verified' | 'completed' | 'canceled' | 'expired';
+type OrderStatusTone =
+  | 'pending'
+  | 'email-verified'
+  | 'waiting-reconfirm'
+  | 'customer-reconfirmed'
+  | 'completed'
+  | 'canceled'
+  | 'expired';
 type OrderMutation = 'complete' | 'cancel';
+type RowActionKind = OrderMutation | 'reconfirm' | 'anonymize' | 'update-items';
 
 type OrdersSearchContext =
   | {
@@ -35,6 +43,9 @@ interface OrderStatusUiConfig {
   actions: readonly OrderAction[];
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ANONYMIZED_USER_LABEL = 'Anonimizovan korisnik';
+
 const ORDER_STATUS_UI: Record<OrderStatus, OrderStatusUiConfig> = {
   PENDING: {
     label: 'Čeka email potvrdu',
@@ -44,6 +55,16 @@ const ORDER_STATUS_UI: Record<OrderStatus, OrderStatusUiConfig> = {
   EMAIL_VERIFIED: {
     label: 'Email potvrđen',
     tone: 'email-verified',
+    actions: ['approve', 'cancel', 'details'],
+  },
+  WAITING_FOR_CUSTOMER_RECONFIRMATION: {
+    label: 'Čeka ponovnu potvrdu kupca',
+    tone: 'waiting-reconfirm',
+    actions: ['cancel', 'details'],
+  },
+  CUSTOMER_RECONFIRMED: {
+    label: 'Kupac ponovo potvrdio',
+    tone: 'customer-reconfirmed',
     actions: ['approve', 'cancel', 'details'],
   },
   EXPIRED: {
@@ -93,6 +114,7 @@ export class AdminOrders implements OnDestroy {
   readonly error = signal<string | null>(null);
 
   readonly orders = signal<AdminOrder[]>([]);
+  readonly editedItemQuantities = signal<Record<string, number>>({});
   readonly expandedOrderId = signal<string | null>(null);
   readonly lastSearchContext = signal<OrdersSearchContext>(null);
 
@@ -101,8 +123,12 @@ export class AdminOrders implements OnDestroy {
   readonly confirmAction = signal<OrderMutation | null>(null);
   readonly confirmOrder = signal<AdminOrder | null>(null);
 
+  readonly anonymizeConfirmOpen = signal(false);
+  readonly anonymizeConfirmBusy = signal(false);
+  readonly anonymizeTargetEmail = signal('');
+
   readonly rowActionBusyOrderId = signal<string | null>(null);
-  readonly rowActionBusyType = signal<OrderMutation | null>(null);
+  readonly rowActionBusyType = signal<RowActionKind | null>(null);
 
   readonly actionNotice = signal<ActionNotice | null>(null);
 
@@ -130,7 +156,7 @@ export class AdminOrders implements OnDestroy {
   );
   readonly canSearchByEmail = computed(() => {
     const email = this.emailValue();
-    return email.length >= 3 && !this.loading();
+    return this.isValidEmail(email) && !this.loading();
   });
 
   readonly confirmTitle = computed(() => {
@@ -195,6 +221,11 @@ export class AdminOrders implements OnDestroy {
       return;
     }
 
+    if (!this.isValidEmail(email)) {
+      this.error.set('Unesite ispravnu email adresu.');
+      return;
+    }
+
     this.lastSearchContext.set({ mode: 'email', email });
     this.fetchOrdersByEmail(email);
   }
@@ -208,11 +239,13 @@ export class AdminOrders implements OnDestroy {
       .pipe(
         tap((res) => {
           this.orders.set(res ?? []);
+          this.editedItemQuantities.set({});
           this.loading.set(false);
         }),
         catchError((err) => {
           this.loading.set(false);
           this.orders.set([]);
+          this.editedItemQuantities.set({});
 
           const msg =
             err?.status === 401 || err?.status === 403
@@ -235,11 +268,13 @@ export class AdminOrders implements OnDestroy {
       .pipe(
         tap((res) => {
           this.orders.set(res ?? []);
+          this.editedItemQuantities.set({});
           this.loading.set(false);
         }),
         catchError((err) => {
           this.loading.set(false);
           this.orders.set([]);
+          this.editedItemQuantities.set({});
 
           const msg =
             err?.status === 401 || err?.status === 403
@@ -276,6 +311,110 @@ export class AdminOrders implements OnDestroy {
   cancelOrder(order: AdminOrder): void {
     if (!this.hasAction(order, 'cancel') || this.isRowBusy(order)) return;
     this.openConfirm('cancel', order);
+  }
+
+  resendOrderConfirmation(order: AdminOrder): void {
+    if (!this.hasItemsChanged(order) || this.isRowBusy(order)) return;
+
+    this.rowActionBusyOrderId.set(order.orderId);
+    this.rowActionBusyType.set('reconfirm');
+    this.error.set(null);
+
+    this.api
+      .resendConfirmation(order.orderId)
+      .pipe(
+        tap(() => {
+          this.showNotice('success', 'Email za ponovnu potvrdu je uspješno poslan kupcu.');
+          this.refreshOrders();
+        }),
+        catchError((err) => {
+          const status = this.statusFromError(err);
+          const backendMessage = this.extractErrorMessage(err);
+
+          const msg =
+            backendMessage ??
+            (status === 401 || status === 403
+              ? 'Nemate dozvolu (provjeri admin token / role).'
+              : status === 404
+                ? 'Narudžba nije pronađena.'
+                : status === 400
+                  ? 'Ponovna potvrda trenutno nije moguća za ovu narudžbu.'
+                  : 'Greška pri slanju emaila za ponovnu potvrdu.');
+
+          this.error.set(msg);
+          this.showNotice('error', msg);
+          return of(null);
+        }),
+        finalize(() => {
+          this.rowActionBusyOrderId.set(null);
+          this.rowActionBusyType.set(null);
+        }),
+      )
+      .subscribe();
+  }
+
+  openAnonymizeConfirm(): void {
+    const email = this.emailValue();
+    this.error.set(null);
+
+    if (!email) {
+      this.error.set('Unesite email adresu za anonimizaciju.');
+      return;
+    }
+
+    if (!this.isValidEmail(email)) {
+      this.error.set('Unesite ispravnu email adresu za anonimizaciju.');
+      return;
+    }
+
+    this.anonymizeTargetEmail.set(email);
+    this.anonymizeConfirmBusy.set(false);
+    this.anonymizeConfirmOpen.set(true);
+  }
+
+  closeAnonymizeConfirm(force = false): void {
+    if (!force && this.anonymizeConfirmBusy()) return;
+    this.anonymizeConfirmOpen.set(false);
+    this.anonymizeTargetEmail.set('');
+  }
+
+  confirmAnonymizeByEmail(): void {
+    const email = this.anonymizeTargetEmail();
+    if (!email || this.anonymizeConfirmBusy()) return;
+
+    this.error.set(null);
+    this.anonymizeConfirmBusy.set(true);
+    this.rowActionBusyOrderId.set(email);
+    this.rowActionBusyType.set('anonymize');
+
+    this.api
+      .anonymizeCustomerByEmail(email)
+      .pipe(
+        tap(() => {
+          this.showNotice('success', 'Podaci kupca su uspješno anonimizovani.');
+          this.closeAnonymizeConfirm(true);
+          this.refreshOrders();
+        }),
+        catchError((err) => {
+          const status = this.statusFromError(err);
+          const msg =
+            status === 401 || status === 403
+              ? 'Nemate dozvolu (provjeri admin token / role).'
+              : status === 400
+                ? 'Unesite ispravnu email adresu.'
+                : 'Anonimizacija trenutno nije uspjela. Pokušajte ponovo.';
+
+          this.error.set(msg);
+          this.showNotice('error', msg);
+          return of(null);
+        }),
+        finalize(() => {
+          this.anonymizeConfirmBusy.set(false);
+          this.rowActionBusyOrderId.set(null);
+          this.rowActionBusyType.set(null);
+        }),
+      )
+      .subscribe();
   }
 
   confirmMutation(): void {
@@ -335,21 +474,129 @@ export class AdminOrders implements OnDestroy {
     return this.rowActionBusyOrderId() === order.orderId && this.rowActionBusyType() === action;
   }
 
+  isReconfirmBusy(order: AdminOrder): boolean {
+    return this.rowActionBusyOrderId() === order.orderId && this.rowActionBusyType() === 'reconfirm';
+  }
+
+  hasItemsChanged(order: AdminOrder): boolean {
+    return order.itemsChanged === true;
+  }
+
+  customerDisplayName(order: AdminOrder): string {
+    const fullName = this.safeString(order.userDetails?.fullName);
+    if (fullName) return fullName;
+
+    const email = this.safeString(order.userDetails?.email);
+    return email || ANONYMIZED_USER_LABEL;
+  }
+
+  customerDisplayEmail(order: AdminOrder): string {
+    return this.safeString(order.userDetails?.email) || ANONYMIZED_USER_LABEL;
+  }
+
+  customerDisplayValue(value: unknown): string {
+    return this.safeString(value) || '-';
+  }
+
+  editedItemQuantity(orderId: string, sizeAttributeVariantId: string, fallback: number): number {
+    const key = this.quantityKey(orderId, sizeAttributeVariantId);
+    const edited = this.editedItemQuantities()[key];
+    if (typeof edited === 'number' && Number.isFinite(edited)) return edited;
+    return fallback;
+  }
+
+  onItemQuantityInput(orderId: string, sizeAttributeVariantId: string, rawValue: string): void {
+    const parsed = Number(rawValue);
+    if (!Number.isFinite(parsed)) return;
+    const nextQty = Math.max(0, Math.floor(parsed));
+    const key = this.quantityKey(orderId, sizeAttributeVariantId);
+    this.editedItemQuantities.update((prev) => ({ ...prev, [key]: nextQty }));
+  }
+
+  hasItemChanges(order: AdminOrder): boolean {
+    const edited = this.editedItemQuantities();
+    for (const item of order.items ?? []) {
+      const key = this.quantityKey(order.orderId, item.sizeAttributeVariantId);
+      const updated = edited[key];
+      if (typeof updated !== 'number') continue;
+      if (Math.floor(updated) !== Math.floor(Number(item.quantity ?? 0))) return true;
+    }
+    return false;
+  }
+
+  isUpdateItemsBusy(order: AdminOrder): boolean {
+    return this.rowActionBusyOrderId() === order.orderId && this.rowActionBusyType() === 'update-items';
+  }
+
+  saveOrderItems(order: AdminOrder): void {
+    if (this.isRowBusy(order) || !this.hasItemChanges(order)) return;
+
+    const payload: UpdateOrderItemRequest[] = (order.items ?? []).map((item) => ({
+      sizeAttributeVariantId: item.sizeAttributeVariantId,
+      quantity: this.editedItemQuantity(order.orderId, item.sizeAttributeVariantId, item.quantity),
+    }));
+
+    const invalidQty = payload.some((item) => !Number.isInteger(item.quantity) || item.quantity <= 0);
+    if (invalidQty) {
+      const msg = 'Količina mora biti cijeli broj veći od 0.';
+      this.error.set(msg);
+      this.showNotice('error', msg);
+      return;
+    }
+
+    this.rowActionBusyOrderId.set(order.orderId);
+    this.rowActionBusyType.set('update-items');
+    this.error.set(null);
+
+    this.api
+      .updateOrderItems(order.orderId, payload)
+      .pipe(
+        tap((updatedOrder) => {
+          this.orders.update((prev) =>
+            prev.map((current) => (current.orderId === order.orderId ? updatedOrder : current)),
+          );
+          this.clearEditedQuantitiesForOrder(order.orderId);
+          this.showNotice('success', 'Stavke narudžbe su uspješno ažurirane.');
+        }),
+        catchError((err) => {
+          const status = this.statusFromError(err);
+          const backendMessage = this.extractErrorMessage(err);
+          const msg =
+            backendMessage ??
+            (status === 401 || status === 403
+              ? 'Nemate dozvolu (provjeri admin token / role).'
+              : status === 404
+                ? 'Narudžba ili stavke nisu pronađene.'
+                : status === 409
+                  ? 'Stanje zaliha je promijenjeno. Osvježite i pokušajte ponovo.'
+                  : 'Greška pri ažuriranju stavki narudžbe.');
+          this.error.set(msg);
+          this.showNotice('error', msg);
+          return of(null);
+        }),
+        finalize(() => {
+          this.rowActionBusyOrderId.set(null);
+          this.rowActionBusyType.set(null);
+        }),
+      )
+      .subscribe();
+  }
+
   closeNotice(): void {
     this.actionNotice.set(null);
     this.clearNoticeTimer();
   }
 
   statusLabel(status: OrderStatus): string {
-    return ORDER_STATUS_UI[status].label;
+    return ORDER_STATUS_UI[status]?.label ?? String(status ?? '').trim();
   }
 
   statusClass(status: OrderStatus): string {
-    return ORDER_STATUS_UI[status].tone;
+    return ORDER_STATUS_UI[status]?.tone ?? 'pending';
   }
 
   hasAction(order: AdminOrder, action: OrderAction): boolean {
-    return ORDER_STATUS_UI[order.status].actions.includes(action);
+    return ORDER_STATUS_UI[order.status]?.actions.includes(action) ?? false;
   }
 
   trackByOrderId(_: number, o: AdminOrder): string {
@@ -378,6 +625,22 @@ export class AdminOrders implements OnDestroy {
     }
 
     this.fetchOrdersByEmail(context.email);
+  }
+
+  private quantityKey(orderId: string, sizeAttributeVariantId: string): string {
+    return `${orderId}:${sizeAttributeVariantId}`;
+  }
+
+  private clearEditedQuantitiesForOrder(orderId: string): void {
+    this.editedItemQuantities.update((prev) => {
+      const next: Record<string, number> = {};
+      for (const [key, value] of Object.entries(prev)) {
+        if (!key.startsWith(`${orderId}:`)) {
+          next[key] = value;
+        }
+      }
+      return next;
+    });
   }
 
   private showNotice(kind: ActionNotice['kind'], message: string): void {
@@ -444,6 +707,10 @@ export class AdminOrders implements OnDestroy {
     if (!direct) return null;
     if (direct.toLowerCase().startsWith('http failure response')) return null;
     return direct;
+  }
+
+  private isValidEmail(email: string): boolean {
+    return EMAIL_REGEX.test(String(email ?? '').trim());
   }
 
   private safeString(value: unknown): string | null {

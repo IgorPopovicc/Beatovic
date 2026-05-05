@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { CartStore } from '../../../core/cart/cart.store';
+import { AppNotice, AppNoticeService } from '../../../core/system/app-notice.service';
 
 const AUTO_CLOSE_MS = 3000;
 const EXIT_ANIMATION_MS = 180;
@@ -16,19 +17,38 @@ const EXIT_ANIMATION_MS = 180;
 })
 export class CartAddToastComponent implements OnDestroy {
   private readonly cart = inject(CartStore);
+  private readonly notices = inject(AppNoticeService);
   private closeTimer: ReturnType<typeof setTimeout> | null = null;
   private unmountTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly rendered = signal(false);
   readonly visible = signal(false);
+  readonly kind = signal<'success' | 'error' | 'info'>('success');
+  readonly action = signal<'cart' | 'none'>('none');
   readonly title = signal('Proizvod je dodan u korpu');
   readonly subtitle = signal<string | null>(null);
+  readonly icon = computed(() => {
+    switch (this.kind()) {
+      case 'error':
+        return '!';
+      case 'info':
+        return 'i';
+      default:
+        return '✓';
+    }
+  });
 
   constructor() {
     effect(() => {
       const evt = this.cart.lastAddEvent();
       if (!evt) return;
-      this.open(evt.item.name, evt.item.size ?? null);
+      this.openCartToast(evt.item.name, evt.item.size ?? null);
+    });
+
+    effect(() => {
+      const notice = this.notices.lastNotice();
+      if (!notice) return;
+      this.openNoticeToast(notice);
     });
   }
 
@@ -45,9 +65,23 @@ export class CartAddToastComponent implements OnDestroy {
     this.close();
   }
 
-  private open(productName: string, size: string | null): void {
+  private openCartToast(productName: string, size: string | null): void {
+    this.kind.set('success');
+    this.action.set('cart');
     this.title.set('Proizvod je dodan u korpu');
     this.subtitle.set(this.buildSubtitle(productName, size));
+    this.showToast();
+  }
+
+  private openNoticeToast(notice: AppNotice): void {
+    this.kind.set(notice.kind);
+    this.action.set('none');
+    this.title.set(notice.title || 'Obavještenje');
+    this.subtitle.set(notice.subtitle ?? null);
+    this.showToast();
+  }
+
+  private showToast(): void {
     this.rendered.set(true);
     this.clearUnmountTimer();
     this.deferShow();

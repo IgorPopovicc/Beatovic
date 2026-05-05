@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { HomePage } from './home-page';
 import { ProductsApiService } from '../../../core/api/products-api.service';
 import { ProductSearchResponse } from '../../../core/api/catalog.models';
+import { NewsletterApiService } from '../../../core/api/newsletter-api.service';
 
 const EMPTY_SEARCH_RESPONSE: ProductSearchResponse = {
   variants: [],
@@ -24,6 +25,12 @@ describe('HomePage', () => {
           provide: ProductsApiService,
           useValue: {
             search: () => of(EMPTY_SEARCH_RESPONSE),
+          },
+        },
+        {
+          provide: NewsletterApiService,
+          useValue: {
+            subscribe: () => of('OK'),
           },
         },
       ],

@@ -121,7 +121,7 @@ export class RouteSeoService {
       description,
       image: absoluteImage
         ? [absoluteImage]
-        : [this.seo.absoluteUrl('/assets/images/logo/planets_main_logo.png')],
+        : [this.seo.absoluteUrl('/planeta-share.png')],
       sku: product.sku ?? product.id,
       brand: {
         '@type': 'Brand',

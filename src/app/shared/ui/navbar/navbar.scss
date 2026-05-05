@@ -42,7 +42,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
+  pointer-events: auto;
+}
+
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.brand-link:focus-visible {
+  outline: 2px solid rgba(224, 24, 36, 0.4);
+  outline-offset: 3px;
 }
 
 .brand-logo {

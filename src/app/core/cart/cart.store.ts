@@ -34,6 +34,7 @@ export interface CartItem {
 
   unitPrice: CartMoney;
   qty: number;
+  maxQty?: number | null;
 
   // optional for routing
   slug?: string;
@@ -99,30 +100,38 @@ export class CartStore {
   }
 
   add(item: Omit<CartItem, 'qty'> & { qty?: number }) {
-    const qtyToAdd = Math.max(1, item.qty ?? 1);
+    const candidate = this.normalizeRuntimeItem(item);
+    const qtyToAdd = Math.max(1, candidate.qty);
     const current = this._items();
 
-    const idx = current.findIndex((x) => x.id === item.id);
+    const idx = this.findMatchingIndex(current, candidate);
     if (idx >= 0) {
       const next = [...current];
-      next[idx] = { ...next[idx], qty: next[idx].qty + qtyToAdd };
+      const existing = next[idx];
+      const merged = this.mergeItemMeta(existing, candidate);
+      const nextQty = this.clampQty(existing.qty + qtyToAdd, merged.maxQty);
+      const qtyAdded = Math.max(0, nextQty - existing.qty);
+      next[idx] = { ...merged, qty: nextQty };
       this._items.set(next);
-      this.emitAddEvent(next[idx], qtyToAdd, true);
+      this.emitAddEvent(next[idx], qtyAdded, true);
       return;
     }
 
-    const created: CartItem = { ...item, qty: qtyToAdd };
+    const created: CartItem = {
+      ...candidate,
+      qty: this.clampQty(qtyToAdd, candidate.maxQty),
+    };
     this._items.set([...current, created]);
-    this.emitAddEvent(created, qtyToAdd, false);
+    this.emitAddEvent(created, created.qty, false);
   }
 
   setQty(id: string, qty: number) {
-    const q = Math.max(1, Math.floor(qty || 1));
     const current = this._items();
     const idx = current.findIndex((x) => x.id === id);
     if (idx < 0) return;
 
     const next = [...current];
+    const q = this.clampQty(qty, next[idx].maxQty);
     next[idx] = { ...next[idx], qty: q };
     this._items.set(next);
   }
@@ -158,18 +167,27 @@ export class CartStore {
     try {
       const raw = this.storage?.getItem(this.storageKey);
       if (!raw) return [];
-      const parsed = JSON.parse(raw) as CartItem[];
+      const parsed = JSON.parse(raw) as unknown;
       if (!Array.isArray(parsed)) return [];
-      return parsed
-        .filter((x) => x && typeof x.id === 'string')
-        .map((x) => ({
-          ...x,
-          unitPrice: {
-            ...x.unitPrice,
-            currency: normalizeCurrencyCode(x.unitPrice?.currency),
-          },
-          qty: Math.max(1, Number(x.qty || 1)),
-        }));
+
+      const deduped: CartItem[] = [];
+      for (const rawItem of parsed) {
+        const item = this.normalizeStoredItem(rawItem);
+        if (!item) continue;
+
+        const idx = this.findMatchingIndex(deduped, item);
+        if (idx < 0) {
+          deduped.push(item);
+          continue;
+        }
+
+        const existing = deduped[idx];
+        const merged = this.mergeItemMeta(existing, item);
+        const mergedQty = this.clampQty(existing.qty + item.qty, merged.maxQty);
+        deduped[idx] = { ...merged, qty: mergedQty };
+      }
+
+      return deduped;
     } catch {
       return [];
     }
@@ -190,5 +208,178 @@ export class CartStore {
       qtyInCart: item.qty,
       merged,
     });
+  }
+
+  private normalizeStoredItem(raw: unknown): CartItem | null {
+    if (!raw || typeof raw !== 'object') return null;
+    const entry = raw as Record<string, unknown>;
+
+    const id = this.normalizeText(entry['id'] ?? entry['lineId'] ?? entry['cartItemId']);
+    const productId = this.normalizeOptionalText(
+      entry['productId'] ?? entry['variantId'] ?? entry['productVariantId'],
+    );
+    const sku = this.normalizeOptionalText(entry['sku'] ?? entry['productSku'] ?? entry['variantSku']);
+    const size = this.normalizeSize(entry['size'] ?? entry['selectedSize'] ?? entry['sizeValue']);
+
+    const normalizedId = id || this.fallbackLineId(productId, sku, size);
+    if (!normalizedId) return null;
+
+    const unitPriceRaw =
+      entry['unitPrice'] && typeof entry['unitPrice'] === 'object'
+        ? (entry['unitPrice'] as Record<string, unknown>)
+        : null;
+
+    const amount = Number(unitPriceRaw?.['amount'] ?? entry['price'] ?? 0);
+    const qty = this.parseQty(entry['qty'] ?? entry['quantity']);
+    const maxQty = this.parseMaxQty(entry['maxQty'] ?? entry['availableStock'] ?? entry['stock']);
+
+    const normalized: CartItem = {
+      id: normalizedId,
+      productId,
+      name:
+        this.normalizeText(entry['name'] ?? entry['productName'] ?? entry['title'] ?? 'Proizvod') ||
+        'Proizvod',
+      sku,
+      size,
+      image: this.normalizeImage(entry['image']),
+      unitPrice: {
+        amount: Number.isFinite(amount) ? amount : 0,
+        currency: normalizeCurrencyCode(unitPriceRaw?.['currency'] ?? entry['currency']),
+      },
+      qty: this.clampQty(qty, maxQty),
+      ...(maxQty !== null ? { maxQty } : {}),
+      slug: this.normalizeOptionalText(entry['slug']),
+    };
+
+    return normalized;
+  }
+
+  private normalizeRuntimeItem(item: Omit<CartItem, 'qty'> & { qty?: number }): CartItem {
+    const id = this.normalizeText(item.id);
+    const productId = this.normalizeOptionalText(item.productId);
+    const sku = this.normalizeOptionalText(item.sku);
+    const size = this.normalizeSize(item.size);
+    const maxQty = this.parseMaxQty(item.maxQty);
+    const fallbackId = this.fallbackLineId(productId, sku, size);
+
+    const amount = Number(item.unitPrice?.amount ?? 0);
+    return {
+      ...item,
+      id: id || fallbackId,
+      productId,
+      sku,
+      size,
+      unitPrice: {
+        amount: Number.isFinite(amount) ? amount : 0,
+        currency: normalizeCurrencyCode(item.unitPrice?.currency),
+      },
+      qty: this.parseQty(item.qty),
+      ...(maxQty !== null ? { maxQty } : {}),
+    };
+  }
+
+  private findMatchingIndex(items: CartItem[], candidate: CartItem): number {
+    const exactIdIndex = items.findIndex((x) => this.normalizeText(x.id) === this.normalizeText(candidate.id));
+    if (exactIdIndex >= 0) return exactIdIndex;
+
+    const candidateKey = this.dedupKey(candidate);
+    if (!candidateKey) return -1;
+    return items.findIndex((x) => this.dedupKey(x) === candidateKey);
+  }
+
+  private dedupKey(item: CartItem): string {
+    const size = this.extractNormalizedSize(item);
+    const variantKey =
+      this.normalizeOptionalText(item.productId) ??
+      this.normalizeOptionalText(item.sku) ??
+      this.normalizeOptionalText(this.legacyVariantHintFromId(item.id));
+
+    if (!variantKey) return '';
+    return `${variantKey}::${size ?? ''}`;
+  }
+
+  private mergeItemMeta(existing: CartItem, incoming: CartItem): CartItem {
+    const incomingMaxQty = this.parseMaxQty(incoming.maxQty);
+    const existingMaxQty = this.parseMaxQty(existing.maxQty);
+    const mergedMaxQty = incomingMaxQty ?? existingMaxQty;
+
+    return {
+      ...existing,
+      ...incoming,
+      id: this.normalizeText(incoming.id) || this.normalizeText(existing.id),
+      productId: this.normalizeOptionalText(incoming.productId) ?? this.normalizeOptionalText(existing.productId),
+      sku: this.normalizeOptionalText(incoming.sku) ?? this.normalizeOptionalText(existing.sku),
+      size: this.normalizeSize(incoming.size) ?? this.normalizeSize(existing.size),
+      unitPrice: incoming.unitPrice ?? existing.unitPrice,
+      ...(mergedMaxQty !== null ? { maxQty: mergedMaxQty } : {}),
+    };
+  }
+
+  private extractNormalizedSize(item: CartItem): string | null {
+    const explicitSize = this.normalizeSize(item.size);
+    if (explicitSize) return explicitSize;
+
+    const parts = this.normalizeText(item.id).split('::');
+    return this.normalizeSize(parts[1] ?? null);
+  }
+
+  private legacyVariantHintFromId(id: string): string | null {
+    const normalizedId = this.normalizeText(id);
+    if (!normalizedId) return null;
+    const parts = normalizedId.split('::');
+    if (parts.length !== 1) return null;
+    return this.normalizeOptionalText(parts[0]) ?? null;
+  }
+
+  private fallbackLineId(productId?: string, sku?: string, size?: string | null): string {
+    const variantKey = this.normalizeOptionalText(productId) ?? this.normalizeOptionalText(sku);
+    if (!variantKey) return '';
+    const normalizedSize = this.normalizeSize(size);
+    return normalizedSize ? `${variantKey}::${normalizedSize}` : variantKey;
+  }
+
+  private normalizeImage(raw: unknown): CartImage | null {
+    if (!raw || typeof raw !== 'object') return null;
+    const image = raw as Record<string, unknown>;
+    const url = this.normalizeText(image['url']);
+    const alt = this.normalizeText(image['alt']);
+    if (!url) return null;
+    return { url, alt };
+  }
+
+  private normalizeText(value: unknown): string {
+    return String(value ?? '').trim();
+  }
+
+  private normalizeOptionalText(value: unknown): string | undefined {
+    const normalized = this.normalizeText(value);
+    return normalized || undefined;
+  }
+
+  private normalizeSize(value: unknown): string | null {
+    const normalized = this.normalizeText(value);
+    return normalized || null;
+  }
+
+  private parseQty(value: unknown): number {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return 1;
+    return Math.max(1, Math.floor(parsed));
+  }
+
+  private parseMaxQty(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') return null;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return null;
+    const floored = Math.floor(parsed);
+    if (floored < 1) return null;
+    return floored;
+  }
+
+  private clampQty(value: number, maxQty?: number | null): number {
+    const normalized = this.parseQty(value);
+    const max = this.parseMaxQty(maxQty);
+    if (max === null) return normalized;
+    return Math.min(normalized, max);
   }
 }

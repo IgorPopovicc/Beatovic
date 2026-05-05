@@ -1,14 +1,21 @@
-export type OrderStatus = 'PENDING' | 'EMAIL_VERIFIED' | 'COMPLETED' | 'CANCELED' | 'EXPIRED';
+export type OrderStatus =
+  | 'PENDING'
+  | 'EMAIL_VERIFIED'
+  | 'WAITING_FOR_CUSTOMER_RECONFIRMATION'
+  | 'CUSTOMER_RECONFIRMED'
+  | 'COMPLETED'
+  | 'CANCELED'
+  | 'EXPIRED';
 
 export type CouponType = 'PERCENTAGE' | 'FIXED';
 
 export interface AdminOrderUserDetails {
-  fullName: string;
-  email: string;
-  address: string;
-  phoneNumber: string;
-  municipality: string;
-  postalCode: string;
+  fullName: string | null;
+  email: string | null;
+  address: string | null;
+  phoneNumber: string | null;
+  municipality: string | null;
+  postalCode: string | null;
 }
 
 export interface AdminOrderItem {
@@ -29,9 +36,10 @@ export interface AdminOrder {
   couponCode: string | null;
   couponValue: number | null;
   couponType: CouponType | null;
-  userDetails: AdminOrderUserDetails;
+  userDetails: AdminOrderUserDetails | null;
   orderDate?: string | null;
   items: AdminOrderItem[];
+  itemsChanged?: boolean | null;
 }
 
 export interface UnregisteredOrderRequest {
@@ -44,6 +52,7 @@ export interface UnregisteredOrderRequest {
     address: string;
     municipality: string;
     postalCode: string;
+    privacyPolicyAccepted: boolean;
   };
   orderItems: Array<{
     sizeVariantAttributeId: string;

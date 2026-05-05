@@ -267,7 +267,7 @@ export class AdminVariantUpdateModal {
         this.fileError.set(null);
 
         this.form.reset({
-          price: Number(details.finalPrice ?? details.originalPrice ?? 0),
+          price: this.resolveEditableBasePrice(details),
           isNew: !!details.new,
           isOutlet: !!details.outlet,
           displayImageName: '',
@@ -768,5 +768,19 @@ export class AdminVariantUpdateModal {
       .replace(/\p{M}+/gu, '')
       .toUpperCase()
       .trim();
+  }
+
+  private resolveEditableBasePrice(details: ProductVariant): number {
+    const originalPrice = Number(details?.originalPrice);
+    if (Number.isFinite(originalPrice) && originalPrice >= 0) return originalPrice;
+
+    // Defensive fallback for legacy payloads that might expose a generic "price".
+    const legacyPrice = Number((details as ProductVariant & { price?: unknown })?.price);
+    if (Number.isFinite(legacyPrice) && legacyPrice >= 0) return legacyPrice;
+
+    const finalPrice = Number(details?.finalPrice);
+    if (Number.isFinite(finalPrice) && finalPrice >= 0) return finalPrice;
+
+    return 0;
   }
 }

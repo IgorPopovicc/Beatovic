@@ -127,8 +127,8 @@ export class AdminCoupons {
   }
 
   usageLabel(coupon: CouponDetails): string {
-    if (coupon.usageType === 'SINGLE_USE') return 'SINGLE_USE';
-    if (coupon.usageType === 'PER_USER') return 'PER_USER';
+    if (coupon.usageType === 'GLOBAL_LIMIT') return 'Globalni limit';
+    if (coupon.usageType === 'LIMIT_PER_USER') return 'Limit po korisniku';
     return coupon.usageType;
   }
 

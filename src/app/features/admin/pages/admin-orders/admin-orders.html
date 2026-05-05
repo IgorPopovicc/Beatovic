@@ -39,6 +39,18 @@
           {{ loading() ? 'Učitavanje...' : 'Pretraži po email-u' }}
         </button>
       </div>
+
+      <div class="f actions">
+        <label class="lbl ghost">.</label>
+        <button
+          class="btn-search danger"
+          type="button"
+          (click)="openAnonymizeConfirm()"
+          [disabled]="loading() || anonymizeConfirmBusy()"
+        >
+          Anonimizuj kupca
+        </button>
+      </div>
     </div>
   </div>
 
@@ -74,7 +86,7 @@
         @for (o of orders(); track trackByOrderId($index, o)) {
           <div class="row" role="listitem">
             <div class="main">
-              <div class="name">{{ o.userDetails.fullName }}</div>
+              <div class="name">{{ customerDisplayName(o) }}</div>
               <div class="id">
                 Order ID: <span>{{ o.orderId }}</span>
               </div>
@@ -131,29 +143,46 @@
 
           @if (isExpanded(o.orderId)) {
             <div class="details">
+              @if (hasItemsChanged(o)) {
+                <div class="dcol full warning">
+                  <div class="dtitle">Potrebna ponovna potvrda</div>
+                  <div class="dline">
+                    Ova narudžba je izmijenjena i kupac mora ponovo potvrditi narudžbu putem email-a.
+                  </div>
+                  <button
+                    type="button"
+                    class="action-btn warn"
+                    (click)="resendOrderConfirmation(o)"
+                    [disabled]="isRowBusy(o)"
+                  >
+                    {{ isReconfirmBusy(o) ? 'Slanje...' : 'Pošalji ponovnu potvrdu' }}
+                  </button>
+                </div>
+              }
+
               <div class="dcol">
                 <div class="dtitle">Kupac</div>
                 <div class="dline">
-                  <span>Ime:</span> <strong>{{ o.userDetails.fullName }}</strong>
+                  <span>Ime:</span> <strong>{{ customerDisplayName(o) }}</strong>
                 </div>
                 <div class="dline">
-                  <span>Email:</span> <strong>{{ o.userDetails.email }}</strong>
+                  <span>Email:</span> <strong>{{ customerDisplayEmail(o) }}</strong>
                 </div>
                 <div class="dline">
-                  <span>Telefon:</span> <strong>{{ o.userDetails.phoneNumber }}</strong>
+                  <span>Telefon:</span> <strong>{{ customerDisplayValue(o.userDetails?.phoneNumber) }}</strong>
                 </div>
               </div>
 
               <div class="dcol">
                 <div class="dtitle">Adresa</div>
                 <div class="dline">
-                  <span>Adresa:</span> <strong>{{ o.userDetails.address }}</strong>
+                  <span>Adresa:</span> <strong>{{ customerDisplayValue(o.userDetails?.address) }}</strong>
                 </div>
                 <div class="dline">
-                  <span>Općina:</span> <strong>{{ o.userDetails.municipality }}</strong>
+                  <span>Općina:</span> <strong>{{ customerDisplayValue(o.userDetails?.municipality) }}</strong>
                 </div>
                 <div class="dline">
-                  <span>Poštanski:</span> <strong>{{ o.userDetails.postalCode }}</strong>
+                  <span>Poštanski:</span> <strong>{{ customerDisplayValue(o.userDetails?.postalCode) }}</strong>
                 </div>
               </div>
 
@@ -172,11 +201,31 @@
                       </div>
 
                       <div class="it-right">
-                        <div class="it-qty">x{{ i.quantity }}</div>
+                        <label class="it-qty">
+                          <span>Količina</span>
+                          <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            [value]="editedItemQuantity(o.orderId, i.sizeAttributeVariantId, i.quantity)"
+                            (input)="onItemQuantityInput(o.orderId, i.sizeAttributeVariantId, $any($event.target).value)"
+                          />
+                        </label>
                         <div class="it-price">{{ formatPrice(i.totalItemPrice) }} KM</div>
                       </div>
                     </div>
                   }
+                </div>
+
+                <div class="item-actions">
+                  <button
+                    type="button"
+                    class="action-btn warn"
+                    (click)="saveOrderItems(o)"
+                    [disabled]="!hasItemChanges(o) || isRowBusy(o)"
+                  >
+                    {{ isUpdateItemsBusy(o) ? 'Čuvanje...' : 'Sačuvaj izmjene stavki' }}
+                  </button>
                 </div>
               </div>
 
@@ -211,6 +260,19 @@
   [busy]="confirmBusy()"
   (confirm)="confirmMutation()"
   (cancel)="closeConfirm()"
+/>
+
+<app-confirm-dialog
+  [open]="anonymizeConfirmOpen()"
+  [title]="'Anonimizacija kupca'"
+  [message]="'Da li ste sigurni da želite anonimizovati sve podatke za email: ' + anonymizeTargetEmail() + '?'"
+  [confirmText]="'Da, anonimizuj'"
+  cancelText="Ne"
+  [variant]="'danger'"
+  [icon]="'⚠'"
+  [busy]="anonymizeConfirmBusy()"
+  (confirm)="confirmAnonymizeByEmail()"
+  (cancel)="closeAnonymizeConfirm()"
 />
 
 <div class="action-toast-wrap" [class.show]="!!actionNotice()" aria-live="polite" aria-atomic="true">

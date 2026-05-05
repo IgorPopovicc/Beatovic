@@ -38,6 +38,10 @@
   pointer-events: none;
 }
 
+.toast.no-action {
+  grid-template-columns: auto 1fr auto;
+}
+
 .toast-wrap.show .toast {
   pointer-events: auto;
 }
@@ -53,6 +57,16 @@
   color: #fff;
   background: #e01824;
   box-shadow: 0 6px 16px rgba(224, 24, 36, 0.28);
+}
+
+.toast.error .icon {
+  background: #b3121b;
+  box-shadow: 0 6px 16px rgba(179, 18, 27, 0.3);
+}
+
+.toast.info .icon {
+  background: #2c2c2c;
+  box-shadow: 0 6px 16px rgba(44, 44, 44, 0.26);
 }
 
 .body {
@@ -133,5 +147,10 @@
     grid-column: 2;
     justify-self: start;
     margin-top: 2px;
+  }
+
+  .toast.no-action .close-btn {
+    grid-column: 3;
+    grid-row: 1;
   }
 }

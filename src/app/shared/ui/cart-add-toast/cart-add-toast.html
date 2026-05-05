@@ -1,7 +1,13 @@
 @if (rendered()) {
   <div class="toast-wrap" [class.show]="visible()" aria-live="polite" aria-atomic="true">
-    <div class="toast" role="status">
-      <div class="icon" aria-hidden="true">✓</div>
+    <div
+      class="toast"
+      [class.no-action]="action() !== 'cart'"
+      [class.error]="kind() === 'error'"
+      [class.info]="kind() === 'info'"
+      [attr.role]="kind() === 'error' ? 'alert' : 'status'"
+    >
+      <div class="icon" aria-hidden="true">{{ icon() }}</div>
 
       <div class="body">
         <div class="title">{{ title() }}</div>
@@ -10,7 +16,9 @@
         }
       </div>
 
-      <a class="view-cart" routerLink="/cart" (click)="onViewCart()">Pogledaj korpu</a>
+      @if (action() === 'cart') {
+        <a class="view-cart" routerLink="/cart" (click)="onViewCart()">Pogledaj korpu</a>
+      }
 
       <button type="button" class="close-btn" (click)="close()" aria-label="Zatvori obavještenje">
         ✕
