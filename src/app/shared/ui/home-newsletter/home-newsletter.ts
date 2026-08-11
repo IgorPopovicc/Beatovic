@@ -3,6 +3,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { NewsletterApiService } from '../../../core/api/newsletter-api.service';
 import { AppNoticeService } from '../../../core/system/app-notice.service';
+import { RouterLink } from '@angular/router';
+import { TurnstileWidgetComponent } from '../turnstile-widget/turnstile-widget';
+import { TurnstileTokenService } from '../../../core/security/turnstile-token.service';
+import { isTurnstileVerificationError } from '../../../core/security/turnstile.interceptor';
 
 function hasVisibleText(value: string): boolean {
   return String(value ?? '').trim().length > 0;
@@ -10,7 +14,7 @@ function hasVisibleText(value: string): boolean {
 
 @Component({
   selector: 'app-home-newsletter',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink, TurnstileWidgetComponent],
   templateUrl: './home-newsletter.html',
   styleUrl: './home-newsletter.scss',
 })
@@ -18,6 +22,7 @@ export class HomeNewsletter {
   private readonly fb = inject(FormBuilder);
   private readonly newsletterApi = inject(NewsletterApiService);
   private readonly notices = inject(AppNoticeService);
+  readonly turnstile = inject(TurnstileTokenService);
 
   readonly submitting = signal(false);
   readonly submitError = signal<string | null>(null);
@@ -25,6 +30,7 @@ export class HomeNewsletter {
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email, Validators.maxLength(120)]],
     privacyPolicyAccepted: [false, [Validators.requiredTrue]],
+    website: [''],
   });
 
   submit(): void {
@@ -34,6 +40,11 @@ export class HomeNewsletter {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    if (!this.turnstile.hasToken('newsletter')) {
+      this.submitError.set('Potvrdite sigurnosnu provjeru prije slanja.');
       return;
     }
 
@@ -50,17 +61,23 @@ export class HomeNewsletter {
       .subscribe({
         email,
         privacyPolicyAccepted: true,
+        website: String(raw.website ?? ''),
       })
-      .pipe(finalize(() => this.submitting.set(false)))
+      .pipe(
+        finalize(() => {
+          this.submitting.set(false);
+          this.turnstile.reset('newsletter');
+        }),
+      )
       .subscribe({
         next: () => {
           this.submitError.set(null);
-          this.form.reset({ email: '', privacyPolicyAccepted: false });
+          this.form.reset({ email: '', privacyPolicyAccepted: false, website: '' });
           this.form.markAsPristine();
           this.form.markAsUntouched();
           this.notices.success(
-            'Uspješno ste prijavljeni na newsletter.',
-            'Nakon potvrde dobit ćete jedinstveni kod za 10% popusta na email.',
+            'Poslali smo vam email sa linkom za potvrdu.',
+            'Molimo provjerite inbox (i spam folder).',
           );
         },
         error: (err: unknown) => {
@@ -91,6 +108,9 @@ export class HomeNewsletter {
   }
 
   private userErrorMessage(error: unknown): string {
+    if (isTurnstileVerificationError(error)) {
+      return 'Sigurnosna provjera nije uspjela. Molimo pokušajte ponovo.';
+    }
     const status = Number((error as { status?: unknown })?.status ?? 0);
     if (status === 400 || status === 422) {
       return 'Provjerite unesene podatke i pokušajte ponovo.';

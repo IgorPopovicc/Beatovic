@@ -102,6 +102,36 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'politika-privatnosti',
+    loadComponent: () =>
+      import('./features/privacy-policy/privacy-policy').then((m) => m.PrivacyPolicyComponent),
+    data: {
+      seo: {
+        title: 'Politika privatnosti | Planeta',
+        description: 'Informacije o obradi podataka u Planeta webshopu.',
+      },
+    },
+  },
+  {
+    path: 'newsletter/subscribe',
+    loadComponent: () =>
+      import('./features/newsletter-subscribe-status/newsletter-subscribe-status-page').then(
+        (m) => m.NewsletterSubscribeStatusPageComponent,
+      ),
+    data: { outcome: 'success', seo: { noindex: true } },
+  },
+  { path: 'newsletter/subscribe-success', redirectTo: 'newsletter/subscribe', pathMatch: 'full' },
+  { path: 'newsletter/subscribe-confirmed', redirectTo: 'newsletter/subscribe', pathMatch: 'full' },
+  {
+    path: 'newsletter/subscribe-failed',
+    loadComponent: () =>
+      import('./features/newsletter-subscribe-status/newsletter-subscribe-status-page').then(
+        (m) => m.NewsletterSubscribeStatusPageComponent,
+      ),
+    data: { outcome: 'failure', seo: { noindex: true } },
+  },
+  { path: 'newsletter/subscribe-error', redirectTo: 'newsletter/subscribe-failed', pathMatch: 'full' },
+  {
     path: 'newsletter/unsubscribe-failed',
     loadComponent: () =>
       import('./features/newsletter-unsubscribe-failed/newsletter-unsubscribe-failed-page').then(

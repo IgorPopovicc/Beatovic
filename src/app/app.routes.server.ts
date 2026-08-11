@@ -1,7 +1,9 @@
 import { RenderMode, type ServerRoute } from '@angular/ssr';
 
 export const serverRoutes: ServerRoute[] = [
-  { path: '', renderMode: RenderMode.Prerender },
+  // The home page is API-backed and must resolve deployment configuration at container runtime.
+  // Rendering it on request keeps the image environment-agnostic and avoids build-time API calls.
+  { path: '', renderMode: RenderMode.Server },
   { path: 'products', renderMode: RenderMode.Server },
   { path: 'products/:gender/:category', renderMode: RenderMode.Server },
   { path: 'catalog', renderMode: RenderMode.Server },
@@ -11,6 +13,12 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'cart', renderMode: RenderMode.Server },
   { path: 'checkout', renderMode: RenderMode.Server },
   { path: 'order-result', renderMode: RenderMode.Server },
+  { path: 'politika-privatnosti', renderMode: RenderMode.Server },
+  { path: 'newsletter/subscribe', renderMode: RenderMode.Server },
+  { path: 'newsletter/subscribe-success', renderMode: RenderMode.Server },
+  { path: 'newsletter/subscribe-confirmed', renderMode: RenderMode.Server },
+  { path: 'newsletter/subscribe-failed', renderMode: RenderMode.Server },
+  { path: 'newsletter/subscribe-error', renderMode: RenderMode.Server },
   { path: 'newsletter/unsubscribe-failed', renderMode: RenderMode.Server },
   { path: 'newsletter/unsubscribe-error', renderMode: RenderMode.Server },
   { path: 'newsletter/unsubscribe', renderMode: RenderMode.Server },

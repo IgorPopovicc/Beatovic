@@ -53,6 +53,8 @@
   </div>
 
   <div class="footer-bottom">
+    <a routerLink="/politika-privatnosti">Politika privatnosti</a>
+    <br />
     Web stranicu izradio
     <a href="https://www.linkedin.com/in/igpopovic" target="_blank" rel="noopener">
       Igor Popović
@@ -91,6 +93,10 @@
       }
 
       <form class="contact-form" [formGroup]="form" (ngSubmit)="submitContactMessage()" novalidate>
+        <label class="honeypot" aria-hidden="true">
+          Website
+          <input type="text" formControlName="website" tabindex="-1" autocomplete="off" />
+        </label>
         <div class="form-grid">
           <label class="field">
             <span>Ime i prezime</span>
@@ -136,7 +142,10 @@
         <label class="field privacy-field">
           <span class="privacy-check">
             <input type="checkbox" formControlName="privacyPolicyAccepted" />
-            <span>Prihvatam politiku privatnosti i obradu podataka za odgovor na upit.</span>
+            <span>
+              Prihvatam <a routerLink="/politika-privatnosti">politiku privatnosti</a> i obradu
+              podataka za odgovor na upit.
+            </span>
           </span>
           <span class="field-msg" [class.error]="hasFieldError('privacyPolicyAccepted')">
             {{ fieldError('privacyPolicyAccepted') }}
@@ -144,11 +153,16 @@
         </label>
 
         <div class="contact-actions">
+          <app-turnstile-widget context="contact" />
           <button type="button" class="btn ghost" (click)="closeContactModal()" [disabled]="submitting()">
             Zatvori
           </button>
 
-          <button type="submit" class="btn primary" [disabled]="submitting()">
+          <button
+            type="submit"
+            class="btn primary"
+            [disabled]="submitting() || !turnstile.hasToken('contact')"
+          >
             {{ submitting() ? 'Slanje...' : 'Pošalji poruku' }}
           </button>
         </div>

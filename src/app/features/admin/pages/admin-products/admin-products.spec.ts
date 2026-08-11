@@ -1,3 +1,6 @@
+import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AdminProducts } from './admin-products';
@@ -8,6 +11,7 @@ describe('AdminProducts', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [provideRouter([]), provideHttpClient(), provideZonelessChangeDetection()],
       imports: [AdminProducts],
     }).compileComponents();
 

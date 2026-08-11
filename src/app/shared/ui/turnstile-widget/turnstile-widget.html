@@ -1,0 +1,6 @@
+<div class="turnstile-wrap">
+  <div #container class="turnstile-container" aria-label="Sigurnosna provjera"></div>
+  @if (statusMessage()) {
+    <p class="turnstile-status" role="status">{{ statusMessage() }}</p>
+  }
+</div>

@@ -5,11 +5,15 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { startWith } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
+import { TurnstileWidgetComponent } from '../../shared/ui/turnstile-widget/turnstile-widget';
+import { TurnstileTokenService } from '../../core/security/turnstile-token.service';
+import { isTurnstileVerificationError } from '../../core/security/turnstile.interceptor';
 
 @Component({
   selector: 'app-admin-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgOptimizedImage],
+  imports: [CommonModule, ReactiveFormsModule, NgOptimizedImage, TurnstileWidgetComponent],
   templateUrl: './admin-login.html',
   styleUrl: './admin-login.scss',
 })
@@ -17,6 +21,7 @@ export class AdminLogin implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly turnstile = inject(TurnstileTokenService);
 
   readonly loading = signal(false);
   readonly showPassword = signal(false);
@@ -31,7 +36,12 @@ export class AdminLogin implements OnInit {
     initialValue: this.form.status,
   });
 
-  readonly invalid = computed(() => this.formStatus() !== 'VALID' || this.loading());
+  readonly invalid = computed(
+    () =>
+      this.formStatus() !== 'VALID' ||
+      this.loading() ||
+      !this.turnstile.hasToken('admin-login'),
+  );
   readonly passwordInputType = computed(() => (this.showPassword() ? 'text' : 'password'));
 
   ngOnInit(): void {
@@ -55,16 +65,23 @@ export class AdminLogin implements OnInit {
 
     const { username, password } = this.form.getRawValue();
 
-    this.auth.login(username, password).subscribe({
+    this.auth
+      .login(username, password)
+      .pipe(finalize(() => this.turnstile.reset('admin-login')))
+      .subscribe({
       next: () => {
         this.loading.set(false);
 
         void this.router.navigateByUrl('/admin/panel');
       },
-      error: () => {
+      error: (error: unknown) => {
         this.loading.set(false);
-        this.loginError.set('Greška pri prijavi. Pokušajte ponovo.');
+        this.loginError.set(
+          isTurnstileVerificationError(error)
+            ? 'Sigurnosna provjera nije uspjela. Molimo pokušajte ponovo.'
+            : 'Greška pri prijavi. Pokušajte ponovo.',
+        );
       },
-    });
+      });
   }
 }

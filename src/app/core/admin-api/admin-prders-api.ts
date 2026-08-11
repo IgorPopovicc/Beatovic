@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+import { runtimeApiUrl } from '../config/runtime-config.service';
 import { AuthService } from '../auth/auth.service';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -30,12 +30,10 @@ export class AdminOrdersApi {
       'Content-Type': 'application/json',
     });
 
-    const url =
-      `${environment.apiBaseUrl}/orders/admin/by-date` +
-      `?startDate=${encodeURIComponent(startDate)}` +
-      `&endDate=${encodeURIComponent(endDate)}`;
+    const url = runtimeApiUrl(`/orders/admin/by-date`);
+    const params = new HttpParams().set('startDate', startDate).set('endDate', endDate);
 
-    return this.http.get<AdminOrder[]>(url, { headers }).pipe(
+    return this.http.get<AdminOrder[]>(url, { headers, params }).pipe(
       catchError((err) => {
         console.error('[AdminOrdersApi] getByDate failed:', err);
         return throwError(() => err);
@@ -52,7 +50,7 @@ export class AdminOrdersApi {
       'Content-Type': 'application/json',
     });
 
-    const url = `${environment.apiBaseUrl}/orders/admin/by-email/unregistered`;
+    const url = runtimeApiUrl(`/orders/admin/by-email/unregistered`);
     const payload: OrdersByEmailRequest = { email };
 
     return this.http.post<AdminOrder[]>(url, payload, { headers }).pipe(
@@ -63,6 +61,44 @@ export class AdminOrdersApi {
     );
   }
 
+  getByOrderNumber(orderNumber: string): Observable<AdminOrder> {
+    const token = this.auth.accessToken();
+    if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    const safeOrderNumber = encodeURIComponent(orderNumber.trim());
+    return this.http
+      .get<AdminOrder>(
+        runtimeApiUrl(`/orders/admin/by-number/${safeOrderNumber}`),
+        { headers },
+      )
+      .pipe(
+        catchError((err) => {
+          console.error('[AdminOrdersApi] getByOrderNumber failed:', err);
+          return throwError(() => err);
+        }),
+      );
+  }
+
+  getByPantheonId(pantheonOrderId: string): Observable<AdminOrder> {
+    const token = this.auth.accessToken();
+    if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    const safePantheonOrderId = encodeURIComponent(pantheonOrderId.trim());
+    return this.http
+      .get<AdminOrder>(
+        runtimeApiUrl(`/orders/admin/by-pantheon-id/${safePantheonOrderId}`),
+        { headers },
+      )
+      .pipe(
+        catchError((err) => {
+          console.error('[AdminOrdersApi] getByPantheonId failed:', err);
+          return throwError(() => err);
+        }),
+      );
+  }
+
   createUnregisteredOrder(
     payload: UnregisteredOrderRequest,
   ): Observable<UnregisteredOrderResponse> {
@@ -70,7 +106,7 @@ export class AdminOrdersApi {
       'Content-Type': 'application/json',
     });
 
-    const url = `${environment.apiBaseUrl}/orders/unregistered`;
+    const url = runtimeApiUrl(`/orders/unregistered`);
 
     return this.http.post<UnregisteredOrderResponse>(url, payload, { headers }).pipe(
       catchError((err) => {
@@ -90,7 +126,7 @@ export class AdminOrdersApi {
     });
 
     const safeOrderId = encodeURIComponent(orderId);
-    const url = `${environment.apiBaseUrl}/orders/admin/${safeOrderId}/complete`;
+    const url = runtimeApiUrl(`/orders/admin/${safeOrderId}/complete`);
 
     return this.http.get<unknown>(url, { headers }).pipe(
       catchError((err) => {
@@ -110,7 +146,7 @@ export class AdminOrdersApi {
     });
 
     const safeOrderId = encodeURIComponent(orderId);
-    const url = `${environment.apiBaseUrl}/orders/admin/${safeOrderId}/cancel`;
+    const url = runtimeApiUrl(`/orders/admin/${safeOrderId}/cancel`);
 
     return this.http.get<unknown>(url, { headers }).pipe(
       catchError((err) => {
@@ -130,7 +166,7 @@ export class AdminOrdersApi {
     });
 
     const safeOrderId = encodeURIComponent(orderId);
-    const url = `${environment.apiBaseUrl}/orders/admin/${safeOrderId}/resend-confirmation`;
+    const url = runtimeApiUrl(`/orders/admin/${safeOrderId}/resend-confirmation`);
 
     return this.http.post(url, null, { headers, responseType: 'text' }).pipe(
       map(() => void 0),
@@ -151,7 +187,7 @@ export class AdminOrdersApi {
     });
 
     const safeOrderId = encodeURIComponent(orderId);
-    const url = `${environment.apiBaseUrl}/orders/admin/${safeOrderId}/update-items`;
+    const url = runtimeApiUrl(`/orders/admin/${safeOrderId}/update-items`);
 
     return this.http.put<AdminOrder>(url, items, { headers }).pipe(
       catchError((err) => {
@@ -159,6 +195,26 @@ export class AdminOrdersApi {
         return throwError(() => err);
       }),
     );
+  }
+
+  removeOrderCoupon(orderId: string): Observable<void> {
+    const token = this.auth.accessToken();
+    if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    const safeOrderId = encodeURIComponent(orderId);
+    return this.http
+      .delete(runtimeApiUrl(`/orders/admin/${safeOrderId}/coupon`), {
+        headers,
+        responseType: 'text',
+      })
+      .pipe(
+        map(() => void 0),
+        catchError((err) => {
+          console.error('[AdminOrdersApi] removeOrderCoupon failed:', err);
+          return throwError(() => err);
+        }),
+      );
   }
 
   anonymizeCustomerByEmail(email: string): Observable<void> {
@@ -171,7 +227,7 @@ export class AdminOrdersApi {
     });
 
     const params = new HttpParams().set('email', email);
-    const url = `${environment.apiBaseUrl}/anonymization/admin/customer`;
+    const url = runtimeApiUrl(`/anonymization/admin/customer`);
 
     return this.http.post(url, null, { headers, params, responseType: 'text' }).pipe(
       map(() => void 0),

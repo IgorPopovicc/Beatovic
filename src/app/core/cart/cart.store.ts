@@ -29,6 +29,7 @@ export interface CartItem {
 
   name: string;
   sku?: string;
+  displaySku?: string;
   size?: string | null;
   image?: CartImage | null;
 
@@ -219,6 +220,7 @@ export class CartStore {
       entry['productId'] ?? entry['variantId'] ?? entry['productVariantId'],
     );
     const sku = this.normalizeOptionalText(entry['sku'] ?? entry['productSku'] ?? entry['variantSku']);
+    const displaySku = this.normalizeOptionalText(entry['displaySku']) ?? sku;
     const size = this.normalizeSize(entry['size'] ?? entry['selectedSize'] ?? entry['sizeValue']);
 
     const normalizedId = id || this.fallbackLineId(productId, sku, size);
@@ -240,6 +242,7 @@ export class CartStore {
         this.normalizeText(entry['name'] ?? entry['productName'] ?? entry['title'] ?? 'Proizvod') ||
         'Proizvod',
       sku,
+      displaySku,
       size,
       image: this.normalizeImage(entry['image']),
       unitPrice: {
@@ -258,6 +261,7 @@ export class CartStore {
     const id = this.normalizeText(item.id);
     const productId = this.normalizeOptionalText(item.productId);
     const sku = this.normalizeOptionalText(item.sku);
+    const displaySku = this.normalizeOptionalText(item.displaySku) ?? sku;
     const size = this.normalizeSize(item.size);
     const maxQty = this.parseMaxQty(item.maxQty);
     const fallbackId = this.fallbackLineId(productId, sku, size);
@@ -268,6 +272,7 @@ export class CartStore {
       id: id || fallbackId,
       productId,
       sku,
+      displaySku,
       size,
       unitPrice: {
         amount: Number.isFinite(amount) ? amount : 0,
@@ -309,6 +314,11 @@ export class CartStore {
       id: this.normalizeText(incoming.id) || this.normalizeText(existing.id),
       productId: this.normalizeOptionalText(incoming.productId) ?? this.normalizeOptionalText(existing.productId),
       sku: this.normalizeOptionalText(incoming.sku) ?? this.normalizeOptionalText(existing.sku),
+      displaySku:
+        this.normalizeOptionalText(incoming.displaySku) ??
+        this.normalizeOptionalText(existing.displaySku) ??
+        this.normalizeOptionalText(incoming.sku) ??
+        this.normalizeOptionalText(existing.sku),
       size: this.normalizeSize(incoming.size) ?? this.normalizeSize(existing.size),
       unitPrice: incoming.unitPrice ?? existing.unitPrice,
       ...(mergedMaxQty !== null ? { maxQty: mergedMaxQty } : {}),

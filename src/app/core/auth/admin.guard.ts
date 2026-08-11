@@ -1,6 +1,7 @@
 import { CanMatchFn, Router, UrlSegment } from '@angular/router';
 import { inject } from '@angular/core';
 import { AuthService } from './auth.service';
+import { map } from 'rxjs/operators';
 
 export const adminOnlyGuard: CanMatchFn = (_route, segments: UrlSegment[]) => {
   const auth = inject(AuthService);
@@ -8,12 +9,8 @@ export const adminOnlyGuard: CanMatchFn = (_route, segments: UrlSegment[]) => {
 
   // Let the dedicated `/admin` login route handle exact `/admin`.
   const isExactAdminRoot = segments.length === 1 && segments[0]?.path === 'admin';
-  const hasValidToken = auth.hasValidToken();
-  const hasAdminRole = auth.hasRole('ADMIN');
-
   if (isExactAdminRoot) return false;
-
-  if (hasValidToken && hasAdminRole) return true;
-
-  return router.createUrlTree(['/admin']);
+  return auth
+    .ensureValidAdminSession()
+    .pipe(map((valid) => (valid ? true : router.createUrlTree(['/admin']))));
 };

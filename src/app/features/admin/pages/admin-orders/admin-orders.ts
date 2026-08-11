@@ -17,7 +17,7 @@ type OrderStatusTone =
   | 'completed'
   | 'canceled'
   | 'expired';
-type OrderMutation = 'complete' | 'cancel';
+type OrderMutation = 'complete' | 'cancel' | 'remove-coupon';
 type RowActionKind = OrderMutation | 'reconfirm' | 'anonymize' | 'update-items';
 
 type OrdersSearchContext =
@@ -29,6 +29,14 @@ type OrdersSearchContext =
   | {
       mode: 'email';
       email: string;
+    }
+  | {
+      mode: 'order-number';
+      orderNumber: string;
+    }
+  | {
+      mode: 'pantheon-id';
+      pantheonOrderId: string;
     }
   | null;
 
@@ -98,6 +106,8 @@ export class AdminOrders implements OnDestroy {
   readonly startDate = new FormControl<string>('', { nonNullable: true });
   readonly endDate = new FormControl<string>('', { nonNullable: true });
   readonly email = new FormControl<string>('', { nonNullable: true });
+  readonly orderNumber = new FormControl<string>('', { nonNullable: true });
+  readonly pantheonOrderId = new FormControl<string>('', { nonNullable: true });
 
   readonly startSig = toSignal(this.startDate.valueChanges.pipe(startWith(this.startDate.value)), {
     initialValue: this.startDate.value,
@@ -109,6 +119,14 @@ export class AdminOrders implements OnDestroy {
   readonly emailSig = toSignal(this.email.valueChanges.pipe(startWith(this.email.value)), {
     initialValue: this.email.value,
   });
+  readonly orderNumberSig = toSignal(
+    this.orderNumber.valueChanges.pipe(startWith(this.orderNumber.value)),
+    { initialValue: this.orderNumber.value },
+  );
+  readonly pantheonOrderIdSig = toSignal(
+    this.pantheonOrderId.valueChanges.pipe(startWith(this.pantheonOrderId.value)),
+    { initialValue: this.pantheonOrderId.value },
+  );
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -139,6 +157,8 @@ export class AdminOrders implements OnDestroy {
   readonly startValue = computed(() => this.normalize(this.startSig()));
   readonly endValue = computed(() => this.normalize(this.endSig()));
   readonly emailValue = computed(() => this.normalize(this.emailSig()));
+  readonly orderNumberValue = computed(() => this.normalize(this.orderNumberSig()));
+  readonly pantheonOrderIdValue = computed(() => this.normalize(this.pantheonOrderIdSig()));
 
   readonly hasBothDates = computed(() => !!this.startValue() && !!this.endValue());
 
@@ -158,9 +178,16 @@ export class AdminOrders implements OnDestroy {
     const email = this.emailValue();
     return this.isValidEmail(email) && !this.loading();
   });
+  readonly canSearchByOrderNumber = computed(
+    () => this.orderNumberValue().length > 0 && !this.loading(),
+  );
+  readonly canSearchByPantheonId = computed(
+    () => this.pantheonOrderIdValue().length > 0 && !this.loading(),
+  );
 
   readonly confirmTitle = computed(() => {
     if (this.confirmAction() === 'cancel') return 'Otkaži narudžbu';
+    if (this.confirmAction() === 'remove-coupon') return 'Ukloni kupon';
     return 'Odobri narudžbu';
   });
 
@@ -169,23 +196,30 @@ export class AdminOrders implements OnDestroy {
     if (!order) return '';
 
     if (this.confirmAction() === 'cancel') {
-      return `Jeste li sigurni da želite otkazati narudžbu ${order.orderId}?`;
+      return `Jeste li sigurni da želite otkazati ${this.orderDisplayReference(order)}?`;
     }
 
-    return `Jeste li sigurni da želite odobriti narudžbu ${order.orderId}?`;
+    if (this.confirmAction() === 'remove-coupon') {
+      return `Jeste li sigurni da želite ukloniti kupon sa ${this.orderDisplayReference(order)}?`;
+    }
+
+    return `Jeste li sigurni da želite odobriti ${this.orderDisplayReference(order)}?`;
   });
 
   readonly confirmButtonText = computed(() => {
     if (this.confirmAction() === 'cancel') return 'Da, otkaži';
+    if (this.confirmAction() === 'remove-coupon') return 'Da, ukloni kupon';
     return 'Da, odobri';
   });
 
   readonly confirmVariant = computed<ConfirmVariant>(() => {
-    return this.confirmAction() === 'cancel' ? 'danger' : 'default';
+    return this.confirmAction() === 'cancel' || this.confirmAction() === 'remove-coupon'
+      ? 'danger'
+      : 'default';
   });
 
   readonly confirmIcon = computed(() => {
-    return this.confirmAction() === 'cancel' ? '⚠' : '✓';
+    return this.confirmAction() === 'cancel' || this.confirmAction() === 'remove-coupon' ? '⚠' : '✓';
   });
 
   ngOnDestroy(): void {
@@ -228,6 +262,55 @@ export class AdminOrders implements OnDestroy {
 
     this.lastSearchContext.set({ mode: 'email', email });
     this.fetchOrdersByEmail(email);
+  }
+
+  onSearchByOrderNumber(): void {
+    const orderNumber = this.orderNumberValue();
+    if (!orderNumber) return;
+    this.lastSearchContext.set({ mode: 'order-number', orderNumber });
+    this.fetchSingleOrder(
+      this.api.getByOrderNumber(orderNumber),
+      'Narudžba sa tim brojem nije pronađena.',
+    );
+  }
+
+  onSearchByPantheonId(): void {
+    const pantheonOrderId = this.pantheonOrderIdValue();
+    if (!pantheonOrderId) return;
+    this.lastSearchContext.set({ mode: 'pantheon-id', pantheonOrderId });
+    this.fetchSingleOrder(
+      this.api.getByPantheonId(pantheonOrderId),
+      'Narudžba sa tim Pantheon ID-em nije pronađena.',
+    );
+  }
+
+  private fetchSingleOrder(
+    request$: ReturnType<AdminOrdersApi['getByOrderNumber']>,
+    notFound: string,
+  ): void {
+    this.loading.set(true);
+    this.error.set(null);
+    request$
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (order) => {
+          this.orders.set(order ? [order] : []);
+          this.editedItemQuantities.set({});
+          this.expandedOrderId.set(order?.orderId ?? null);
+        },
+        error: (err: unknown) => {
+          this.orders.set([]);
+          this.editedItemQuantities.set({});
+          const status = this.statusFromError(err);
+          this.error.set(
+            status === 404
+              ? notFound
+              : status === 401 || status === 403
+                ? 'Nemate dozvolu za ovu pretragu.'
+                : 'Pretraga narudžbe trenutno nije uspjela. Pokušajte ponovo.',
+          );
+        },
+      });
   }
 
   private fetchOrders(start: string, end: string): void {
@@ -311,6 +394,11 @@ export class AdminOrders implements OnDestroy {
   cancelOrder(order: AdminOrder): void {
     if (!this.hasAction(order, 'cancel') || this.isRowBusy(order)) return;
     this.openConfirm('cancel', order);
+  }
+
+  removeOrderCoupon(order: AdminOrder): void {
+    if (!order.couponCode || this.isRowBusy(order)) return;
+    this.openConfirm('remove-coupon', order);
   }
 
   resendOrderConfirmation(order: AdminOrder): void {
@@ -430,7 +518,9 @@ export class AdminOrders implements OnDestroy {
     const request$ =
       action === 'complete'
         ? this.api.completeOrder(order.orderId)
-        : this.api.cancelOrder(order.orderId);
+        : action === 'cancel'
+          ? this.api.cancelOrder(order.orderId)
+          : this.api.removeOrderCoupon(order.orderId);
 
     request$
       .pipe(
@@ -438,7 +528,9 @@ export class AdminOrders implements OnDestroy {
           const successMsg =
             action === 'complete'
               ? 'Narudžba je uspješno odobrena.'
-              : 'Narudžba je uspješno otkazana.';
+              : action === 'cancel'
+                ? 'Narudžba je uspješno otkazana.'
+                : 'Kupon je uspješno uklonjen sa narudžbe.';
 
           this.showNotice('success', successMsg);
           this.refreshOrders();
@@ -496,6 +588,11 @@ export class AdminOrders implements OnDestroy {
 
   customerDisplayValue(value: unknown): string {
     return this.safeString(value) || '-';
+  }
+
+  orderDisplayReference(order: AdminOrder): string {
+    const orderNumber = this.safeString(order.orderNumber);
+    return orderNumber ? `porudžbenicu ${orderNumber}` : 'porudžbenicu';
   }
 
   editedItemQuantity(orderId: string, sizeAttributeVariantId: string, fallback: number): number {
@@ -623,8 +720,21 @@ export class AdminOrders implements OnDestroy {
       this.fetchOrders(context.start, context.end);
       return;
     }
-
-    this.fetchOrdersByEmail(context.email);
+    if (context.mode === 'email') {
+      this.fetchOrdersByEmail(context.email);
+      return;
+    }
+    if (context.mode === 'order-number') {
+      this.fetchSingleOrder(
+        this.api.getByOrderNumber(context.orderNumber),
+        'Narudžba sa tim brojem nije pronađena.',
+      );
+      return;
+    }
+    this.fetchSingleOrder(
+      this.api.getByPantheonId(context.pantheonOrderId),
+      'Narudžba sa tim Pantheon ID-em nije pronađena.',
+    );
   }
 
   private quantityKey(orderId: string, sizeAttributeVariantId: string): string {
@@ -666,6 +776,13 @@ export class AdminOrders implements OnDestroy {
 
     if (status === 404) {
       return 'Narudžbina nije pronađena ili više nije dostupna.';
+    }
+
+    if (action === 'remove-coupon') {
+      if (status === 409 || status === 422) {
+        return 'Kupon je već uklonjen ili ga narudžba više nema.';
+      }
+      return 'Greška pri uklanjanju kupona. Pokušajte ponovo.';
     }
 
     if (status === 409 || status === 422) {

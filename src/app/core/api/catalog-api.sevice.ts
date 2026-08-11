@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError, map, shareReplay, switchMap } from 'rxjs/operators';
 import { Observable, of, throwError } from 'rxjs';
 import { ApiCategory, ApiCategoryValue } from './catalog.models';
-import { environment } from '../../../environments/environment';
+import { runtimeApiUrl } from '../config/runtime-config.service';
 
 type RawApiCategory = Partial<ApiCategory> & {
   id?: string;
@@ -58,7 +58,7 @@ function normalizeCategoryValue(raw: RawApiCategoryValue): ApiCategoryValue | nu
 @Injectable({ providedIn: 'root' })
 export class CatalogApiService {
   private http = inject(HttpClient);
-  private baseUrl = environment.apiBaseUrl;
+  private readonly baseUrl = runtimeApiUrl('');
 
   private categories$?: Observable<ApiCategory[]>;
 

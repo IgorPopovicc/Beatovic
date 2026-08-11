@@ -51,16 +51,25 @@ export interface Variant {
   id: string;
   productId?: string;
   productName: string;
+  name?: string;
   productDescription?: string;
+  description?: string;
+  shortDescription?: string;
+  subtitle?: string;
   productSku?: string;
   sku?: string;
+  displaySku?: string;
+  variantSku?: string;
   originalPrice?: number;
+  price?: number;
   finalPrice?: number;
   currency?: string;
   discountPrice?: number;
   quantity?: number;
   mainImageName?: string;
   mainImageUrl?: string;
+  mainImageWebUrl?: string;
+  mainImageThumbnailUrl?: string;
   categories?: Array<{
     id?: string;
     categoryId: string;
@@ -80,10 +89,37 @@ export interface Variant {
     value?: string;
     displayValue?: string;
   }>;
-  images?: Array<{ id: string; url: string; displayed: boolean }>;
-  relatedProducts?: Array<{ id: string; mainImageUrl?: string }>;
+  images?: Array<{
+    id: string;
+    url?: string;
+    originalUrl?: string;
+    webUrl?: string;
+    thumbnailUrl?: string;
+    displayed: boolean;
+  }>;
+  relatedProducts?: RelatedProductVariant[];
+  brand?: string;
   outlet?: boolean;
   new?: boolean;
+}
+
+export interface RelatedProductVariant {
+  id: string;
+  variantId?: string;
+  productId?: string;
+  productName?: string;
+  name?: string;
+  sku?: string;
+  displaySku?: string;
+  originalPrice?: number;
+  price?: number;
+  finalPrice?: number;
+  currency?: string;
+  quantity?: number;
+  mainImageName?: string;
+  mainImageUrl?: string;
+  mainImageWebUrl?: string;
+  mainImageThumbnailUrl?: string;
 }
 
 export interface AvailableCategory {

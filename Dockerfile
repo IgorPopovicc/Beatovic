@@ -6,17 +6,7 @@ RUN npm ci
 FROM deps AS builder
 WORKDIR /app
 
-ARG API_BASE_URL=https://euroleague-tiebreaker.com/planetabih-webservice/api
-ARG MEDIA_PRODUCT_BASE_URL=https://euroleague-tiebreaker.com/media/product/
-ARG SITE_URL=https://euroleague-tiebreaker.com
-
 COPY . .
-
-RUN API_BASE_URL="$API_BASE_URL" \
-    MEDIA_PRODUCT_BASE_URL="$MEDIA_PRODUCT_BASE_URL" \
-    SITE_URL="$SITE_URL" \
-    node scripts/inject-env-prod.cjs
-
 RUN npm run build:ssr
 
 FROM node:20.19-alpine AS runner
@@ -28,10 +18,11 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
+COPY scripts/write-runtime-config.cjs scripts/docker-entrypoint.sh ./scripts/
 
 EXPOSE 4000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget -qO- http://127.0.0.1:${PORT}/healthz >/dev/null || exit 1
 
-CMD ["node", "dist/Beatovic/server/server.mjs"]
+ENTRYPOINT ["sh", "scripts/docker-entrypoint.sh"]

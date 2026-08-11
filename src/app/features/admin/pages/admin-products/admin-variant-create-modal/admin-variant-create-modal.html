@@ -126,7 +126,7 @@
                 @for (v of variants(); track v.id) {
                   <div class="variant-row" role="listitem">
                     <div class="v-main">
-                      <div class="v-name">{{ v.sku }}</div>
+                      <div class="v-name">{{ v.displaySku || v.sku }}</div>
                       <div class="v-meta">
                         Cijena: <strong>{{ formatPrice(v.finalPrice) }}</strong> KM
                       </div>
@@ -166,26 +166,16 @@
               <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
                 <div class="grid2">
                   <div class="field">
-                    <label class="label">SKU modela (suffix)</label>
-                    <div class="sku-prefix">
-                      Prefiks proizvoda:
-                      <strong>{{ skuPrefix() || '-' }}</strong>
-                    </div>
+                    <label class="label">SKU modela (opcionalno)</label>
                     <input
                       class="input"
                       type="text"
                       formControlName="sku"
-                      placeholder="npr. BLACK-M ili 42"
+                      placeholder="Ostavite prazno za automatski SKU"
                       (blur)="onSkuInputBlur()"
                     />
-                    <div class="sku-help">Unesite samo završni dio SKU-a. Prefiks se dodaje automatski.</div>
-                    <div class="sku-preview" [class.bad]="duplicateGeneratedSku()">
-                      Finalni SKU: <strong>{{ generatedSku() || '-' }}</strong>
-                    </div>
-                    @if (form.controls.sku.touched && form.controls.sku.invalid) {
-                      <div class="field-err">SKU je obavezan.</div>
-                    }
-                    @if ((form.controls.sku.touched || submitting()) && duplicateGeneratedSku()) {
+                    <div class="sku-help">Backend generiše zadani SKU kada polje ostane prazno.</div>
+                    @if ((form.controls.sku.touched || submitting()) && duplicateSku()) {
                       <div class="field-err">Ovaj SKU već postoji za izabrani proizvod.</div>
                     }
                   </div>
@@ -251,10 +241,10 @@
                           @for (o of colorOptions(); track o.id) {
                             <button type="button" class="dd-item" (click)="selectColor(o.id)">
                               <span class="dd-label color">
-                                @if (isHexColor(o.value)) {
+                                @if (colorSwatch(o.value); as background) {
                                   <span
                                     class="swatch"
-                                    [style.background]="toCssHex(o.value)"
+                                    [style.background]="background"
                                   ></span>
                                   <span class="text">{{ colorLabel(o.value) }}</span>
                                 } @else {

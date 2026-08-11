@@ -1,3 +1,6 @@
+import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
@@ -19,7 +22,7 @@ describe('NewCollection', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [NewCollection],
-      providers: [
+      providers: [provideRouter([]), provideHttpClient(), provideZonelessChangeDetection(),
         {
           provide: ProductsApiService,
           useValue: {

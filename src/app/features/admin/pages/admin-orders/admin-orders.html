@@ -2,7 +2,7 @@
   <div class="head">
     <div class="head-left">
       <h1 class="title">Narudžbine</h1>
-      <p class="sub">Pretraga po periodu ili po email adresi kupca.</p>
+      <p class="sub">Pretraga po periodu, kupcu, broju narudžbe ili Pantheon ID-u.</p>
     </div>
 
     <div class="filters">
@@ -20,6 +20,52 @@
         <label class="lbl ghost">.</label>
         <button class="btn-search" type="button" (click)="onSearch()" [disabled]="!canSearch()">
           {{ loading() ? 'Učitavanje...' : 'Pretraži po datumu' }}
+        </button>
+      </div>
+
+      <div class="f">
+        <label class="lbl">Broj narudžbe</label>
+        <input
+          class="input"
+          type="text"
+          [formControl]="orderNumber"
+          placeholder="ORD-2026-000123"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="f actions">
+        <label class="lbl ghost">.</label>
+        <button
+          class="btn-search"
+          type="button"
+          (click)="onSearchByOrderNumber()"
+          [disabled]="!canSearchByOrderNumber()"
+        >
+          {{ loading() ? 'Učitavanje...' : 'Pretraži po broju' }}
+        </button>
+      </div>
+
+      <div class="f">
+        <label class="lbl">Pantheon ID</label>
+        <input
+          class="input"
+          type="text"
+          [formControl]="pantheonOrderId"
+          placeholder="Pantheon ID"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="f actions">
+        <label class="lbl ghost">.</label>
+        <button
+          class="btn-search"
+          type="button"
+          (click)="onSearchByPantheonId()"
+          [disabled]="!canSearchByPantheonId()"
+        >
+          {{ loading() ? 'Učitavanje...' : 'Pretraži Pantheon ID' }}
         </button>
       </div>
 
@@ -88,7 +134,7 @@
             <div class="main">
               <div class="name">{{ customerDisplayName(o) }}</div>
               <div class="id">
-                Order ID: <span>{{ o.orderId }}</span>
+                Porudžbenica: <span>{{ o.orderNumber || 'broj nije dostupan' }}</span>
               </div>
               <div class="desc" title="{{ o.description }}">{{ o.description }}</div>
             </div>
@@ -239,6 +285,14 @@
                     <span class="sep">·</span>
                     <span>Vrijednost:</span> <strong>{{ o.couponValue }}</strong>
                   </div>
+                  <button
+                    type="button"
+                    class="action-btn danger"
+                    (click)="removeOrderCoupon(o)"
+                    [disabled]="isRowBusy(o)"
+                  >
+                    {{ isActionBusy(o, 'remove-coupon') ? 'Uklanjanje...' : 'Ukloni kupon' }}
+                  </button>
                 </div>
               }
             </div>

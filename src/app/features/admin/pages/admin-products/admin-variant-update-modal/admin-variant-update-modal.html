@@ -36,7 +36,9 @@
               >
                 <span class="dd-text">
                   <span class="dd-label color">
-                    <span class="swatch" [style.background]="selectedColorSwatch()"></span>
+                    @if (selectedColorSwatch(); as background) {
+                      <span class="swatch" [style.background]="background"></span>
+                    }
                     <span class="text">{{ selectedColorLabel() }}</span>
                   </span>
                 </span>
@@ -57,7 +59,9 @@
                           [class.active]="selectedColorValueId() === c.id"
                         >
                           <span class="dd-label color">
-                            <span class="swatch" [style.background]="colorSwatch(c.value)"></span>
+                            @if (colorSwatch(c.value); as background) {
+                              <span class="swatch" [style.background]="background"></span>
+                            }
                             <span class="text">{{ colorLabel(c.value) }}</span>
                           </span>
 

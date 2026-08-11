@@ -1,25 +1,9 @@
 <section
-  #sectionRoot
   class="promo-video"
   [style.--running-fallback-bg]="'url(' + fallbackBackgroundImage + ')'"
   aria-labelledby="running-collection-title"
 >
   <div class="video-wrap">
-    @if (shouldRenderVideo()) {
-      <video
-        #bgVideo
-        class="bg-video"
-        autoplay
-        muted
-        loop
-        playsinline
-        preload="none"
-        [attr.poster]="fallbackBackgroundImage"
-        (canplay)="ensureVideoPlayback()"
-      >
-        <source src="assets/media/videos/test.mp4" type="video/mp4" />
-      </video>
-    }
     <div class="overlay"></div>
   </div>
 
@@ -44,9 +28,9 @@
       <div class="panel right">
         <section class="featured-products" aria-label="Izdvojeni modeli">
           <div class="featured-head">
-            <span class="featured-label">Preporuka sedmice</span>
-            <h3>2 modela koja trkači najviše biraju</h3>
-            <p>Odabrani modeli sa fokusom na podršku, amortizaciju i prozračnost.</p>
+            <span class="featured-label">Aktuelna ponuda</span>
+            <h3>Izdvojeni running modeli</h3>
+            <p>Proizvodi učitani iz trenutne dostupne ponude.</p>
           </div>
 
           @if (error()) {

@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { environment } from '../../../environments/environment';
+import { runtimeApiUrl } from '../config/runtime-config.service';
 import { AuthService } from '../auth/auth.service';
 import { CouponDetails, CreateCouponRequest } from './admin-coupons.models';
 
@@ -81,7 +81,7 @@ export class AdminCouponsApi {
       return throwError(() => err);
     }
 
-    return this.http.get<unknown>(`${environment.apiBaseUrl}/admin/coupons/active`, { headers }).pipe(
+    return this.http.get<unknown>(runtimeApiUrl(`/admin/coupons/active`), { headers }).pipe(
       map((response) =>
         toRawCouponArray(response)
           .map((item) => normalizeCoupon(item))
@@ -103,7 +103,7 @@ export class AdminCouponsApi {
       return throwError(() => err);
     }
 
-    return this.http.post<unknown>(`${environment.apiBaseUrl}/admin/coupons`, body, { headers }).pipe(
+    return this.http.post<unknown>(runtimeApiUrl(`/coupons/admin`), body, { headers }).pipe(
       map((response) => {
         const normalized = normalizeCoupon(response as RawCouponDetails);
         if (!normalized) {
@@ -129,7 +129,7 @@ export class AdminCouponsApi {
 
     const safeId = encodeURIComponent(couponId);
     return this.http
-      .delete(`${environment.apiBaseUrl}/admin/coupons/${safeId}`, {
+      .delete(runtimeApiUrl(`/admin/coupons/${safeId}`), {
         headers,
         responseType: 'text',
       })

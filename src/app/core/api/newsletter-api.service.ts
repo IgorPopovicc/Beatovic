@@ -3,17 +3,18 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { environment } from '../../../environments/environment';
+import { runtimeApiUrl } from '../config/runtime-config.service';
 
 export interface NewsletterSubscribeRequest {
   email: string;
   privacyPolicyAccepted: boolean;
+  website: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class NewsletterApiService {
   private readonly http = inject(HttpClient);
-  private readonly endpoint = `${environment.apiBaseUrl}/newsletter/subscribe`;
+  private readonly endpoint = runtimeApiUrl(`/newsletter/subscribe`);
 
   subscribe(body: NewsletterSubscribeRequest): Observable<string> {
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });

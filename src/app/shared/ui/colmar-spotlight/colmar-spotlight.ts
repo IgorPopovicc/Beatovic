@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { catchError, of, switchMap, tap } from 'rxjs';
+import { catchError, of, tap } from 'rxjs';
 import { ProductsApiService } from '../../../core/api/products-api.service';
 import { ProductCard } from '../product-card/product-card';
 import { mapVariantToProductCard, variantMatchesBrand } from '../product-card/product-card.mapper';
@@ -67,27 +67,17 @@ export class ColmarSpotlight {
         sortOrder: 'ASC',
       })
       .pipe(
-        switchMap((res) => {
-          const initial = res?.variants ?? [];
-          if (initial.length > 0) return of(initial);
-
-          // Fallback if text search returns nothing.
-          return this.productsApi.search({ hasActiveStock: true, page: 0, pageSize: 8 }).pipe(
-            tap((fallbackRes) => {
-              if (!fallbackRes?.variants?.length) {
-                this.error.set('Trenutno nema dostupnih modela za ovaj blok.');
-              }
-            }),
-            switchMap((fallbackRes) => of(fallbackRes?.variants ?? [])),
+        tap((response) => {
+          const featuredVariant = (response?.variants ?? []).find((variant) =>
+            variantMatchesBrand(variant, this.config.brandKey),
           );
-        }),
-        tap((variants) => {
-          const featuredVariant =
-            variants.find((v) => variantMatchesBrand(v, this.config.brandKey)) ?? variants[0];
           const mapped = featuredVariant
             ? mapVariantToProductCard(featuredVariant, { priority: false })
             : null;
           this.product.set(mapped?.id ? mapped : null);
+          if (!mapped) {
+            this.error.set('Trenutno nema dostupnih Colmar modela.');
+          }
           this.loading.set(false);
         }),
         catchError((err) => {

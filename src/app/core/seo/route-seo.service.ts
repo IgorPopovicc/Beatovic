@@ -94,10 +94,10 @@ export class RouteSeoService {
     const isProductPlaceholder =
       String(imageCandidate ?? '')
         .toLowerCase()
-        .includes('/assets/images/products/test.webp') ||
+        .includes('/assets/images/products/no-image.svg') ||
       String(imageCandidate ?? '')
         .toLowerCase()
-        .includes('assets/images/products/test.webp');
+        .includes('assets/images/products/no-image.svg');
     const absoluteImage =
       imageCandidate && !isProductPlaceholder ? this.seo.absoluteUrl(imageCandidate) : null;
     const imageAlt = (product.seoImage?.alt || primaryImage?.alt || product.name).trim();

@@ -11,6 +11,7 @@ export interface CreateContactMessageRequest {
   message: string;
   phoneNumber?: string;
   privacyPolicyAccepted: boolean;
+  website: string;
 }
 
 export interface ContactMessage {

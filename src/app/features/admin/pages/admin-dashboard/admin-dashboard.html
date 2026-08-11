@@ -135,7 +135,7 @@
         <table class="orders-table">
           <thead>
             <tr>
-              <th>ID narudžbe</th>
+              <th>Broj narudžbe</th>
               <th>Kupac</th>
               <th>Datum</th>
               <th>Status</th>
@@ -146,7 +146,7 @@
           <tbody>
             @for (o of orderAnalytics().latestOrders; track trackByOrderId($index, o)) {
               <tr>
-                <td class="mono">{{ o.orderId }}</td>
+                <td class="mono">{{ o.orderNumber || 'broj nije dostupan' }}</td>
                 <td>{{ orderCustomer(o) }}</td>
                 <td>{{ formatDateTime(o.orderDate) }}</td>
                 <td>

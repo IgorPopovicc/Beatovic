@@ -19,6 +19,7 @@ export interface ProductVariant {
   productSku?: string;
   categories?: ProductCategory[];
   sku?: string;
+  displaySku?: string;
   originalPrice?: number;
   finalPrice?: number;
   discountPrice?: number;
@@ -29,6 +30,8 @@ export interface ProductVariant {
   relatedProducts?: RelatedProduct[];
   mainImageName?: string;
   mainImageUrl?: string;
+  mainImageWebUrl?: string;
+  mainImageThumbnailUrl?: string;
   outlet?: boolean;
   new?: boolean;
 }
@@ -65,13 +68,19 @@ export interface VariantDiscountDetails {
 
 export interface ProductImage {
   id: string;
-  url: string;
+  url?: string;
+  originalUrl?: string;
+  webUrl?: string;
+  thumbnailUrl?: string;
   displayed: boolean;
 }
 
 export interface RelatedProduct {
   id: string;
+  mainImageName?: string;
   mainImageUrl?: string;
+  mainImageWebUrl?: string;
+  mainImageThumbnailUrl?: string;
 }
 
 export interface FoundCategory {
@@ -123,8 +132,11 @@ export interface Product {
   variants?: Array<{
     id: string;
     sku?: string;
+    displaySku?: string;
     colorVariantAttributeValue?: string;
     mainImageName?: string;
+    mainImageWebUrl?: string;
+    mainImageThumbnailUrl?: string;
   }>;
 }
 
@@ -136,6 +148,7 @@ export interface ProductIdSkuPair {
 export interface ProductVariantIdSkuPair {
   id: string;
   sku: string;
+  displaySku?: string;
 }
 
 export interface UpdateProductRequest {

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-labelledby="title description">
+  <title id="title">Slika proizvoda nije dostupna</title>
+  <desc id="description">Neutralna zamjenska ilustracija za proizvod bez fotografije.</desc>
+  <rect width="800" height="800" fill="#f3f3f3"/>
+  <g fill="none" stroke="#b7b7b7" stroke-linecap="round" stroke-linejoin="round" stroke-width="24">
+    <rect x="176" y="210" width="448" height="380" rx="28"/>
+    <circle cx="310" cy="330" r="44"/>
+    <path d="m210 530 118-122 92 88 72-70 98 104"/>
+  </g>
+</svg>

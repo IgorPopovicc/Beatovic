@@ -22,9 +22,33 @@
   animation: loop 40s linear infinite;
 }
 
-.marquee__logos img {
-  display: block;
-  margin-inline: 2rem;
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin-inline: 1rem;
+  padding: 10px 22px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 999px;
+  color: #111;
+  background: #fff;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brand-link:hover,
+.brand-link:focus-visible {
+  border-color: #e01824;
+  color: #e01824;
+}
+
+.state {
+  padding: 18px;
+  color: rgba(0, 0, 0, 0.66);
+  text-align: center;
+  font-weight: 700;
 }
 
 .reverse .marquee__logos {

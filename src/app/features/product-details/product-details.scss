@@ -2,6 +2,32 @@
   display: block;
 }
 
+.related {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.related-head {
+  margin-bottom: 16px;
+}
+
+.related-head h2,
+.related-head p {
+  margin: 0;
+}
+
+.related-head p {
+  margin-top: 5px;
+  color: rgba(0, 0, 0, 0.62);
+}
+
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+}
+
 /* =========================
    PAGE WRAPPER
    ========================= */

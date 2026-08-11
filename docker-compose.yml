@@ -1,16 +1,20 @@
 services:
-  app:
-    container_name: beatovic-ssr
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        API_BASE_URL: ${API_BASE_URL}
-        MEDIA_PRODUCT_BASE_URL: ${MEDIA_PRODUCT_BASE_URL}
-        SITE_URL: ${SITE_URL}
+  frontend:
+    image: igorpopovicc/beatovic:latest
+    container_name: frontend
     environment:
       NODE_ENV: production
-      PORT: ${PORT:-4000}
+      PORT: 4000
+      API_BASE_URL: https://${BE_HOSTNAME}/${APP_HOST_CONTEXT_PATH}/api
+      MEDIA_PRODUCT_BASE_URL: https://${BE_HOSTNAME}/media/product
+      SITE_URL: https://${BE_HOSTNAME}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY}
     ports:
-      - "127.0.0.1:${PORT:-4000}:${PORT:-4000}"
+      - "127.0.0.1:4000:4000"
     restart: unless-stopped
+    networks:
+      - backend-net
+
+networks:
+  backend-net:
+    external: true

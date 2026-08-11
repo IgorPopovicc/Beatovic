@@ -1,13 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ProductsSearchRequest, ProductSearchResponse } from './catalog.models';
+import { ProductsSearchRequest, ProductSearchResponse, Variant } from './catalog.models';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { runtimeApiUrl } from '../config/runtime-config.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProductsApiService {
   private http = inject(HttpClient);
-  private baseUrl = environment.apiBaseUrl;
+  private readonly baseUrl = runtimeApiUrl('');
 
   search(body: ProductsSearchRequest): Observable<ProductSearchResponse> {
     const payload: ProductsSearchRequest = {
@@ -20,7 +20,9 @@ export class ProductsApiService {
     return this.http.post<ProductSearchResponse>(`${this.baseUrl}/products/search`, payload);
   }
 
-  getVariantDetails(id: string) {
-    return this.http.get<any>(`${environment.apiBaseUrl}/products/variants/${id}/details`);
+  getVariantDetails(id: string): Observable<Variant> {
+    return this.http.get<Variant>(
+      runtimeApiUrl(`/products/variants/${encodeURIComponent(id)}/details`),
+    );
   }
 }

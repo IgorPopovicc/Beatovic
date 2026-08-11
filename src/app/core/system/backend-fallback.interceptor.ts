@@ -7,18 +7,13 @@ import {
 import { inject } from '@angular/core';
 import { catchError, tap } from 'rxjs/operators';
 import { throwError } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { isRuntimeApiUrl } from '../config/runtime-config.service';
 import { BackendStatusService } from './backend-status.service';
 
 const RETRYABLE_OUTAGE_STATUSES = new Set([0, 500, 502, 503, 504]);
 
 function isMonitoredApiRequest(method: string, url: string): boolean {
-  const isApiOrigin =
-    url.startsWith(environment.apiBaseUrl) ||
-    url.startsWith(environment.auth.host) ||
-    url.startsWith('/api/');
-
-  if (!isApiOrigin) return false;
+  if (!isRuntimeApiUrl(url)) return false;
   if (method === 'GET' || method === 'HEAD') return true;
 
   if (method === 'POST') {

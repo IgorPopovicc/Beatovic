@@ -65,7 +65,7 @@
                 (click)="setActive(i)"
                 aria-label="Odaberi sliku {{ i + 1 }}"
               >
-                <img [ngSrc]="img.mobile" [alt]="img.alt" width="90" height="90" />
+                <img [ngSrc]="img.thumbnail || img.mobile" [alt]="img.alt" width="90" height="90" />
               </button>
             }
           </div>
@@ -73,9 +73,9 @@
 
         <aside class="buy">
           <div class="buy-card">
-            @if (p.sku) {
+            @if (p.displaySku || p.sku) {
               <div class="sku">
-                Šifra artikla <strong>{{ p.sku }}</strong>
+                Šifra artikla <strong>{{ p.displaySku || p.sku }}</strong>
               </div>
             }
 
@@ -186,6 +186,20 @@
           </div>
         </aside>
       </div>
+
+      @if (relatedProducts().length) {
+        <section class="related" aria-labelledby="related-products-title">
+          <div class="related-head">
+            <h2 id="related-products-title">Povezani proizvodi</h2>
+            <p>Modeli povezani sa ovim proizvodom u aktuelnoj ponudi.</p>
+          </div>
+          <div class="related-grid">
+            @for (related of relatedProducts(); track related.id) {
+              <app-product-card [product]="related" variant="compact" />
+            }
+          </div>
+        </section>
+      }
     }
   }
 </section>

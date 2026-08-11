@@ -6,6 +6,8 @@ import { currencyDisplayLabel } from '../../utils/currency';
 export interface ProductImage {
   desktop: string;
   mobile: string;
+  thumbnail?: string;
+  original?: string;
   w: number;
   h: number;
   alt: string;
@@ -39,12 +41,14 @@ export class ProductCardComponent {
   private imageFallback = false;
 
   get imageMobile(): string {
-    if (this.imageFallback) return 'assets/images/products/test.webp';
+    if (this.imageFallback) return 'assets/images/products/no-image.svg';
     return this.product.image.mobile || this.product.image.desktop;
   }
 
   get imageDesktop(): string {
-    return this.imageFallback ? 'assets/images/products/test.webp' : this.product.image.desktop;
+    return this.imageFallback
+      ? 'assets/images/products/no-image.svg'
+      : this.product.image.desktop;
   }
 
   get showMobileSource(): boolean {

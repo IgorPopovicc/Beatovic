@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { environment } from '../../../environments/environment';
+import { runtimeApiUrl } from '../config/runtime-config.service';
 import { AuthService } from '../auth/auth.service';
 import { ContactMessage, ContactSearchRequest } from './admin-contacts.models';
 
@@ -51,7 +51,7 @@ export class AdminContactsApi {
     }
 
     return this.http
-      .post<unknown>(`${environment.apiBaseUrl}/contact/admin/search`, body, { headers })
+      .post<unknown>(runtimeApiUrl(`/contact/admin/search`), body, { headers })
       .pipe(
         map((response) => {
           const items = Array.isArray(response) ? response : [];

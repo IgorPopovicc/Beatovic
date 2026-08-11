@@ -60,6 +60,8 @@
         </p>
       }
 
+      <app-turnstile-widget context="admin-login" />
+
       <!-- SUBMIT -->
       <button class="btn" type="submit" [disabled]="invalid()">
         {{ loading() ? 'Provjera...' : 'Prijavi se' }}

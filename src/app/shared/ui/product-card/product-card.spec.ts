@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
@@ -14,8 +16,8 @@ describe('ProductCardComponent', () => {
     price: 49.99,
     currency: 'BAM',
     image: {
-      desktop: 'assets/images/products/test.webp',
-      mobile: 'assets/images/products/test.webp',
+      desktop: 'assets/images/products/no-image.svg',
+      mobile: 'assets/images/products/no-image.svg',
       w: 1200,
       h: 1200,
       alt: 'Test proizvod',
@@ -25,7 +27,7 @@ describe('ProductCardComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ProductCardComponent],
-      providers: [provideRouter([])],
+      providers: [provideHttpClient(), provideZonelessChangeDetection(), provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProductCardComponent);

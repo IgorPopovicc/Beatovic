@@ -1,3 +1,6 @@
+import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AdminVariantUpdateModal } from './admin-variant-update-modal';
@@ -8,6 +11,7 @@ describe('AdminVariantUpdateModal', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
+      providers: [provideRouter([]), provideHttpClient(), provideZonelessChangeDetection()],
       imports: [AdminVariantUpdateModal],
     }).compileComponents();
 

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { runtimeApiUrl } from '../config/runtime-config.service';
 import type { CouponDetails } from '../admin-api/admin-coupons.models';
 
 export type CheckoutCouponDiscountType = CouponDetails['discountType'];
@@ -81,7 +81,7 @@ function normalizeCode(value: string): string {
 @Injectable({ providedIn: 'root' })
 export class CouponsApiService {
   private readonly http = inject(HttpClient);
-  private readonly endpoint = `${environment.apiBaseUrl}/admin/coupons/active`;
+  private readonly endpoint = runtimeApiUrl(`/admin/coupons/active`);
 
   lookupCouponByCode(code: string): Observable<CouponLookupResult> {
     const normalizedCode = normalizeCode(code);

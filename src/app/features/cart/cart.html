@@ -67,8 +67,8 @@
                 </div>
 
                 <div class="meta">
-                  @if (it.sku) {
-                    <div class="sku">SKU {{ it.sku }}</div>
+                  @if (it.displaySku || it.sku) {
+                    <div class="sku">SKU {{ it.displaySku || it.sku }}</div>
                   }
                   <div class="name">{{ it.name }}</div>
                   @if (it.size) {

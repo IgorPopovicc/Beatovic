@@ -13,15 +13,19 @@ import { CommonModule, DecimalPipe, isPlatformBrowser, NgOptimizedImage } from '
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ProductDetailsModel } from '../../shared/data/products.mock';
+import { ProductDetailsModel } from '../../shared/data/products.models';
 import { CartStore } from '../../core/cart/cart.store';
 import { ProductDetailsResolved } from './product-details.resolver';
 import { currencyDisplayLabel, normalizeCurrencyCode } from '../../shared/utils/currency';
+import {
+  ProductCard,
+  ProductCardComponent,
+} from '../../shared/ui/product-card/product-card';
 
 @Component({
   selector: 'app-product-details',
   standalone: true,
-  imports: [CommonModule, NgOptimizedImage, DecimalPipe, RouterLink],
+  imports: [CommonModule, NgOptimizedImage, DecimalPipe, RouterLink, ProductCardComponent],
   templateUrl: './product-details.html',
   styleUrl: './product-details.scss',
 })
@@ -35,6 +39,7 @@ export class ProductDetails implements OnDestroy {
   readonly loading = signal(true);
   readonly notFound = signal(false);
   readonly product = signal<ProductDetailsModel | null>(null);
+  readonly relatedProducts = signal<ProductCard[]>([]);
   readonly shareNotice = signal<{ kind: 'success' | 'error'; text: string } | null>(null);
 
   readonly activeIndex = signal(0);
@@ -147,6 +152,7 @@ export class ProductDetails implements OnDestroy {
     this.selectedSize.set(null);
     this.sizeQtyMap.set({});
     this.sizeAttrElementIdMap.set({});
+    this.relatedProducts.set([]);
 
     if (!resolved) {
       this.product.set(null);
@@ -157,6 +163,7 @@ export class ProductDetails implements OnDestroy {
     this.notFound.set(false);
     this.sizeQtyMap.set({ ...resolved.sizeQtyMap });
     this.sizeAttrElementIdMap.set({ ...resolved.sizeAttrElementIdMap });
+    this.relatedProducts.set(resolved.relatedProducts);
 
     this.product.set({
       id: resolved.id,
@@ -164,6 +171,7 @@ export class ProductDetails implements OnDestroy {
       name: resolved.name,
       subtitle: resolved.subtitle,
       sku: resolved.sku,
+      displaySku: resolved.displaySku,
       price: resolved.price,
       oldPrice: resolved.oldPrice,
       currency: resolved.currency,
@@ -215,7 +223,8 @@ export class ProductDetails implements OnDestroy {
       if (!sizeAttrElementId) return;
     }
 
-    const image = p.gallery?.[0]?.mobile || p.gallery?.[0]?.desktop || '';
+    const image =
+      p.gallery?.[0]?.thumbnail || p.gallery?.[0]?.mobile || p.gallery?.[0]?.desktop || '';
     const lineId = hasSizes ? `${sizeAttrElementId}::${sizeValue}` : p.id;
 
     this.cart.add({
@@ -223,6 +232,7 @@ export class ProductDetails implements OnDestroy {
       productId: p.id,
       name: p.name,
       sku: p.sku,
+      displaySku: p.displaySku,
       size: hasSizes ? sizeValue : null,
       image: image ? { url: image, alt: p.name } : null,
       unitPrice: {

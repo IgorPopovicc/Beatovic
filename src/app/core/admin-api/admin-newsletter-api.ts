@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { environment } from '../../../environments/environment';
+import { runtimeApiUrl } from '../config/runtime-config.service';
 import { AuthService } from '../auth/auth.service';
 import {
   NewsletterSubscription,
@@ -179,7 +179,7 @@ export class AdminNewsletterApi {
     }
 
     return this.http
-      .get<unknown>(`${environment.apiBaseUrl}/newsletter/admin/subscriptions`, {
+      .get<unknown>(runtimeApiUrl(`/newsletter/admin/subscriptions`), {
         headers,
         params,
       })

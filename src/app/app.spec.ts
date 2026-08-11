@@ -1,3 +1,4 @@
+import { provideHttpClient } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, RouterOutlet } from '@angular/router';
@@ -7,12 +8,13 @@ describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      providers: [provideHttpClient(), provideZonelessChangeDetection(), provideRouter([])],
       schemas: [NO_ERRORS_SCHEMA],
     })
       .overrideComponent(App, {
         set: {
           imports: [RouterOutlet],
+          schemas: [NO_ERRORS_SCHEMA],
         },
       })
       .compileComponents();

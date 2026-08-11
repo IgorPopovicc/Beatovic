@@ -26,6 +26,7 @@ export class OrderResultComponent implements OnInit {
 
   email = computed(() => String(this.navState.email || ''));
   error = computed(() => String(this.navState.error || ''));
+  orderNumber = computed(() => String(this.navState.response?.orderNumber || '').trim());
 
   ngOnInit(): void {
     if (this.status() === 'success') {
@@ -50,6 +51,7 @@ export class OrderResultComponent implements OnInit {
     status?: Status;
     email?: string;
     error?: string;
+    response?: { orderNumber?: string };
   } {
     if (!isPlatformBrowser(this.platformId) || typeof history === 'undefined') {
       return {};
@@ -59,6 +61,7 @@ export class OrderResultComponent implements OnInit {
       status?: Status;
       email?: string;
       error?: string;
+      response?: { orderNumber?: string };
     };
   }
 }

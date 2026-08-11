@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-import { environment } from '../../../environments/environment';
+import { runtimeApiUrl } from '../config/runtime-config.service';
 import { AuthService } from '../auth/auth.service';
 import {
   CreateDiscountRequest,
@@ -27,7 +27,7 @@ export class AdminDiscountsApi {
   }
 
   getAll(): Observable<DiscountListItem[]> {
-    const url = `${environment.apiBaseUrl}/discounts/admin`;
+    const url = runtimeApiUrl(`/discounts/admin`);
     let headers: HttpHeaders;
 
     try {
@@ -45,7 +45,7 @@ export class AdminDiscountsApi {
   }
 
   create(body: CreateDiscountRequest): Observable<unknown> {
-    const url = `${environment.apiBaseUrl}/discounts/admin`;
+    const url = runtimeApiUrl(`/discounts/admin`);
     let headers: HttpHeaders;
 
     try {
@@ -63,7 +63,7 @@ export class AdminDiscountsApi {
   }
 
   update(body: UpdateDiscountRequest): Observable<unknown> {
-    const url = `${environment.apiBaseUrl}/discounts/admin`;
+    const url = runtimeApiUrl(`/discounts/admin`);
     let headers: HttpHeaders;
 
     try {
@@ -82,7 +82,7 @@ export class AdminDiscountsApi {
 
   // Delete endpoint od 01.01.2026 koristi HTTP DELETE (path ostaje isti)
   delete(discountId: string): Observable<unknown> {
-    const url = `${environment.apiBaseUrl}/discounts/admin/${discountId}/delete`;
+    const url = runtimeApiUrl(`/discounts/admin/${discountId}/delete`);
     let headers: HttpHeaders;
 
     try {
@@ -106,7 +106,7 @@ export class AdminDiscountsApi {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
 
     return this.http
-      .get<DiscountDTO[]>(`${environment.apiBaseUrl}/discounts/admin`, { headers })
+      .get<DiscountDTO[]>(runtimeApiUrl(`/discounts/admin`), { headers })
       .pipe(
         catchError((err) => {
           console.error('[AdminDiscountsApi] getActiveDiscounts failed:', err);

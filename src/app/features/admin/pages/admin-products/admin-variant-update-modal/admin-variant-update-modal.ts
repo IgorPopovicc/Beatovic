@@ -27,7 +27,8 @@ import {
   UpdateProductVariantDTO,
 } from '../../../../../core/admin-api/admin-products.models';
 
-import { environment } from '../../../../../../environments/environment';
+import { runtimeMediaUrl } from '../../../../../core/config/runtime-config.service';
+import { colorSwatchLabel, parseColorSwatch } from '../../../../../shared/utils/color-swatch';
 
 type FileItem = { _id: string; file: File };
 
@@ -112,7 +113,7 @@ export class AdminVariantUpdateModal {
     displayImageName: this.fb.nonNullable.control<string>(''),
   });
 
-  readonly sku = computed(() => this.details()?.sku ?? '');
+  readonly sku = computed(() => this.details()?.displaySku ?? this.details()?.sku ?? '');
 
   constructor() {
     effect(() => {
@@ -123,40 +124,12 @@ export class AdminVariantUpdateModal {
   }
 
   // ======= BOJA HELPERS =======
-  private normalizeHexToCss(v: string | null | undefined): string | null {
-    const s = (v ?? '').trim();
-    if (!s) return null;
-    if (/^0x[0-9a-fA-F]{6}$/.test(s)) return `#${s.slice(2)}`.toUpperCase();
-    if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toUpperCase();
-    if (/^[0-9a-fA-F]{6}$/.test(s)) return `#${s}`.toUpperCase();
-    return null;
-  }
-
-  private colorNameFromCssHex(cssHex: string): string {
-    const map: Record<string, string> = {
-      '#000000': 'Crna',
-      '#FFFFFF': 'Bijela',
-      '#FF0000': 'Crvena',
-      '#00FF00': 'Zelena',
-      '#0000FF': 'Plava',
-      '#FFFF00': 'Žuta',
-      '#FFA500': 'Narandžasta',
-      '#800080': 'Ljubičasta',
-      '#808080': 'Siva',
-      '#A52A2A': 'Braon',
-      '#FFC0CB': 'Roze',
-    };
-    return map[cssHex] ?? `Boja ${cssHex}`;
-  }
-
   colorLabel(raw: string): string {
-    const css = this.normalizeHexToCss(raw);
-    if (css) return this.colorNameFromCssHex(css);
-    return raw;
+    return colorSwatchLabel(raw);
   }
 
-  colorSwatch(raw: string): string {
-    return this.normalizeHexToCss(raw) ?? '#ffffff';
+  colorSwatch(raw: string): string | null {
+    return parseColorSwatch(raw)?.background ?? null;
   }
 
   // ======= LABELI ZA TEMPLATE =======
@@ -258,7 +231,9 @@ export class AdminVariantUpdateModal {
 
         const imgs = (details.images ?? []).map((img) => ({
           ...img,
-          url: this.toFullMediaUrl(img.url),
+          url: this.toFullMediaUrl(
+            img.thumbnailUrl ?? img.webUrl ?? img.url ?? img.originalUrl ?? '',
+          ),
         }));
         this.existingImages.set(imgs);
 
@@ -338,9 +313,7 @@ export class AdminVariantUpdateModal {
   }
 
   private toFullMediaUrl(url: string): string {
-    if (!url) return url;
-    if (/^https?:\/\//i.test(url)) return url;
-    return `${environment.mediaProductBaseUrl}${url}`;
+    return runtimeMediaUrl(url);
   }
 
   // ======= DROPDOWNS =======

@@ -4,11 +4,16 @@
       <p class="eyebrow">Newsletter</p>
       <h2 id="home-newsletter-title">Budi prvi koji sazna za nove kolekcije i akcije</h2>
       <p>
-        Prijavi se na newsletter i nakon potvrde dobij jedinstveni kod za 10% popusta na email.
+        Prijavi se na newsletter i, kada je promotivna ponuda aktivna, nakon potvrde primi kod za
+        popust na email.
       </p>
     </div>
 
     <form class="newsletter-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <label class="honeypot" aria-hidden="true">
+        Website
+        <input type="text" formControlName="website" tabindex="-1" autocomplete="off" />
+      </label>
       <label class="field">
         <span class="sr-only">Email adresa</span>
         <input
@@ -23,7 +28,7 @@
 
       <label class="privacy">
         <input type="checkbox" formControlName="privacyPolicyAccepted" />
-        <span>Prihvatam politiku privatnosti.</span>
+        <span>Prihvatam <a routerLink="/politika-privatnosti">politiku privatnosti</a>.</span>
       </label>
       <span class="field-msg" [class.error]="hasFieldError('privacyPolicyAccepted')">
         {{ fieldError('privacyPolicyAccepted') }}
@@ -33,7 +38,13 @@
         <div class="status error" role="alert">{{ submitError() }}</div>
       }
 
-      <button type="submit" class="submit-btn" [disabled]="submitting()">
+      <app-turnstile-widget context="newsletter" />
+
+      <button
+        type="submit"
+        class="submit-btn"
+        [disabled]="submitting() || !turnstile.hasToken('newsletter')"
+      >
         {{ submitting() ? 'Slanje...' : 'Prijavi se' }}
       </button>
     </form>

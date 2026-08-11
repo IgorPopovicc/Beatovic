@@ -28,10 +28,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CatalogApiService } from '../../../core/api/catalog-api.sevice';
 import { toLabel, toSlug } from '../../../core/api/catalog-slug';
 import { CartStore } from '../../../core/cart/cart.store';
-import { environment } from '../../../../environments/environment';
 import { ProductsApiService } from '../../../core/api/products-api.service';
 import { Variant } from '../../../core/api/catalog.models';
+import { runtimeMediaUrl } from '../../../core/config/runtime-config.service';
 import { currencyDisplayLabel } from '../../utils/currency';
+
+type VariantCategory = NonNullable<Variant['categories']>[number];
 
 @Component({
   selector: 'app-navbar',
@@ -297,8 +299,8 @@ export class Navbar implements OnInit, OnDestroy {
     this.router.navigateByUrl(url);
   }
 
-  goToProduct(v: any) {
-    const variantId = (v?.id ?? '').trim();
+  goToProduct(v: Variant) {
+    const variantId = String(v.id ?? '').trim();
     if (!variantId) {
       console.warn('[Navbar] Missing variant id in search result', v);
       return;
@@ -322,22 +324,22 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   // ===== UI helpers =====
-  getBadge(v: any): string | null {
-    const oldP = Number(v?.originalPrice ?? 0);
-    const newP = Number(v?.finalPrice ?? 0);
+  getBadge(v: Variant): string | null {
+    const oldP = Number(v.originalPrice ?? 0);
+    const newP = Number(v.finalPrice ?? 0);
     if (!oldP || !newP || oldP <= newP) return null;
     const pct = Math.round((1 - newP / oldP) * 100);
     return `${pct}%`;
   }
 
-  hasDiscount(v: any): boolean {
-    const oldP = Number(v?.originalPrice ?? 0);
-    const newP = Number(v?.finalPrice ?? 0);
+  hasDiscount(v: Variant): boolean {
+    const oldP = Number(v.originalPrice ?? 0);
+    const newP = Number(v.finalPrice ?? 0);
     return !!oldP && !!newP && oldP > newP;
   }
 
-  formatPrice(v: any): number {
-    const p = v?.finalPrice ?? v?.originalPrice ?? 0;
+  formatPrice(v: Variant): number {
+    const p = v.finalPrice ?? v.originalPrice ?? 0;
     return Number(p || 0);
   }
 
@@ -345,51 +347,40 @@ export class Navbar implements OnInit, OnDestroy {
     return currencyDisplayLabel(currency);
   }
 
-  pickMetaLine(v: any): string {
-    const cats = v?.categories ?? [];
-    const categoryValue = (c: any) => String(c?.displayValue ?? c?.value ?? '').trim();
+  pickMetaLine(v: Variant): string {
+    const cats = v.categories ?? [];
+    const categoryValue = (c?: VariantCategory) =>
+      String(c?.displayValue ?? c?.value ?? '').trim();
     const brand = categoryValue(
-      cats.find((c: any) => (c.categoryName ?? '').toUpperCase() === 'BREND'),
+      cats.find((c) => (c.categoryName ?? '').toUpperCase() === 'BREND'),
     );
-    const gender = categoryValue(cats.find((c: any) => (c.categoryName ?? '').toUpperCase() === 'POL'));
+    const gender = categoryValue(
+      cats.find((c) => (c.categoryName ?? '').toUpperCase() === 'POL'),
+    );
     const cat = categoryValue(
-      cats.find((c: any) => (c.categoryName ?? '').toUpperCase() === 'KATEGORIJA'),
+      cats.find((c) => (c.categoryName ?? '').toUpperCase() === 'KATEGORIJA'),
     );
     const parts = [brand, cat, gender].filter(Boolean);
-    return parts.length ? parts.join(' • ') : (v?.sku ?? v?.productSku ?? '');
+    return parts.length ? parts.join(' • ') : (v.displaySku ?? v.sku ?? v.productSku ?? '');
   }
 
-  pickImageUrl(v: any): string {
-    // 1) Preferiraj mainImageName/mainImageUrl (light DTO format)
-    const main = (v?.mainImageName ?? v?.mainImageUrl ?? '').trim();
+  pickImageUrl(v: Variant): string {
+    // Search results use web-optimized images when the backend provides them.
+    const main = (v.mainImageWebUrl ?? v.mainImageUrl ?? v.mainImageName ?? '').trim();
     if (main) {
-      return this.joinMediaUrl(main);
+      return runtimeMediaUrl(main);
     }
 
-    // 2) Fallback na images[] ako backend nekad vrati i to
-    const imgs = v?.images ?? [];
-    const img = imgs.find((x: any) => x.displayed) ?? imgs[0];
-    const url = (img?.url ?? '').trim();
+    // Fall back to the backend image collection when the main image fields are absent.
+    const imgs = v.images ?? [];
+    const img = imgs.find((candidate) => candidate.displayed) ?? imgs[0];
+    const url = (img?.webUrl ?? img?.url ?? img?.originalUrl ?? '').trim();
     if (url) {
-      // Ako je već full URL, vrati ga
-      if (/^https?:\/\//i.test(url)) return url;
-      return this.joinMediaUrl(url);
+      return runtimeMediaUrl(url);
     }
 
-    // 3) Placeholder
-    return 'assets/images/products/test.webp';
-  }
-
-  private joinMediaUrl(filename: string): string {
-    if (/^https?:\/\//i.test(filename)) return filename;
-
-    const base = (environment as any).mediaProductBaseUrl as string | undefined;
-    if (!base) return filename; // fail-safe
-
-    // obezbijedi tačno jedan "/"
-    const normalizedBase = base.endsWith('/') ? base : `${base}/`;
-    const cleanFile = filename.startsWith('/') ? filename.slice(1) : filename;
-    return `${normalizedBase}${cleanFile}`;
+    // A real missing image gets one generic placeholder, never a fake product image.
+    return 'assets/images/products/no-image.svg';
   }
 
   @HostListener('window:scroll')

@@ -229,13 +229,18 @@
             <div class="field wide-full privacy-field">
               <label class="privacy-check">
                 <input type="checkbox" formControlName="privacyPolicyAccepted" />
-                <span>Prihvatam politiku privatnosti i obradu podataka za realizaciju narudžbe.</span>
+                <span>
+                  Prihvatam <a routerLink="/politika-privatnosti">politiku privatnosti</a> i obradu
+                  podataka za realizaciju narudžbe.
+                </span>
               </label>
               <div class="field-message" [class.error]="hasFieldError('privacyPolicyAccepted')">
                 {{ fieldMessage('privacyPolicyAccepted') }}
               </div>
             </div>
           </div>
+
+          <app-turnstile-widget context="checkout" />
 
           <div class="actions">
             <button class="btn ghost" type="button" [disabled]="submitting()" (click)="goBack()">

@@ -30,6 +30,8 @@ export interface AdminOrderItem {
 
 export interface AdminOrder {
   orderId: string;
+  orderNumber: string;
+  pantheonOrderId?: string | null;
   status: OrderStatus;
   totalPrice: number;
   description: string;
@@ -60,7 +62,7 @@ export interface UnregisteredOrderRequest {
   }>;
 }
 
-export type UnregisteredOrderResponse = unknown;
+export type UnregisteredOrderResponse = AdminOrder;
 
 export interface OrdersByEmailRequest {
   email: string;

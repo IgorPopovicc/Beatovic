@@ -1,3 +1,6 @@
+import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
@@ -52,7 +55,7 @@ describe('AdminDashboard', () => {
 
     await TestBed.configureTestingModule({
       imports: [AdminDashboard],
-      providers: [
+      providers: [provideRouter([]), provideHttpClient(), provideZonelessChangeDetection(),
         { provide: AdminOrdersApi, useValue: ordersApi },
         { provide: AdminProductsApi, useValue: productsApi },
         { provide: AdminDiscountsApi, useValue: discountsApi },

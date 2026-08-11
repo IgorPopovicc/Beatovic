@@ -7,6 +7,7 @@ import {
 import express from 'express';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveRuntimeConfig } from './app/core/config/runtime-config.service';
 
 const serverDistFolder = dirname(fileURLToPath(import.meta.url));
 const browserDistFolder = join(serverDistFolder, '../browser');
@@ -16,6 +17,23 @@ const angularApp = new AngularNodeAppEngine();
 
 app.get('/healthz', (_req, res) => {
   res.status(200).json({ status: 'ok' });
+});
+
+app.get('/runtime-config.js', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.sendFile(join(browserDistFolder, 'runtime-config.js'));
+});
+
+app.get('/robots.txt', (_req, res) => {
+  const { siteUrl } = resolveRuntimeConfig();
+  res.type('text/plain').send(`User-agent: *\nAllow: /\nSitemap: ${siteUrl}/sitemap.xml\n`);
+});
+
+app.get('/sitemap.xml', (_req, res) => {
+  const { siteUrl } = resolveRuntimeConfig();
+  const paths = ['/', '/catalog/muskarci/obuca', '/brands'];
+  const urls = paths.map((path) => `  <url><loc>${siteUrl}${path}</loc></url>`).join('\n');
+  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
 });
 
 /**

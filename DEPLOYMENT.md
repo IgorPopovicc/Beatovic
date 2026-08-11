@@ -56,22 +56,25 @@ cp .env.example .env
 
 Update values in `.env`:
 
-- `API_BASE_URL`: production backend API URL
-- `MEDIA_PRODUCT_BASE_URL`: production media base URL
-- `SITE_URL`: public frontend URL (must be real domain for OG/Twitter/canonical)
+- `BE_HOSTNAME`: public backend/frontend hostname without a protocol
+- `APP_HOST_CONTEXT_PATH`: backend application context path without leading/trailing slashes
+- `TURNSTILE_SITE_KEY`: public Cloudflare Turnstile site key for this frontend hostname
 - `PORT`: SSR container port (default `4000`)
 
 Important:
 - Do not set localhost values for public production URLs.
-- `SITE_URL` is used for absolute SEO/OG links.
+- Compose derives `API_BASE_URL`, `MEDIA_PRODUCT_BASE_URL`, and `SITE_URL` from these values.
+- The container writes them to `runtime-config.js` when it starts; changing them does not rebuild Angular or the image.
 
 ## 4) Build and run SSR app (Docker)
 
 ```bash
-docker compose build
-docker compose up -d
+docker build -t igorpopovicc/beatovic:latest .
+docker compose up -d frontend
 docker compose ps
 ```
+
+The local image is tagged as `igorpopovicc/beatovic:latest`.
 
 Health check:
 
@@ -127,8 +130,15 @@ systemctl list-timers | grep certbot
 ```bash
 cd /path/to/beatovic
 git pull
-docker compose build
-docker compose up -d
+docker build -t igorpopovicc/beatovic:latest .
+docker compose up -d frontend
+```
+
+If this server should always run the published Docker Hub image:
+
+```bash
+docker compose pull frontend
+docker compose up -d frontend
 ```
 
 ## 8) Logs and troubleshooting
@@ -136,7 +146,7 @@ docker compose up -d
 App logs:
 
 ```bash
-docker compose logs -f app
+docker compose logs -f frontend
 ```
 
 Nginx logs:
@@ -182,7 +192,14 @@ If you must run without Docker:
 ```bash
 npm ci
 npm run build:ssr
-PORT=4000 node dist/Beatovic/server/server.mjs
+export NODE_ENV=production
+export PORT=4000
+export API_BASE_URL=https://example.com/context/api
+export MEDIA_PRODUCT_BASE_URL=https://example.com/media/product
+export SITE_URL=https://example.com
+export TURNSTILE_SITE_KEY=replace-with-site-key
+node scripts/write-runtime-config.cjs
+node dist/Beatovic/server/server.mjs
 ```
 
 Then keep the same Nginx reverse proxy to `127.0.0.1:4000`.
@@ -195,4 +212,5 @@ Use systemd/pm2 only if needed; Docker remains the recommended path for this rep
 - Build command: `npm run build:ssr` (production build)
 - Start command: `npm run start:ssr`
 - App exposes health endpoint: `GET /healthz`
+- Runtime browser configuration: `GET /runtime-config.js` (generated on each container start and served with `no-store`)
 - Product SEO/OG tags are generated server-side via existing SEO services and product resolver data.

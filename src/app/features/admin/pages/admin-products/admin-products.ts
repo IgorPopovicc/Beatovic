@@ -17,7 +17,7 @@ import {
 import { AdminProductsApi } from '../../../../core/admin-api/admin-products-api';
 import { AdminProductCreateModal } from './admin-products-create-modal/admin-products-create-modal';
 import { ProductVariant, Product } from '../../../../core/admin-api/admin-products.models';
-import { environment } from '../../../../../environments/environment';
+import { runtimeMediaUrl } from '../../../../core/config/runtime-config.service';
 import { ConfirmDialog } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
 import { AdminVariantCreateModal } from './admin-variant-create-modal/admin-variant-create-modal';
 import { AdminVariantUpdateModal } from './admin-variant-update-modal/admin-variant-update-modal';
@@ -217,13 +217,17 @@ export class AdminProducts {
 
   imageUrlVariant(v: ProductVariant): string | null {
     const img = (v.images ?? []).find((x) => x.displayed) ?? (v.images ?? [])[0];
-    const raw = String(img?.url ?? v.mainImageName ?? v.mainImageUrl ?? '').trim();
-    if (!raw) return null;
-    if (/^https?:\/\//i.test(raw)) return raw;
-
-    const base = String(environment.mediaProductBaseUrl ?? '').replace(/\/$/, '');
-    const clean = raw.replace(/^\/+/, '');
-    return `${base}/${clean}`;
+    const raw = String(
+      img?.thumbnailUrl ??
+        v.mainImageThumbnailUrl ??
+        img?.webUrl ??
+        v.mainImageWebUrl ??
+        img?.url ??
+        v.mainImageUrl ??
+        v.mainImageName ??
+        '',
+    ).trim();
+    return runtimeMediaUrl(raw) || null;
   }
 
   formatPrice(value: number | null | undefined): string {

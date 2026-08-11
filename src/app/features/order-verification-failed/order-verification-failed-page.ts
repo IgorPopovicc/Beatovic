@@ -10,6 +10,8 @@ type VerificationFailureReason =
   | 'invalid-token'
   | 'missing-token'
   | 'already-verified'
+  | 'already-delivered'
+  | 'rejected'
   | 'backend-error'
   | 'verification-failed'
   | 'unknown';
@@ -69,6 +71,34 @@ export class OrderVerificationFailedPageComponent {
           secondaryLink: '/catalog/muskarci/obuca',
           seoTitle: 'Narudžba je već potvrđena | Planeta',
           seoDescription: 'Narudžba je već potvrđena i link više nije potrebno koristiti.',
+        };
+
+      case 'already-delivered':
+        return {
+          tone: 'warning',
+          icon: '!',
+          title: 'Narudžba je već isporučena',
+          message: 'Ova radnja više nije dostupna jer je narudžba već isporučena.',
+          primaryText: 'Nazad na početnu',
+          primaryLink: '/',
+          secondaryText: 'Otvori katalog',
+          secondaryLink: '/catalog/muskarci/obuca',
+          seoTitle: 'Narudžba je već isporučena | Planeta',
+          seoDescription: 'Potvrda nije dostupna za već isporučenu narudžbu.',
+        };
+
+      case 'rejected':
+        return {
+          tone: 'error',
+          icon: '!',
+          title: 'Narudžba je odbijena',
+          message: 'Ova narudžba je odbijena ili otkazana i više je nije moguće potvrditi.',
+          primaryText: 'Nazad na početnu',
+          primaryLink: '/',
+          secondaryText: 'Napravi novu narudžbu',
+          secondaryLink: '/catalog/muskarci/obuca',
+          seoTitle: 'Narudžba je odbijena | Planeta',
+          seoDescription: 'Odbijenu narudžbu nije moguće potvrditi.',
         };
 
       case 'missing-token':
@@ -156,10 +186,20 @@ export class OrderVerificationFailedPageComponent {
       return 'expired-token';
     }
 
+    if (combined.includes('deliver') || combined.includes('isporuc')) {
+      return 'already-delivered';
+    }
+
+    if (combined.includes('reject') || combined.includes('odbij') || combined.includes('otkaz')) {
+      return 'rejected';
+    }
+
     if (
       combined.includes('already verified') ||
       combined.includes('already confirmed') ||
       combined.includes('already-verified') ||
+      combined.includes('already performed') ||
+      combined.includes('already-processed') ||
       (combined.includes('vec') && combined.includes('potvrd')) ||
       (combined.includes('već') && combined.includes('potvrd'))
     ) {

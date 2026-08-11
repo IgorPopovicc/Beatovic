@@ -1,9 +1,9 @@
-import { environment } from '../../../../environments/environment';
+import { runtimeMediaUrl } from '../../../core/config/runtime-config.service';
 import { Variant } from '../../../core/api/catalog.models';
 import { normalizeCurrencyCode } from '../../utils/currency';
 import { ProductCard } from './product-card';
 
-const IMAGE_FALLBACK = 'assets/images/products/test.webp';
+const IMAGE_FALLBACK = 'assets/images/products/no-image.svg';
 
 function normalize(value: unknown): string {
   return String(value ?? '').trim();
@@ -26,42 +26,17 @@ function slugify(value: string): string {
 }
 
 function resolveMediaUrl(pathOrUrl: string): string {
-  const value = normalize(pathOrUrl);
-  if (!value) return '';
-  if (/^https?:\/\//i.test(value)) return value;
-
-  const base = normalize(environment.mediaProductBaseUrl).replace(/\/$/, '');
-  if (!base) return value;
-
-  const clean = value
-    .replace(/^\/+/, '')
-    .replace(/^media\/product\/+/i, '')
-    .replace(/^product\/+/i, '');
-
-  if (!clean) return '';
-
-  const [pathPart, searchPart = ''] = clean.split('?');
-  const encodedPath = pathPart
-    .split('/')
-    .filter(Boolean)
-    .map((segment) => {
-      try {
-        return encodeURIComponent(decodeURIComponent(segment));
-      } catch {
-        return encodeURIComponent(segment);
-      }
-    })
-    .join('/');
-
-  return `${base}/${encodedPath}${searchPart ? `?${searchPart}` : ''}`;
+  return runtimeMediaUrl(pathOrUrl);
 }
 
 function imageUrlFromVariant(v: Variant): string {
   const displayed = v.images?.find((i) => i.displayed) ?? v.images?.[0];
   const candidates = [
-    normalize(v.mainImageName),
+    normalize(v.mainImageWebUrl),
+    normalize(displayed?.webUrl),
     normalize(v.mainImageUrl),
     normalize(displayed?.url),
+    normalize(v.mainImageName),
     normalize(v.images?.[0]?.url),
   ];
 
@@ -90,10 +65,10 @@ export function mapVariantToProductCard(v: Variant, options?: { priority?: boole
     id: variantId,
     slug: slugify(`${name}-${identity || 'variant'}`),
     name,
-    subtitle: normalize(v.productSku) || undefined,
+    subtitle: normalize(v.displaySku ?? v.sku ?? v.productSku) || undefined,
     price: finalPrice,
     oldPrice: hasDiscount ? originalPrice : null,
-    currency: normalizeCurrencyCode((v as any).currency),
+    currency: normalizeCurrencyCode(v.currency),
     discountLabel: undefined,
     image: {
       desktop: imageUrl,

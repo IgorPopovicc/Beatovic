@@ -3,13 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { environment } from '../../../environments/environment';
+import { runtimeApiUrl } from '../config/runtime-config.service';
 import { CreateContactMessageRequest } from '../admin-api/admin-contacts.models';
 
 @Injectable({ providedIn: 'root' })
 export class ContactFormApiService {
   private readonly http = inject(HttpClient);
-  private readonly endpoint = `${environment.apiBaseUrl}/contact/add`;
+  private readonly endpoint = runtimeApiUrl(`/contact/add`);
 
   submitMessage(body: CreateContactMessageRequest): Observable<void> {
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });

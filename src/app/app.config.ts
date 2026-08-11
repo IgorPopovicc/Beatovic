@@ -19,6 +19,7 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { backendFallbackInterceptor } from './core/system/backend-fallback.interceptor';
 import { APP_CURRENCY_CODE, APP_LOCALE } from './shared/utils/currency';
+import { turnstileInterceptor } from './core/security/turnstile.interceptor';
 
 registerLocaleData(localeBs);
 
@@ -50,6 +51,9 @@ export const appConfig: ApplicationConfig = {
         },
       }),
     ),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor, backendFallbackInterceptor])),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([turnstileInterceptor, authInterceptor, backendFallbackInterceptor]),
+    ),
   ],
 };

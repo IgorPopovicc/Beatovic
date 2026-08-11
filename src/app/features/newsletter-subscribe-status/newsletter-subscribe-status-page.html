@@ -1,0 +1,25 @@
+@if (successful()) {
+  <app-status-page
+    badge="Newsletter"
+    tone="success"
+    icon="✓"
+    title="Prijava je uspješno potvrđena"
+    message="Vaša email adresa je potvrđena i newsletter prijava je završena."
+    primaryCtaText="Nazad na početnu"
+    primaryCtaLink="/"
+    secondaryCtaText="Otvori katalog"
+    secondaryCtaLink="/catalog/muskarci/obuca"
+  />
+} @else {
+  <app-status-page
+    badge="Newsletter"
+    tone="error"
+    icon="!"
+    title="Prijava nije potvrđena"
+    message="Link nije važeći, istekao je ili je zahtjev već obrađen. Prijavite se ponovo ako i dalje želite newsletter poruke."
+    primaryCtaText="Nazad na početnu"
+    primaryCtaLink="/"
+    secondaryCtaText="Otvori katalog"
+    secondaryCtaLink="/catalog/muskarci/obuca"
+  />
+}

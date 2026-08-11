@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { inject, Injectable, REQUEST } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
-import { environment } from '../../../environments/environment';
+import { resolveRuntimeConfig } from '../config/runtime-config.service';
 
 export type SeoPageConfig = {
   title: string;
@@ -222,7 +222,7 @@ export class SeoService {
   }
 
   private resolveSiteUrl(): string {
-    const fromEnv = String(environment.siteUrl || '').trim().replace(/\/+$/, '');
+    const fromEnv = resolveRuntimeConfig().siteUrl;
 
     const forwardedHost = this.requestHeader('x-forwarded-host') || this.requestHeader('host');
     if (forwardedHost && !this.isLocalHost(forwardedHost)) {

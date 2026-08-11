@@ -33,6 +33,7 @@ import {
   ProductVariant,
 } from '../../../../../core/admin-api/admin-products.models';
 import { AdminAttributesApi } from '../../../../../core/admin-api/admin-attributes-api';
+import { colorSwatchLabel, parseColorSwatch } from '../../../../../shared/utils/color-swatch';
 
 type DropdownKey = 'color';
 
@@ -99,7 +100,7 @@ export class AdminVariantCreateModal {
   readonly hasProductResults = computed(() => this.productResults().length > 0);
 
   readonly form = this.fb.group({
-    sku: this.fb.nonNullable.control('', [Validators.required]),
+    sku: this.fb.nonNullable.control(''),
     price: this.fb.nonNullable.control<number>(0, [Validators.required, Validators.min(0)]),
     isNew: this.fb.nonNullable.control<boolean>(true),
     isOutlet: this.fb.nonNullable.control<boolean>(false),
@@ -118,24 +119,11 @@ export class AdminVariantCreateModal {
     { initialValue: this.form.controls.sku.value },
   );
 
-  readonly skuPrefix = computed(() => String(this.selectedProduct()?.productSku ?? '').trim());
-
-  readonly skuSuffix = computed(() =>
-    this.normalizeSkuSuffix(this.skuInputSig(), this.skuPrefix()),
-  );
-
-  readonly generatedSku = computed(() => this.composeSku(this.skuPrefix(), this.skuSuffix()));
-
-  readonly duplicateGeneratedSku = computed(() => {
-    const target = this.normalizeSkuForCompare(this.generatedSku());
+  readonly duplicateSku = computed(() => {
+    const target = this.normalizeSkuForCompare(this.skuInputSig());
     if (!target) return false;
 
     return this.variants().some((variant) => this.normalizeSkuForCompare(variant.sku) === target);
-  });
-
-  readonly generatedSkuInvalid = computed(() => {
-    const sku = this.generatedSku();
-    return !sku || sku.length < 2 || this.duplicateGeneratedSku();
   });
 
   readonly invalid = computed(
@@ -143,7 +131,7 @@ export class AdminVariantCreateModal {
       this.submitting() ||
       !this.selectedProduct()?.id ||
       this.formStatusSig() === 'INVALID' ||
-      this.generatedSkuInvalid() ||
+      this.duplicateSku() ||
       this.sizesInvalid() ||
       this.files().length === 0,
   );
@@ -335,10 +323,8 @@ export class AdminVariantCreateModal {
   onSkuInputBlur(): void {
     const control = this.form.controls.sku;
     const current = String(control.value ?? '').trim();
-    const normalized = this.normalizeSkuSuffix(current, this.skuPrefix());
-
-    if (normalized !== current) {
-      control.setValue(normalized);
+    if (current !== control.value) {
+      control.setValue(current);
     }
   }
 
@@ -398,15 +384,9 @@ export class AdminVariantCreateModal {
     }
 
     const v = this.form.getRawValue();
-    const finalSku = this.generatedSku();
+    const finalSku = String(v.sku ?? '').trim();
 
-    if (!finalSku || finalSku.length < 2) {
-      this.submitError.set('SKU modela je obavezan.');
-      this.form.controls.sku.markAsTouched();
-      return;
-    }
-
-    if (this.duplicateGeneratedSku()) {
+    if (this.duplicateSku()) {
       this.submitError.set('Model sa ovim SKU kodom već postoji za izabrani proizvod.');
       this.form.controls.sku.markAsTouched();
       return;
@@ -520,26 +500,12 @@ export class AdminVariantCreateModal {
     this.close();
   }
 
-  isHexColor(v: string | null | undefined): boolean {
-    if (!v) return false;
-    const s = v.trim();
-    return /^#?[0-9a-fA-F]{6}$/.test(s) || /^0x[0-9a-fA-F]{6}$/.test(s);
-  }
-
-  toCssHex(v: string): string | null {
-    const s = v.trim();
-    if (/^0x[0-9a-fA-F]{6}$/.test(s)) return `#${s.slice(2)}`;
-    if (/^#[0-9a-fA-F]{6}$/.test(s)) return s;
-    if (/^[0-9a-fA-F]{6}$/.test(s)) return `#${s}`;
-    return null;
+  colorSwatch(v: string): string | null {
+    return parseColorSwatch(v)?.background ?? null;
   }
 
   colorLabel(v: string): string {
-    // Ako je hex, prikazi npr: "Boja #00FF00"
-    const css = this.toCssHex(v);
-    if (css) return `Boja ${css.toUpperCase()}`;
-    // Inace naziv iz baze (npr. "Plava")
-    return v;
+    return colorSwatchLabel(v);
   }
 
   optionLabel(option: AttributeValueDTO): string {
@@ -563,32 +529,6 @@ export class AdminVariantCreateModal {
       .trim();
   }
 
-  private composeSku(prefixRaw: string, suffixRaw: string): string {
-    const prefix = String(prefixRaw ?? '').trim();
-    const suffix = String(suffixRaw ?? '')
-      .trim()
-      .replace(/^[-_\s]+/, '');
-
-    if (!prefix) return suffix;
-    if (!suffix) return prefix;
-
-    return `${prefix}-${suffix}`;
-  }
-
-  private normalizeSkuSuffix(raw: unknown, prefixRaw: string): string {
-    const value = String(raw ?? '').trim();
-    if (!value) return '';
-
-    const prefix = String(prefixRaw ?? '').trim();
-    if (!prefix) {
-      return value.replace(/^[-_\s]+/, '');
-    }
-
-    const escapedPrefix = this.escapeRegExp(prefix);
-    const stripped = value.replace(new RegExp(`^${escapedPrefix}(?:[-_\\s]*)`, 'i'), '');
-    return stripped.trim().replace(/^[-_\s]+/, '');
-  }
-
   private normalizeSkuForCompare(value: unknown): string {
     return String(value ?? '')
       .trim()
@@ -598,7 +538,4 @@ export class AdminVariantCreateModal {
       .toUpperCase();
   }
 
-  private escapeRegExp(value: string): string {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
 }

@@ -11,12 +11,11 @@ import {
 } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { finalize, forkJoin, of } from 'rxjs';
-import { catchError, startWith } from 'rxjs/operators';
+import { finalize, forkJoin } from 'rxjs';
+import { startWith } from 'rxjs/operators';
 
 import { CatalogApiService } from '../../../../../core/api/catalog-api.sevice';
 import { AdminProductsApi } from '../../../../../core/admin-api/admin-products-api';
-import { ApiCategoryValue } from '../../../../../core/api/catalog.models';
 import {
   CreateProductRequest,
   UpdateProductRequest,
@@ -26,11 +25,11 @@ import {
 
 type SelectOption = { id: string; value: string };
 
-const CATEGORY_IDS = {
-  BRAND: '6097b54c-67a9-49ee-8d17-e407c59a79f8', // BREND
-  CATEGORY: '747da3d4-fd91-464a-9f7c-151f0aed7226', // KATEGORIJA
-  GENDER: '1577b656-702f-476e-a1d9-828aea623a3f', // POL
-} as const;
+interface ManagedCategoryIds {
+  brand: string;
+  category: string;
+  gender: string;
+}
 
 type DropdownKey = 'brand' | 'category' | 'gender';
 
@@ -59,6 +58,7 @@ export class AdminProductCreateModal {
   readonly brandOptions = signal<SelectOption[]>([]);
   readonly categoryOptions = signal<SelectOption[]>([]);
   readonly genderOptions = signal<SelectOption[]>([]);
+  private readonly categoryIds = signal<ManagedCategoryIds | null>(null);
 
   // dropdown open states
   readonly brandOpen = signal(false);
@@ -111,7 +111,13 @@ export class AdminProductCreateModal {
     { initialValue: this.form.controls.genderValueId.value },
   );
 
-  readonly invalid = computed(() => this.formStatusSig() === 'INVALID' || this.submitting());
+  readonly invalid = computed(
+    () =>
+      this.formStatusSig() === 'INVALID' ||
+      this.loading() ||
+      this.submitting() ||
+      !this.categoryIds(),
+  );
 
   // labels (za prikaz u triggeru)
   readonly selectedBrandLabel = computed(() =>
@@ -128,21 +134,22 @@ export class AdminProductCreateModal {
 
   ngOnInit(): void {
     this.loadOptions();
-    this.prefillIfEdit();
     this.syncSkuState();
   }
 
   private prefillIfEdit(): void {
     if (!this.product) return;
+    const ids = this.categoryIds();
+    if (!ids) return;
 
     const cats = this.product.categories ?? [];
     this.originalCategories.set(cats);
 
-    const brandId = cats.find((c) => c.categoryId === CATEGORY_IDS.BRAND)?.categoryValueId ?? null;
+    const brandId = cats.find((c) => c.categoryId === ids.brand)?.categoryValueId ?? null;
     const categoryId =
-      cats.find((c) => c.categoryId === CATEGORY_IDS.CATEGORY)?.categoryValueId ?? null;
+      cats.find((c) => c.categoryId === ids.category)?.categoryValueId ?? null;
     const genderId =
-      cats.find((c) => c.categoryId === CATEGORY_IDS.GENDER)?.categoryValueId ?? null;
+      cats.find((c) => c.categoryId === ids.gender)?.categoryValueId ?? null;
 
     this.form.patchValue({
       productName: this.product.productName ?? '',
@@ -159,21 +166,38 @@ export class AdminProductCreateModal {
     this.error.set(null);
 
     forkJoin({
-      brands: this.catalogApi
-        .getCategoryValues(CATEGORY_IDS.BRAND)
-        .pipe(catchError(() => of([] as ApiCategoryValue[]))),
-      categories: this.catalogApi
-        .getCategoryValues(CATEGORY_IDS.CATEGORY)
-        .pipe(catchError(() => of([] as ApiCategoryValue[]))),
-      genders: this.catalogApi
-        .getCategoryValues(CATEGORY_IDS.GENDER)
-        .pipe(catchError(() => of([] as ApiCategoryValue[]))),
+      brands: this.catalogApi.getCategoryValuesByName('BREND'),
+      categories: this.catalogApi.getCategoryValuesByName('KATEGORIJA'),
+      genders: this.catalogApi.getCategoryValuesByName('POL'),
     })
       .pipe(finalize(() => this.loading.set(false)))
-      .subscribe(({ brands, categories, genders }) => {
-        this.brandOptions.set(brands.map((v) => ({ id: v.id, value: v.value })));
-        this.categoryOptions.set(categories.map((v) => ({ id: v.id, value: v.value })));
-        this.genderOptions.set(genders.map((v) => ({ id: v.id, value: v.value })));
+      .subscribe({
+        next: ({ brands, categories, genders }) => {
+          if (!brands || !categories || !genders) {
+            this.error.set('Backend nije vratio sve potrebne kategorije proizvoda.');
+            return;
+          }
+
+          this.categoryIds.set({
+            brand: brands.categoryId,
+            category: categories.categoryId,
+            gender: genders.categoryId,
+          });
+          this.brandOptions.set(
+            brands.values.map((v) => ({ id: v.id, value: v.displayValue ?? v.value })),
+          );
+          this.categoryOptions.set(
+            categories.values.map((v) => ({ id: v.id, value: v.displayValue ?? v.value })),
+          );
+          this.genderOptions.set(
+            genders.values.map((v) => ({ id: v.id, value: v.displayValue ?? v.value })),
+          );
+          this.prefillIfEdit();
+        },
+        error: () => {
+          this.categoryIds.set(null);
+          this.error.set('Kategorije proizvoda trenutno nije moguće učitati.');
+        },
       });
   }
 
@@ -271,11 +295,18 @@ export class AdminProductCreateModal {
     // EDIT (PUT) uses diff contract:
     // - categoriesToAdd
     // - productCategoryIdsToRemove
+    const ids = this.categoryIds();
+    if (!ids) {
+      this.submitting.set(false);
+      this.error.set('Kategorije proizvoda nisu učitane.');
+      return;
+    }
+
     const existingManaged = (this.originalCategories() ?? []).filter(
       (c) =>
-        c.categoryId === CATEGORY_IDS.BRAND ||
-        c.categoryId === CATEGORY_IDS.CATEGORY ||
-        c.categoryId === CATEGORY_IDS.GENDER,
+        c.categoryId === ids.brand ||
+        c.categoryId === ids.category ||
+        c.categoryId === ids.gender,
     );
 
     const categoriesToAdd = selectedCategories.filter(
@@ -344,10 +375,12 @@ export class AdminProductCreateModal {
     categoryValueId: string | null;
     genderValueId: string | null;
   }): Array<{ categoryId: string; categoryValueId: string }> {
+    const ids = this.categoryIds();
+    if (!ids) return [];
     return [
-      ...this.buildCategoryEntrySingle(CATEGORY_IDS.BRAND, v.brandValueId),
-      ...this.buildCategoryEntrySingle(CATEGORY_IDS.CATEGORY, v.categoryValueId),
-      ...this.buildCategoryEntrySingle(CATEGORY_IDS.GENDER, v.genderValueId),
+      ...this.buildCategoryEntrySingle(ids.brand, v.brandValueId),
+      ...this.buildCategoryEntrySingle(ids.category, v.categoryValueId),
+      ...this.buildCategoryEntrySingle(ids.gender, v.genderValueId),
     ];
   }
 

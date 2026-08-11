@@ -4,6 +4,12 @@
       <div class="badge ok">Narudžba</div>
       <div class="icon ok" aria-hidden="true">✅</div>
       <h1>Uspješno ste poručili</h1>
+      @if (orderNumber()) {
+        <div class="detail" role="status">
+          <div class="dtitle">Broj narudžbe</div>
+          <div class="dmsg">Porudžbenica {{ orderNumber() }}</div>
+        </div>
+      }
       <p class="muted">
         Narudžba je uspješno poslana. Potvrdu narudžbe ćete dobiti na e-mail adresu čim je naš tim
         odobri:

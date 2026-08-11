@@ -15,6 +15,9 @@ import {
   CouponsApiService,
 } from '../../core/api/coupons-api.service';
 import { currencyDisplayLabel } from '../../shared/utils/currency';
+import { TurnstileWidgetComponent } from '../../shared/ui/turnstile-widget/turnstile-widget';
+import { TurnstileTokenService } from '../../core/security/turnstile-token.service';
+import { isTurnstileVerificationError } from '../../core/security/turnstile.interceptor';
 
 const PHONE_REGEX = /^\+?[0-9][0-9\s/-]{5,19}$/;
 const POSTAL_CODE_REGEX = /^\d{5}$/;
@@ -29,7 +32,7 @@ type AppliedCouponState = {
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, TurnstileWidgetComponent],
   templateUrl: './checkout.html',
   styleUrl: './checkout.scss',
 })
@@ -39,6 +42,7 @@ export class CheckoutComponent implements OnDestroy {
   private readonly ordersApi = inject(AdminOrdersApi);
   private readonly couponsApi = inject(CouponsApiService);
   private readonly router = inject(Router);
+  readonly turnstile = inject(TurnstileTokenService);
 
   private readonly destroy$ = new Subject<void>();
 
@@ -117,7 +121,8 @@ export class CheckoutComponent implements OnDestroy {
       this.count() > 0 &&
       this.formStatus() === 'VALID' &&
       !this.submitting() &&
-      !this.couponApplying()
+      !this.couponApplying() &&
+      this.turnstile.hasToken('checkout')
     );
   });
 
@@ -298,6 +303,11 @@ export class CheckoutComponent implements OnDestroy {
       return;
     }
 
+    if (!this.turnstile.hasToken('checkout')) {
+      this.errorMsg.set('Potvrdite sigurnosnu provjeru prije slanja narudžbe.');
+      return;
+    }
+
     const v = this.form.getRawValue();
     const appliedCoupon = this.appliedCoupon();
     const appliedCouponCode = appliedCoupon ? this.normalizeCouponCode(appliedCoupon.code) : '';
@@ -344,7 +354,12 @@ export class CheckoutComponent implements OnDestroy {
 
     this.ordersApi
       .createUnregisteredOrder(payload)
-      .pipe(finalize(() => this.submitting.set(false)))
+      .pipe(
+        finalize(() => {
+          this.submitting.set(false);
+          this.turnstile.reset('checkout');
+        }),
+      )
       .subscribe({
         next: (res) => {
           // CLEAR CART ONLY ON SUCCESS
@@ -360,6 +375,10 @@ export class CheckoutComponent implements OnDestroy {
           });
         },
         error: (err) => {
+          if (isTurnstileVerificationError(err)) {
+            this.errorMsg.set('Sigurnosna provjera nije uspjela. Molimo pokušajte ponovo.');
+            return;
+          }
           const couponError = this.extractCouponErrorMessage(err);
           if (couponError) {
             this.errorMsg.set(couponError);

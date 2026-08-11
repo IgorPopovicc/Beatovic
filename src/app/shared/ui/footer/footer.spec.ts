@@ -1,3 +1,6 @@
+import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
@@ -16,7 +19,7 @@ describe('Footer', () => {
 
     await TestBed.configureTestingModule({
       imports: [Footer],
-      providers: [{ provide: ContactFormApiService, useValue: contactApi }],
+      providers: [provideRouter([]), provideHttpClient(), provideZonelessChangeDetection(), { provide: ContactFormApiService, useValue: contactApi }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Footer);

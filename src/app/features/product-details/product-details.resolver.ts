@@ -3,17 +3,20 @@ import { inject } from '@angular/core';
 import { of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ProductsApiService } from '../../core/api/products-api.service';
-import { ProductDetailsModel } from '../../shared/data/products.mock';
-import { environment } from '../../../environments/environment';
+import { ProductDetailsModel } from '../../shared/data/products.models';
+import { runtimeMediaUrl } from '../../core/config/runtime-config.service';
 import { normalizeCurrencyCode } from '../../shared/utils/currency';
+import { Variant } from '../../core/api/catalog.models';
+import { ProductCard } from '../../shared/ui/product-card/product-card';
 
-const PRODUCT_PLACEHOLDER = 'assets/images/products/test.webp';
+const PRODUCT_PLACEHOLDER = 'assets/images/products/no-image.svg';
 
 export type ProductDetailsResolved = ProductDetailsModel & {
   sizeQtyMap: Record<string, number>;
   sizeAttrElementIdMap: Record<string, string>;
   seoDescription: string;
   seoImage: { url: string; alt: string } | null;
+  relatedProducts: ProductCard[];
 };
 
 function normalize(value: unknown): string {
@@ -44,42 +47,16 @@ function truncate(value: string, max = 190): string {
 }
 
 function resolveMediaUrl(pathOrUrl: string): string {
-  const value = normalize(pathOrUrl);
-  if (!value) return '';
-  if (/^https?:\/\//i.test(value)) return value;
-
-  const base = normalize(environment.mediaProductBaseUrl).replace(/\/$/, '');
-  if (!base) return value;
-
-  const clean = value
-    .replace(/^\/+/, '')
-    .replace(/^media\/product\/+/i, '')
-    .replace(/^product\/+/i, '');
-  if (!clean) return '';
-
-  const [pathPart, searchPart = ''] = clean.split('?');
-  const encodedPath = pathPart
-    .split('/')
-    .filter(Boolean)
-    .map((segment) => {
-      try {
-        return encodeURIComponent(decodeURIComponent(segment));
-      } catch {
-        return encodeURIComponent(segment);
-      }
-    })
-    .join('/');
-
-  return `${base}/${encodedPath}${searchPart ? `?${searchPart}` : ''}`;
+  return runtimeMediaUrl(pathOrUrl);
 }
 
-function pickBrand(dto: any): string {
+function pickBrand(dto: Variant): string {
   const categories = Array.isArray(dto?.categories) ? dto.categories : [];
-  const fromCategory = categories.find((c: any) => normalizeKey(c?.categoryName) === 'BREND');
+  const fromCategory = categories.find((c) => normalizeKey(c?.categoryName) === 'BREND');
   return normalize(fromCategory?.displayValue ?? fromCategory?.value ?? dto?.brand ?? '') || 'Planeta';
 }
 
-function buildSizeMaps(dto: any): {
+function buildSizeMaps(dto: Variant): {
   sizeQtyMap: Record<string, number>;
   sizeAttrElementIdMap: Record<string, string>;
   sizes: string[];
@@ -117,44 +94,57 @@ function buildSizeMaps(dto: any): {
   return { sizeQtyMap, sizeAttrElementIdMap, sizes };
 }
 
-function buildGallery(dto: any, productName: string): ProductDetailsModel['gallery'] {
+function buildGallery(dto: Variant, productName: string): ProductDetailsModel['gallery'] {
   const images = Array.isArray(dto?.images) ? dto.images : [];
-  const displayed = images.find((img: any) => !!img?.displayed);
+  const displayed = images.find((img) => !!img?.displayed);
+  const orderedImages = displayed
+    ? [displayed, ...images.filter((image) => image.id !== displayed.id)]
+    : images;
 
-  const candidatePaths: string[] = [];
+  const candidates = orderedImages.map((image) => ({
+    web: image.webUrl ?? image.url ?? image.originalUrl,
+    thumbnail: image.thumbnailUrl ?? image.webUrl ?? image.url ?? image.originalUrl,
+    original: image.originalUrl ?? image.url ?? image.webUrl,
+  }));
 
-  if (displayed?.url) {
-    candidatePaths.push(String(displayed.url));
-  }
-  for (const img of images) {
-    if (!img?.url) continue;
-    candidatePaths.push(String(img.url));
-  }
+  candidates.push({
+    web: dto.mainImageWebUrl ?? dto.mainImageUrl ?? dto.mainImageName,
+    thumbnail:
+      dto.mainImageThumbnailUrl ?? dto.mainImageWebUrl ?? dto.mainImageUrl ?? dto.mainImageName,
+    original: dto.mainImageUrl ?? dto.mainImageName ?? dto.mainImageWebUrl,
+  });
 
-  candidatePaths.push(normalize(dto?.mainImageName));
-  candidatePaths.push(normalize(dto?.mainImageUrl));
-
-  const uniqueUrls: string[] = [];
+  const gallery: ProductDetailsModel['gallery'] = [];
   const seen = new Set<string>();
 
-  for (const candidate of candidatePaths) {
-    const resolved = resolveMediaUrl(candidate);
-    if (!resolved || seen.has(resolved)) continue;
-    seen.add(resolved);
-    uniqueUrls.push(resolved);
+  for (const candidate of candidates) {
+    const web = resolveMediaUrl(normalize(candidate.web));
+    if (!web || seen.has(web)) continue;
+    seen.add(web);
+    gallery.push({
+      desktop: web,
+      mobile: web,
+      thumbnail: resolveMediaUrl(normalize(candidate.thumbnail)) || web,
+      original: resolveMediaUrl(normalize(candidate.original)) || web,
+      alt: productName,
+      w: 1200,
+      h: 1200,
+    });
   }
 
-  if (!uniqueUrls.length) {
-    uniqueUrls.push(PRODUCT_PLACEHOLDER);
+  if (!gallery.length) {
+    gallery.push({
+      desktop: PRODUCT_PLACEHOLDER,
+      mobile: PRODUCT_PLACEHOLDER,
+      thumbnail: PRODUCT_PLACEHOLDER,
+      original: PRODUCT_PLACEHOLDER,
+      alt: productName,
+      w: 1200,
+      h: 1200,
+    });
   }
 
-  return uniqueUrls.map((url) => ({
-    desktop: url,
-    mobile: url,
-    alt: productName,
-    w: 1200,
-    h: 1200,
-  }));
+  return gallery;
 }
 
 function pickSeoImage(gallery: ProductDetailsModel['gallery']): { url: string; alt: string } | null {
@@ -170,7 +160,48 @@ function pickSeoImage(gallery: ProductDetailsModel['gallery']): { url: string; a
   };
 }
 
-function toResolvedProduct(dto: any, id: string): ProductDetailsResolved {
+function buildRelatedProducts(dto: Variant): ProductCard[] {
+  return (dto.relatedProducts ?? [])
+    .map((related): ProductCard | null => {
+      const id = normalize(related.variantId ?? related.id);
+      const name = normalize(related.productName ?? related.name);
+      if (!id || !name) return null;
+
+      const sku = normalize(related.sku);
+      const finalPrice = Number(related.finalPrice ?? related.price ?? related.originalPrice ?? 0);
+      const originalPrice = Number(related.originalPrice ?? finalPrice);
+      const image =
+        resolveMediaUrl(
+          normalize(
+            related.mainImageWebUrl ??
+              related.mainImageUrl ??
+              related.mainImageThumbnailUrl ??
+              related.mainImageName,
+          ),
+        ) || PRODUCT_PLACEHOLDER;
+
+      return {
+        id,
+        slug: slugify(`${name}-${sku || id}`),
+        name,
+        subtitle: normalize(related.displaySku) || sku || undefined,
+        price: Number.isFinite(finalPrice) ? finalPrice : 0,
+        oldPrice:
+          Number.isFinite(originalPrice) && originalPrice > finalPrice ? originalPrice : null,
+        currency: normalizeCurrencyCode(related.currency),
+        image: {
+          desktop: image,
+          mobile: image,
+          alt: name,
+          w: 800,
+          h: 800,
+        },
+      };
+    })
+    .filter((related): related is ProductCard => related !== null);
+}
+
+function toResolvedProduct(dto: Variant, id: string): ProductDetailsResolved {
   const name = normalize(dto?.productName ?? dto?.name) || 'Proizvod';
   const sku = normalize(dto?.sku ?? dto?.productSku ?? dto?.variantSku) || undefined;
   const brand = pickBrand(dto);
@@ -197,6 +228,7 @@ function toResolvedProduct(dto: any, id: string): ProductDetailsResolved {
     name,
     subtitle: normalize(dto?.productSku ?? dto?.subtitle) || undefined,
     sku,
+    displaySku: normalize(dto?.displaySku) || sku,
     price: finalPrice,
     oldPrice,
     currency: normalizeCurrencyCode(dto?.currency),
@@ -209,6 +241,7 @@ function toResolvedProduct(dto: any, id: string): ProductDetailsResolved {
     sizeAttrElementIdMap,
     seoDescription,
     seoImage: pickSeoImage(gallery),
+    relatedProducts: buildRelatedProducts(dto),
   };
 }
 

@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { CustomerEmailActionsApiService } from '../../core/api/customer-email-actions-api.service';
 import { SeoService } from '../../core/seo/seo.service';
+import { RuntimeConfigService } from '../../core/config/runtime-config.service';
 import { StatusPageComponent, StatusTone } from '../../shared/ui/status-page/status-page';
 
 type OrderVerifyState = 'loading' | 'success' | 'expired' | 'invalid';
@@ -13,6 +14,8 @@ type VerificationFailedReason =
   | 'invalid-token'
   | 'missing-token'
   | 'already-verified'
+  | 'already-delivered'
+  | 'rejected'
   | 'backend-error'
   | 'verification-failed';
 
@@ -43,6 +46,7 @@ export class OrderEmailVerificationPageComponent implements OnInit {
   private readonly emailActionsApi = inject(CustomerEmailActionsApiService);
   private readonly seo = inject(SeoService);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly config = inject(RuntimeConfigService);
 
   readonly state = signal<OrderVerifyState>('loading');
   readonly details = signal<string | null>(null);
@@ -346,7 +350,7 @@ export class OrderEmailVerificationPageComponent implements OnInit {
     if (!url) return null;
 
     try {
-      const parsed = new URL(url, 'https://planeta.local');
+      const parsed = new URL(url, this.config.siteUrl);
       const statusFromQuery = this.stateFromStatusParam(parsed.searchParams.get('status'));
       if (statusFromQuery) return statusFromQuery;
 
@@ -391,7 +395,7 @@ export class OrderEmailVerificationPageComponent implements OnInit {
     if (!url) return null;
 
     try {
-      const parsed = new URL(url, 'https://planeta.local');
+      const parsed = new URL(url, this.config.siteUrl);
       const tokenExpired = this.normalizeText(parsed.searchParams.get('tokenExpired'));
       if (tokenExpired === '1' || tokenExpired === 'true' || tokenExpired === 'yes') {
         return 'expired-token';
@@ -421,6 +425,10 @@ export class OrderEmailVerificationPageComponent implements OnInit {
     if (!combined) return null;
 
     if (this.looksExpired(combined)) return 'expired-token';
+    if (combined.includes('deliver') || combined.includes('isporuc')) return 'already-delivered';
+    if (combined.includes('reject') || combined.includes('odbij') || combined.includes('otkaz')) {
+      return 'rejected';
+    }
     if (this.looksAlreadyConfirmed(combined)) return 'already-verified';
 
     if (
@@ -463,6 +471,18 @@ export class OrderEmailVerificationPageComponent implements OnInit {
     if (reason === 'already-verified') {
       this.state.set('invalid');
       this.details.set('Narudžba je već potvrđena i ovaj link više nije aktivan.');
+      return;
+    }
+
+    if (reason === 'already-delivered') {
+      this.state.set('invalid');
+      this.details.set('Narudžba je već isporučena i potvrdu nije moguće ponoviti.');
+      return;
+    }
+
+    if (reason === 'rejected') {
+      this.state.set('invalid');
+      this.details.set('Narudžba je odbijena ili otkazana i više se ne može potvrditi.');
       return;
     }
 
@@ -542,6 +562,8 @@ export class OrderEmailVerificationPageComponent implements OnInit {
   private looksAlreadyConfirmed(value: string): boolean {
     return (
       value.includes('already') && (value.includes('confirm') || value.includes('verif')) ||
+      value.includes('already performed') ||
+      value.includes('already-processed') ||
       (value.includes('vec') && value.includes('potvrd')) ||
       (value.includes('već') && value.includes('potvrd'))
     );

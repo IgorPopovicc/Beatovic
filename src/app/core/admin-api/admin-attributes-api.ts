@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { environment } from '../../../environments/environment';
+import { runtimeApiUrl } from '../config/runtime-config.service';
 import { AuthService } from '../auth/auth.service';
 import { AttributeDTO, AttributeValueDTO } from './admin-products.models';
 
@@ -67,7 +67,7 @@ export class AdminAttributesApi {
       'Content-Type': 'application/json',
     });
 
-    const url = `${environment.apiBaseUrl}/attributes`;
+    const url = runtimeApiUrl(`/attributes`);
 
     return this.http.get<RawAttributeDTO[]>(url, { headers }).pipe(
       map((items) =>
@@ -91,7 +91,7 @@ export class AdminAttributesApi {
       'Content-Type': 'application/json',
     });
 
-    const url = `${environment.apiBaseUrl}/attributes/${encodeURIComponent(attributeId)}/values`;
+    const url = runtimeApiUrl(`/attributes/${encodeURIComponent(attributeId)}/values`);
 
     return this.http.get<RawAttributeValueDTO[]>(url, { headers }).pipe(
       map((items) =>

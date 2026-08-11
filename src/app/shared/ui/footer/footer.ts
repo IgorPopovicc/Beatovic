@@ -4,6 +4,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { ContactFormApiService } from '../../../core/api/contact-form-api.service';
 import { AppNoticeService } from '../../../core/system/app-notice.service';
+import { RouterLink } from '@angular/router';
+import { TurnstileWidgetComponent } from '../turnstile-widget/turnstile-widget';
+import { TurnstileTokenService } from '../../../core/security/turnstile-token.service';
+import { isTurnstileVerificationError } from '../../../core/security/turnstile.interceptor';
 
 const PHONE_REGEX = /^\+?[0-9\-\s]{7,15}$/;
 
@@ -13,7 +17,7 @@ function hasVisibleText(value: string): boolean {
 
 @Component({
   selector: 'app-footer',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink, TurnstileWidgetComponent],
   templateUrl: './footer.html',
   styleUrl: './footer.scss',
 })
@@ -23,6 +27,7 @@ export class Footer implements OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly contactApi = inject(ContactFormApiService);
   private readonly notices = inject(AppNoticeService);
+  readonly turnstile = inject(TurnstileTokenService);
   private bodyOverflowBeforeModal: string | null = null;
 
   readonly contactOpen = signal(false);
@@ -36,6 +41,7 @@ export class Footer implements OnDestroy {
     subject: ['', [Validators.maxLength(30)]],
     message: ['', [Validators.required, Validators.maxLength(1000)]],
     privacyPolicyAccepted: [false, [Validators.requiredTrue]],
+    website: [''],
   });
 
   scrollTo(fragment: string): void {
@@ -59,6 +65,7 @@ export class Footer implements OnDestroy {
     if (this.submitting()) return;
     this.contactOpen.set(false);
     this.submitError.set(null);
+    this.turnstile.reset('contact');
     this.unlockBodyScroll();
   }
 
@@ -85,6 +92,11 @@ export class Footer implements OnDestroy {
       return;
     }
 
+    if (!this.turnstile.hasToken('contact')) {
+      this.submitError.set('Potvrdite sigurnosnu provjeru prije slanja.');
+      return;
+    }
+
     const raw = this.form.getRawValue();
     const email = String(raw.email ?? '').trim();
     const message = String(raw.message ?? '').trim();
@@ -99,6 +111,7 @@ export class Footer implements OnDestroy {
       email,
       message,
       privacyPolicyAccepted: true,
+      website: String(raw.website ?? ''),
       ...(hasVisibleText(raw.name) ? { name: String(raw.name).trim() } : {}),
       ...(hasVisibleText(raw.phoneNumber) ? { phoneNumber: String(raw.phoneNumber).trim() } : {}),
       ...(hasVisibleText(raw.subject) ? { subject: String(raw.subject).trim() } : {}),
@@ -108,12 +121,18 @@ export class Footer implements OnDestroy {
 
     this.contactApi
       .submitMessage(payload)
-      .pipe(finalize(() => this.submitting.set(false)))
+      .pipe(
+        finalize(() => {
+          this.submitting.set(false);
+          this.turnstile.reset('contact');
+        }),
+      )
       .subscribe({
         next: () => {
           this.submitError.set(null);
           this.resetForm();
-          this.closeContactModal();
+          this.contactOpen.set(false);
+          this.unlockBodyScroll();
           this.notices.success('Poruka je uspješno poslata.');
         },
         error: (err: unknown) => {
@@ -164,12 +183,16 @@ export class Footer implements OnDestroy {
       subject: '',
       message: '',
       privacyPolicyAccepted: false,
+      website: '',
     });
     this.form.markAsPristine();
     this.form.markAsUntouched();
   }
 
   private userErrorMessage(error: unknown): string {
+    if (isTurnstileVerificationError(error)) {
+      return 'Sigurnosna provjera nije uspjela. Molimo pokušajte ponovo.';
+    }
     const status = Number((error as { status?: unknown })?.status ?? 0);
     if (status === 400 || status === 422) {
       const backendEmailError = String(

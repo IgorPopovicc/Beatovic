@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+import { runtimeApiUrl } from '../config/runtime-config.service';
 import { AuthService } from '../auth/auth.service';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -24,7 +24,7 @@ export class AdminProductsApi {
   private readonly auth = inject(AuthService);
 
   searchMain(searchQuery: string, page = 0, pageSize = 20): Observable<SearchMainResponse> {
-    const url = `${environment.apiBaseUrl}/products/search-main`;
+    const url = runtimeApiUrl(`/products/search-main`);
 
     const body: SearchMainRequest = { searchQuery, page, pageSize };
     let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
@@ -42,7 +42,7 @@ export class AdminProductsApi {
   }
 
   searchProduct(searchQuery: string, page = 0, pageSize = 20): Observable<Product[]> {
-    const url = `${environment.apiBaseUrl}/products/search-product`;
+    const url = runtimeApiUrl(`/products/search-product`);
     let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     const token = this.auth.accessToken();
     if (token) {
@@ -70,7 +70,7 @@ export class AdminProductsApi {
       'Content-Type': 'application/json',
     });
 
-    return this.http.post(`${environment.apiBaseUrl}/products/admin`, body, { headers });
+    return this.http.post(runtimeApiUrl(`/products/admin`), body, { headers });
   }
 
   updateProduct(body: UpdateProductRequest): Observable<unknown> {
@@ -82,7 +82,7 @@ export class AdminProductsApi {
       'Content-Type': 'application/json',
     });
 
-    return this.http.put(`${environment.apiBaseUrl}/products/admin`, body, { headers });
+    return this.http.put(runtimeApiUrl(`/products/admin`), body, { headers });
   }
 
   deleteProduct(id: string): Observable<unknown> {
@@ -95,7 +95,7 @@ export class AdminProductsApi {
     });
 
     return this.http
-      .delete(`${environment.apiBaseUrl}/products/admin/${encodeURIComponent(id)}`, { headers })
+      .delete(runtimeApiUrl(`/products/admin/${encodeURIComponent(id)}`), { headers })
       .pipe(
         catchError((err) => {
           console.error('[AdminProductsApi] deleteProduct failed:', err);
@@ -104,16 +104,7 @@ export class AdminProductsApi {
       );
   }
 
-  /**
-   * ===========================
-   * DODATO ZA "DODAJ MODEL"
-   * ===========================
-   *
-   * Lista modela (varijanti) za izabrani proizvod.
-   *
-   * BITNO: Pošto mi nisi poslao tačan backend endpoint, ovdje je ruta placeholder.
-   * Ako tvoj backend ima drugačije, promijeni samo URL string ispod.
-   */
+  /** Lista varijanti za izabrani proizvod. */
   getVariantsByProductId(productId: string): Observable<ProductVariant[]> {
     const token = this.auth.accessToken();
     if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
@@ -122,7 +113,7 @@ export class AdminProductsApi {
       Authorization: `Bearer ${token}`,
     });
 
-    const url = `${environment.apiBaseUrl}/products/admin/variants/by-product/${encodeURIComponent(productId)}`;
+    const url = runtimeApiUrl(`/products/admin/variants/by-product/${encodeURIComponent(productId)}`);
 
     return this.http.get<ProductVariant[]>(url, { headers }).pipe(
       catchError((err) => {
@@ -156,7 +147,7 @@ export class AdminProductsApi {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
 
     return this.http.post<ProductVariant>(
-      `${environment.apiBaseUrl}/products/admin/variants`,
+      runtimeApiUrl(`/products/admin/variants`),
       formData,
       { headers },
     );
@@ -168,7 +159,7 @@ export class AdminProductsApi {
 
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
 
-    const url = `${environment.apiBaseUrl}/products/variants/${encodeURIComponent(variantId)}/details`;
+    const url = runtimeApiUrl(`/products/variants/${encodeURIComponent(variantId)}/details`);
 
     return this.http.get<ProductVariant>(url, { headers }).pipe(
       catchError((err) => {
@@ -196,7 +187,7 @@ export class AdminProductsApi {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
 
     return this.http
-      .post<ProductVariant>(`${environment.apiBaseUrl}/products/admin/variants/update`, formData, {
+      .post<ProductVariant>(runtimeApiUrl(`/products/admin/variants/update`), formData, {
         headers,
       })
       .pipe(
@@ -216,7 +207,7 @@ export class AdminProductsApi {
       'Content-Type': 'application/json',
     });
 
-    const url = `${environment.apiBaseUrl}/products/admin/variants/${encodeURIComponent(variantId)}`;
+    const url = runtimeApiUrl(`/products/admin/variants/${encodeURIComponent(variantId)}`);
 
     return this.http.delete(url, { headers }).pipe(
       catchError((err) => {
@@ -233,7 +224,7 @@ export class AdminProductsApi {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
 
     return this.http
-      .get<ProductIdSkuPair[]>(`${environment.apiBaseUrl}/products/admin/id-sku-pairs`, { headers })
+      .get<ProductIdSkuPair[]>(runtimeApiUrl(`/products/admin/id-sku-pairs`), { headers })
       .pipe(
         catchError((err) => {
           console.error('[AdminProductsApi] getProductIdSkuPairs failed:', err);
@@ -249,7 +240,7 @@ export class AdminProductsApi {
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
 
     return this.http
-      .get<ProductVariantIdSkuPair[]>(`${environment.apiBaseUrl}/products/admin/variants/id-sku-pairs`, {
+      .get<ProductVariantIdSkuPair[]>(runtimeApiUrl(`/products/admin/variants/id-sku-pairs`), {
         headers,
       })
       .pipe(
