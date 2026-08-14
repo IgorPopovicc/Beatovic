@@ -206,13 +206,18 @@ export class Navbar implements OnInit, OnDestroy {
     const pol$ = this.catalogApi.getCategoryIdByName('POL');
     const kat$ = this.catalogApi.getCategoryIdByName('KATEGORIJA');
 
-    forkJoin([pol$, kat$]).subscribe(([polId, katId]) => {
-      if (!polId || !katId) return;
+    forkJoin([pol$, kat$]).subscribe({
+      next: ([polId, katId]) => {
+        if (!polId || !katId) {
+          this.setFallbackMenu();
+          return;
+        }
 
-      forkJoin([
-        this.catalogApi.getCategoryValues(polId, { onlyRoot: true }),
-        this.catalogApi.getCategoryValues(katId, { onlyRoot: true }),
-      ]).subscribe(([polValues, rootCategories]) => {
+        forkJoin([
+          this.catalogApi.getCategoryValues(polId, { onlyRoot: true }),
+          this.catalogApi.getCategoryValues(katId, { onlyRoot: true }),
+        ]).subscribe({
+          next: ([polValues, rootCategories]) => {
         const toMenuValue = (
           item: ApiCategoryValue,
         ): { id: string; value: string; slug: string; label: string; hasChildren: boolean } | null => {
@@ -307,9 +312,21 @@ export class Navbar implements OnInit, OnDestroy {
           this.menu.set(base);
         };
 
-        buildMenu(rootCategories);
-      });
+            buildMenu(rootCategories);
+          },
+          error: () => this.setFallbackMenu(),
+        });
+      },
+      error: () => this.setFallbackMenu(),
     });
+  }
+
+  private setFallbackMenu(): void {
+    this.activeParent.set(null);
+    this.menu.set([
+      { label: 'Početna', link: '/' },
+      { label: 'Brendovi', link: '/brands' },
+    ]);
   }
 
   toggleSearch() {

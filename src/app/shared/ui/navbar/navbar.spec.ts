@@ -117,4 +117,17 @@ describe('Navbar', () => {
       },
     ]);
   });
+
+  it('uses safe public links when the category API is unavailable', () => {
+    catalogApi.getCategoryIdByName.and.returnValue(
+      throwError(() => new Error('catalog unavailable')),
+    );
+
+    (component as unknown as { loadDynamicMenu(): void }).loadDynamicMenu();
+
+    expect(component.menu()).toEqual([
+      { label: 'Početna', link: '/' },
+      { label: 'Brendovi', link: '/brands' },
+    ]);
+  });
 });
