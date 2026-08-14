@@ -135,6 +135,46 @@
   flex-direction: column;
 }
 
+.category-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.category-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 38px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  color: #222;
+  text-decoration: none;
+}
+
+.category-option:hover,
+.category-option:focus-visible,
+.category-option.active {
+  background: #f2f2f2;
+  color: #111;
+}
+
+.category-option:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 1px;
+}
+
+.category-option.active {
+  font-weight: 800;
+}
+
+.category-count {
+  color: #666;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .sizes {
   display: flex;
   flex-wrap: wrap;

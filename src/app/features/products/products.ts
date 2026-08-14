@@ -1,24 +1,23 @@
 import { CommonModule, ViewportScroller } from '@angular/common';
-import {
-  Component,
-  computed,
-  inject,
-  OnDestroy,
-  OnInit,
-  signal,
-} from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, combineLatest, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { ProductsApiService } from '../../core/api/products-api.service';
-import { ProductsSearchRequest, ProductSearchResponse, Variant } from '../../core/api/catalog.models';
+import {
+  ApiCategoryValue,
+  ProductsSearchRequest,
+  ProductSearchResponse,
+  Variant,
+} from '../../core/api/catalog.models';
 import { ProductCardComponent, ProductCard } from '../../shared/ui/product-card/product-card';
 import { mapVariantToProductCard } from '../../shared/ui/product-card/product-card.mapper';
 import { CatalogApiService } from '../../core/api/catalog-api.sevice';
-import { fromSlug, toLabel } from '../../core/api/catalog-slug';
+import { fromSlug, toLabel, toSlug } from '../../core/api/catalog-slug';
 import { SeoService } from '../../core/seo/seo.service';
 import { colorSwatchLabel, parseColorSwatch } from '../../shared/utils/color-swatch';
+import { CategoryVisibilityService } from '../../core/api/category-visibility.service';
 
 type SortKey = 'novo' | 'cijena_rastuce' | 'cijena_opadajuce';
 type SortBy = 'NAME' | 'PRICE';
@@ -33,6 +32,8 @@ type FilterOption = {
 
 type ColorFilterOption = FilterOption & { background: string };
 
+type CategoryNavigationOption = FilterOption & { link: string };
+
 type RouteContext = {
   genderSlug: string;
   categorySlug: string;
@@ -42,6 +43,10 @@ type RouteContext = {
   forceSale: boolean;
   initialCategoryFilters: Record<string, string[]>;
   categoryFilters: Record<string, string[]>;
+  categoryCategoryId: string | null;
+  parentCategoryValue: ApiCategoryValue | null;
+  rawCategoryChildren: ApiCategoryValue[];
+  categoryChildLinkPrefix: string;
 };
 
 type RouteResolution =
@@ -77,7 +82,7 @@ const DEFAULT_PAGE_SIZE = 24;
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, ProductCardComponent],
+  imports: [CommonModule, RouterLink, ProductCardComponent],
   templateUrl: './products.html',
   styleUrl: './products.scss',
 })
@@ -85,6 +90,7 @@ export class Products implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly catalogApi = inject(CatalogApiService);
+  private readonly categoryVisibility = inject(CategoryVisibilityService);
   private readonly productsApi = inject(ProductsApiService);
   private readonly seo = inject(SeoService);
   private readonly viewportScroller = inject(ViewportScroller);
@@ -166,6 +172,48 @@ export class Products implements OnInit, OnDestroy {
       .sort((a, b) => a.label.localeCompare(b.label));
   });
 
+  visibleCategoryChildren = computed<CategoryNavigationOption[]>(() => {
+    const context = this.currentContext();
+    const response = this.response();
+    if (
+      !context?.categoryCategoryId ||
+      !context.parentCategoryValue ||
+      !context.rawCategoryChildren.length ||
+      !context.categoryChildLinkPrefix ||
+      !response
+    ) {
+      return [];
+    }
+
+    const selectedIds = this.selectedCategoryValueIds(context.categoryCategoryId);
+    return this.categoryVisibility
+      .deriveVisibleChildren(
+        context.categoryCategoryId,
+        context.rawCategoryChildren,
+        response.availableCategories ?? [],
+      )
+      .flatMap((child) => {
+        const slug = toSlug(child.value);
+        const label = String(child.displayValue ?? '').trim() || toLabel(child.value);
+        if (!slug || !label) return [];
+
+        return [
+          {
+            id: child.id,
+            label,
+            count: child.count,
+            selected: selectedIds.has(child.id),
+            link: `${context.categoryChildLinkPrefix}/${slug}`,
+          },
+        ];
+      });
+  });
+
+  showCategoryNavigation = computed(() => {
+    const context = this.currentContext();
+    return !!context?.parentCategoryValue && context.rawCategoryChildren.length > 0;
+  });
+
   availableSizes = computed<FilterOption[]>(() => {
     const group = this.sizeAttributeGroup();
     if (!group?.values?.length) return [];
@@ -245,6 +293,14 @@ export class Products implements OnInit, OnDestroy {
     this.routeSub = combineLatest([this.route.paramMap, this.route.queryParamMap])
       .pipe(
         switchMap(([params, queryParams]) => {
+          // Cancel the previous route's product request before resolving the new runtime IDs.
+          // This prevents a slower response from repainting stale gender/category facets.
+          this.searchSub?.unsubscribe();
+          this.searchSub = undefined;
+          this.response.set(null);
+          this.loading.set(true);
+          this.error.set(null);
+
           const genderSlug = params.get('gender') ?? '';
           const sectionSlug = params.get('section') ?? '';
           const categorySlug = params.get('category') ?? sectionSlug;
@@ -268,6 +324,10 @@ export class Products implements OnInit, OnDestroy {
                 forceSale,
                 initialCategoryFilters: {},
                 categoryFilters: {},
+                categoryCategoryId: null,
+                parentCategoryValue: null,
+                rawCategoryChildren: [],
+                categoryChildLinkPrefix: '',
               },
             });
           }
@@ -284,6 +344,10 @@ export class Products implements OnInit, OnDestroy {
                 forceSale,
                 initialCategoryFilters: {},
                 categoryFilters: {},
+                categoryCategoryId: null,
+                parentCategoryValue: null,
+                rawCategoryChildren: [],
+                categoryChildLinkPrefix: '',
               },
             });
           }
@@ -302,34 +366,43 @@ export class Products implements OnInit, OnDestroy {
                 }
 
                 return this.catalogApi.getCategoryValues(katId, { onlyRoot: true }).pipe(
-                  map((values) => {
+                  switchMap((values) => {
                     const category = values.find(
                       (value) =>
-                        this.normalizeKey(value.value) ===
-                        this.normalizeKey(fromSlug(sectionSlug)),
+                        this.normalizeKey(value.value) === this.normalizeKey(fromSlug(sectionSlug)),
                     );
                     if (!category) {
-                      return {
+                      return of({
                         ok: false,
                         reason: 'category_not_found',
                         message: 'Tražena kategorija nije pronađena.',
                         genderSlug,
                         categorySlug,
-                      } satisfies RouteResolution;
+                      } satisfies RouteResolution);
                     }
-                    return {
-                      ok: true,
-                      context: {
-                        genderSlug: '',
-                        categorySlug: sectionSlug,
-                        subcategorySlug: '',
-                        searchQuery: '',
-                        searchMode: false,
-                        forceSale,
-                        initialCategoryFilters: {},
-                        categoryFilters: { [katId]: [category.id] },
-                      },
-                    } satisfies RouteResolution;
+
+                    return this.catalogApi.getCategoryChildren(category.id).pipe(
+                      map(
+                        (children) =>
+                          ({
+                            ok: true,
+                            context: {
+                              genderSlug: '',
+                              categorySlug: sectionSlug,
+                              subcategorySlug: '',
+                              searchQuery: '',
+                              searchMode: false,
+                              forceSale,
+                              initialCategoryFilters: {},
+                              categoryFilters: { [katId]: [category.id] },
+                              categoryCategoryId: katId,
+                              parentCategoryValue: category,
+                              rawCategoryChildren: children,
+                              categoryChildLinkPrefix: `/catalog/${sectionSlug}`,
+                            },
+                          }) satisfies RouteResolution,
+                      ),
+                    );
                   }),
                 );
               }),
@@ -378,8 +451,7 @@ export class Products implements OnInit, OnDestroy {
                   const standaloneParent =
                     !subcategorySlug && !genderValue
                       ? katValues.find(
-                          (v) =>
-                            this.normalizeKey(v.value) === this.normalizeKey(genderApiValue),
+                          (v) => this.normalizeKey(v.value) === this.normalizeKey(genderApiValue),
                         )
                       : null;
 
@@ -388,8 +460,7 @@ export class Products implements OnInit, OnDestroy {
                       map((children) => {
                         const child = children.find(
                           (value) =>
-                            this.normalizeKey(value.value) ===
-                            this.normalizeKey(categoryApiValue),
+                            this.normalizeKey(value.value) === this.normalizeKey(categoryApiValue),
                         );
                         return child
                           ? ({
@@ -403,6 +474,10 @@ export class Products implements OnInit, OnDestroy {
                                 forceSale,
                                 initialCategoryFilters: {},
                                 categoryFilters: { [katId]: [child.id] },
+                                categoryCategoryId: katId,
+                                parentCategoryValue: standaloneParent,
+                                rawCategoryChildren: children,
+                                categoryChildLinkPrefix: `/catalog/${genderSlug}`,
                               },
                             } satisfies RouteResolution)
                           : ({
@@ -426,7 +501,10 @@ export class Products implements OnInit, OnDestroy {
                     } satisfies RouteResolution);
                   }
 
-                  const buildContext = (categoryValueId: string): RouteResolution => ({
+                  const buildContext = (
+                    categoryValueId: string,
+                    children: ApiCategoryValue[],
+                  ): RouteResolution => ({
                     ok: true,
                     context: {
                       genderSlug,
@@ -437,20 +515,24 @@ export class Products implements OnInit, OnDestroy {
                       forceSale,
                       initialCategoryFilters: { [polId]: [genderValue.id] },
                       categoryFilters: { [katId]: [categoryValueId] },
+                      categoryCategoryId: katId,
+                      parentCategoryValue: categoryValue,
+                      rawCategoryChildren: children,
+                      categoryChildLinkPrefix: `/catalog/${genderSlug}/${categorySlug}`,
                     },
                   });
 
-                  if (!subcategorySlug) return of(buildContext(categoryValue.id));
-
                   return this.catalogApi.getCategoryChildren(categoryValue.id).pipe(
                     map((children) => {
+                      if (!subcategorySlug) return buildContext(categoryValue.id, children);
+
                       const child = children.find(
                         (value) =>
                           this.normalizeKey(value.value) ===
                           this.normalizeKey(fromSlug(subcategorySlug)),
                       );
                       return child
-                        ? buildContext(child.id)
+                        ? buildContext(child.id, children)
                         : ({
                             ok: false,
                             reason: 'category_not_found',

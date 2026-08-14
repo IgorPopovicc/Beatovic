@@ -35,6 +35,30 @@
           <div class="muted">{{ sectionLabel() }}</div>
         </div>
 
+        @if (showCategoryNavigation()) {
+          <div class="filter-block">
+            <div class="filter-title">Kategorije</div>
+            <nav class="category-options" aria-label="Dostupne potkategorije">
+              @for (category of visibleCategoryChildren(); track category.id) {
+                <a
+                  class="category-option"
+                  [class.active]="category.selected"
+                  [attr.aria-current]="category.selected ? 'page' : null"
+                  [routerLink]="category.link"
+                  (click)="closeFilters()"
+                >
+                  <span>{{ category.label }}</span>
+                  <span class="category-count">{{ category.count }}</span>
+                </a>
+              } @empty {
+                @if (!loading()) {
+                  <div class="muted">Nema dostupnih potkategorija.</div>
+                }
+              }
+            </nav>
+          </div>
+        }
+
         <div class="filter-block">
           <div class="filter-title">Dostupno</div>
           <label class="check">
@@ -65,11 +89,7 @@
           <div class="brand-list">
             @for (b of availableBrands(); track b.id) {
               <label class="check">
-                <input
-                  type="checkbox"
-                  [checked]="b.selected"
-                  (change)="toggleBrand(b.id)"
-                />
+                <input type="checkbox" [checked]="b.selected" (change)="toggleBrand(b.id)" />
                 <span>{{ b.label }} ({{ b.count }})</span>
               </label>
             } @empty {

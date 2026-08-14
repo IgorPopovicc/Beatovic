@@ -153,3 +153,124 @@ describe('Products standalone category descendants', () => {
     );
   });
 });
+
+describe('Products gender-aware category context', () => {
+  it('keeps POL and KATEGORIJA while deriving visible children and changing catalog state', async () => {
+    const productsApi = jasmine.createSpyObj<ProductsApiService>('ProductsApiService', ['search']);
+    productsApi.search.and.returnValue(
+      of({
+        variants: [],
+        availableCategories: [
+          {
+            id: 'category-id',
+            name: 'KATEGORIJA',
+            values: [
+              { id: 'shirts-id', value: 'Majice', count: 21, alreadySelected: false },
+              { id: 'bras-id', value: 'Grudnjaci', count: 0, alreadySelected: false },
+            ],
+          },
+          {
+            id: 'brand-id',
+            name: 'BREND',
+            values: [{ id: 'brand-value-id', value: 'TEST', count: 4, alreadySelected: false }],
+          },
+        ],
+        availableAttributes: [],
+        totalResults: 48,
+      }),
+    );
+    const catalogApi = jasmine.createSpyObj<CatalogApiService>('CatalogApiService', [
+      'getCategoryIdByName',
+      'getCategoryValues',
+      'getCategoryChildren',
+    ]);
+    catalogApi.getCategoryIdByName.and.callFake((name) =>
+      of(name === 'POL' ? 'gender-category-id' : 'category-id'),
+    );
+    catalogApi.getCategoryValues.and.callFake((id) =>
+      id === 'gender-category-id'
+        ? of([{ id: 'men-id', value: 'MUSKARCI', displayValue: 'Muškarci' }])
+        : of([
+            {
+              id: 'clothing-id',
+              value: 'ODECA',
+              displayValue: 'Odjeća',
+              hasChildren: true,
+            },
+          ]),
+    );
+    catalogApi.getCategoryChildren.and.returnValue(
+      of([
+        { id: 'shirts-id', value: 'MAJICE', displayValue: 'Majice' },
+        { id: 'bras-id', value: 'BRUSEVI', displayValue: 'Grudnjaci' },
+        { id: 'dresses-id', value: 'HALJINE', displayValue: 'Haljine' },
+      ]),
+    );
+
+    await TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideZonelessChangeDetection(),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: of(convertToParamMap({ gender: 'muskarci', category: 'odeca' })),
+            queryParamMap: of(convertToParamMap({})),
+          },
+        },
+        { provide: ProductsApiService, useValue: productsApi },
+        { provide: CatalogApiService, useValue: catalogApi },
+        {
+          provide: ViewportScroller,
+          useValue: jasmine.createSpyObj<ViewportScroller>('ViewportScroller', [
+            'scrollToPosition',
+          ]),
+        },
+      ],
+      imports: [Products],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(Products);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(productsApi.search.calls.mostRecent().args[0]).toEqual(
+      jasmine.objectContaining({
+        initialCategoryFilters: { 'gender-category-id': ['men-id'] },
+        categoryFilters: { 'category-id': ['clothing-id'] },
+      }),
+    );
+    expect(component.visibleCategoryChildren()).toEqual([
+      {
+        id: 'shirts-id',
+        label: 'Majice',
+        count: 21,
+        selected: false,
+        link: '/catalog/muskarci/odeca/majice',
+      },
+    ]);
+    fixture.detectChanges();
+    const renderedText = String(fixture.nativeElement.textContent);
+    expect(renderedText).toContain('Majice');
+    expect(renderedText).not.toContain('Grudnjaci');
+    expect(renderedText).not.toContain('Haljine');
+
+    component.setSort('cijena_opadajuce');
+    component.toggleBrand('brand-value-id');
+    component.goPage(2);
+
+    expect(productsApi.search.calls.mostRecent().args[0]).toEqual(
+      jasmine.objectContaining({
+        initialCategoryFilters: { 'gender-category-id': ['men-id'] },
+        categoryFilters: {
+          'category-id': ['clothing-id'],
+          'brand-id': ['brand-value-id'],
+        },
+        page: 1,
+        sortBy: 'PRICE',
+        sortOrder: 'DESC',
+      }),
+    );
+  });
+});

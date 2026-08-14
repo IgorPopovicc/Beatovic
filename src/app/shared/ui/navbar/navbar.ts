@@ -26,6 +26,7 @@ import {
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CatalogApiService } from '../../../core/api/catalog-api.sevice';
+import { CategoryVisibilityService } from '../../../core/api/category-visibility.service';
 import { toLabel, toSlug } from '../../../core/api/catalog-slug';
 import { CartStore } from '../../../core/cart/cart.store';
 import { ProductsApiService } from '../../../core/api/products-api.service';
@@ -47,6 +48,7 @@ export class Navbar implements OnInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private router = inject(Router);
   private catalogApi = inject(CatalogApiService);
+  private categoryVisibility = inject(CategoryVisibilityService);
   private cart = inject(CartStore);
   private productsApi = inject(ProductsApiService);
   private navigationStartSub?: Subscription;
@@ -218,99 +220,117 @@ export class Navbar implements OnInit, OnDestroy {
           this.catalogApi.getCategoryValues(katId, { onlyRoot: true }),
         ]).subscribe({
           next: ([polValues, rootCategories]) => {
-        const toMenuValue = (
-          item: ApiCategoryValue,
-        ): { id: string; value: string; slug: string; label: string; hasChildren: boolean } | null => {
-          const slug = toSlug(item.value);
-          const label = String(item.displayValue ?? '').trim() || toLabel(item.value);
-          return slug && label
-            ? {
-                id: item.id,
-                value: item.value,
-                slug,
-                label,
-                hasChildren: item.hasChildren === true,
-              }
-            : null;
-        };
+            const toMenuValue = (
+              item: ApiCategoryValue,
+            ): {
+              id: string;
+              value: string;
+              slug: string;
+              label: string;
+              hasChildren: boolean;
+            } | null => {
+              const slug = toSlug(item.value);
+              const label = String(item.displayValue ?? '').trim() || toLabel(item.value);
+              return slug && label
+                ? {
+                    id: item.id,
+                    value: item.value,
+                    slug,
+                    label,
+                    hasChildren: item.hasChildren === true,
+                  }
+                : null;
+            };
 
-        const buildMenu = (categorySource: ApiCategoryValue[]) => {
-          const categoryItems = categorySource
-            .map(toMenuValue)
-            .filter((item): item is NonNullable<ReturnType<typeof toMenuValue>> => item !== null);
+            const buildMenu = (categorySource: ApiCategoryValue[]) => {
+              const categoryItems = categorySource
+                .map(toMenuValue)
+                .filter(
+                  (item): item is NonNullable<ReturnType<typeof toMenuValue>> => item !== null,
+                );
 
-          const primaryCategoryValues = new Set(['OBUCA', 'ODECA', 'AKSESOARI']);
-          const primaryCategories = categoryItems.filter((item) =>
-            primaryCategoryValues.has(this.normalizeMenuValue(item.value)),
-          );
+              const primaryCategoryValues = new Set(['OBUCA', 'ODECA', 'AKSESOARI']);
+              const primaryCategories = categoryItems.filter((item) =>
+                primaryCategoryValues.has(this.normalizeMenuValue(item.value)),
+              );
 
-          const genderValues = new Set(['MUSKARCI', 'ZENE', 'DECA', 'BEBE']);
+              const genderValues = new Set(['MUSKARCI', 'ZENE', 'DECA', 'BEBE']);
 
-          const genderItems: MenuItem[] = polValues
-            .map(toMenuValue)
-            .filter((item): item is NonNullable<ReturnType<typeof toMenuValue>> => item !== null)
-            .filter((item) => genderValues.has(this.normalizeMenuValue(item.value)))
-            .map((gender) => ({
-              label: gender.label,
-              children: primaryCategories.map((category) => ({
-                id: category.id,
-                value: category.value,
-                label: category.label,
-                link: `/catalog/${gender.slug}/${category.slug}`,
-                childLinkPrefix: `/catalog/${gender.slug}/${category.slug}`,
-                hasChildren: category.hasChildren,
-              })),
-            }));
+              const genderItems: MenuItem[] = polValues
+                .map(toMenuValue)
+                .filter(
+                  (item): item is NonNullable<ReturnType<typeof toMenuValue>> => item !== null,
+                )
+                .filter((item) => genderValues.has(this.normalizeMenuValue(item.value)))
+                .map((gender) => ({
+                  label: gender.label,
+                  children: primaryCategories.map((category) => ({
+                    key: `${gender.id}:${category.id}`,
+                    id: category.id,
+                    value: category.value,
+                    label: category.label,
+                    link: `/catalog/${gender.slug}/${category.slug}`,
+                    childLinkPrefix: `/catalog/${gender.slug}/${category.slug}`,
+                    hasChildren: category.hasChildren,
+                    categoryId: katId,
+                    genderCategoryId: polId,
+                    genderValueId: gender.id,
+                  })),
+                }));
 
-          const toys = categoryItems.find(
-            (item) => this.normalizeMenuValue(item.value) === 'IGRACKE_I_OSTALO',
-          );
-          const remaining = categoryItems.filter(
-            (item) =>
-              !primaryCategoryValues.has(this.normalizeMenuValue(item.value)) &&
-              this.normalizeMenuValue(item.value) !== 'IGRACKE_I_OSTALO',
-          );
+              const toys = categoryItems.find(
+                (item) => this.normalizeMenuValue(item.value) === 'IGRACKE_I_OSTALO',
+              );
+              const remaining = categoryItems.filter(
+                (item) =>
+                  !primaryCategoryValues.has(this.normalizeMenuValue(item.value)) &&
+                  this.normalizeMenuValue(item.value) !== 'IGRACKE_I_OSTALO',
+              );
 
-          const base: MenuItem[] = [
-            { label: 'Početna', link: '/' },
-            ...genderItems,
-            ...(toys
-              ? [
-                  {
-                    label: toys.label,
-                    children: [
+              const base: MenuItem[] = [
+                { label: 'Početna', link: '/' },
+                ...genderItems,
+                ...(toys
+                  ? [
                       {
-                        id: toys.id,
-                        value: toys.value,
-                        label: `Sve: ${toys.label}`,
-                        link: `/catalog/${toys.slug}`,
-                        childLinkPrefix: `/catalog/${toys.slug}`,
-                        hasChildren: toys.hasChildren,
+                        label: toys.label,
+                        children: [
+                          {
+                            key: `all:${toys.id}`,
+                            id: toys.id,
+                            value: toys.value,
+                            label: `Sve: ${toys.label}`,
+                            link: `/catalog/${toys.slug}`,
+                            childLinkPrefix: `/catalog/${toys.slug}`,
+                            hasChildren: toys.hasChildren,
+                            categoryId: katId,
+                          },
+                        ],
                       },
-                    ],
-                  },
-                ]
-              : []),
-            ...(remaining.length
-              ? [
-                  {
-                    label: 'Ostalo',
-                    children: remaining.map((category) => ({
-                      id: category.id,
-                      value: category.value,
-                      label: category.label,
-                      link: `/catalog/${category.slug}`,
-                      childLinkPrefix: `/catalog/${category.slug}`,
-                      hasChildren: category.hasChildren,
-                    })),
-                  },
-                ]
-              : []),
-            { label: 'Brendovi', link: '/brands' },
-          ];
+                    ]
+                  : []),
+                ...(remaining.length
+                  ? [
+                      {
+                        label: 'Ostalo',
+                        children: remaining.map((category) => ({
+                          key: `all:${category.id}`,
+                          id: category.id,
+                          value: category.value,
+                          label: category.label,
+                          link: `/catalog/${category.slug}`,
+                          childLinkPrefix: `/catalog/${category.slug}`,
+                          hasChildren: category.hasChildren,
+                          categoryId: katId,
+                        })),
+                      },
+                    ]
+                  : []),
+                { label: 'Brendovi', link: '/brands' },
+              ];
 
-          this.menu.set(base);
-        };
+              this.menu.set(base);
+            };
 
             buildMenu(rootCategories);
           },
@@ -356,44 +376,60 @@ export class Navbar implements OnInit, OnDestroy {
   toggleCategoryChildren(child: MenuChild): void {
     if (!child.hasChildren || child.loading) return;
 
-    if (child.descendants) {
-      this.updateMenuChild(child.id, { expanded: !child.expanded });
+    if (child.descendants !== undefined) {
+      this.updateMenuChild(child.key, { expanded: !child.expanded });
       return;
     }
 
-    this.updateMenuChild(child.id, { loading: true, expanded: true, error: false });
-    this.catalogApi.getCategoryChildren(child.id).subscribe({
-      next: (values) => {
-        const descendants = values
-          .map((value) => {
-            const slug = toSlug(value.value);
-            const label = String(value.displayValue ?? '').trim() || toLabel(value.value);
-            return slug && label
-              ? { label, link: `${child.childLinkPrefix}/${slug}` }
-              : null;
-          })
-          .filter((value): value is { label: string; link: string } => value !== null);
-
-        this.updateMenuChild(child.id, {
-          loading: false,
-          expanded: descendants.length > 0,
-          descendants,
-          error: descendants.length === 0,
-        });
-      },
-      error: () => {
-        // Keep descendants unset so a temporary API/auth failure can be retried.
-        this.updateMenuChild(child.id, { loading: false, expanded: false, error: true });
-      },
+    this.updateMenuChild(child.key, {
+      loading: true,
+      expanded: true,
+      error: false,
+      empty: false,
     });
+    this.categoryVisibility
+      .getVisibleChildren({
+        categoryId: child.categoryId,
+        parentCategoryValueId: child.id,
+        genderCategoryId: child.genderCategoryId,
+        genderValueId: child.genderValueId,
+      })
+      .subscribe({
+        next: (values) => {
+          const descendants = values
+            .map((value) => {
+              const slug = toSlug(value.value);
+              const label = String(value.displayValue ?? '').trim() || toLabel(value.value);
+              return slug && label ? { label, link: `${child.childLinkPrefix}/${slug}` } : null;
+            })
+            .filter((value): value is { label: string; link: string } => value !== null);
+
+          this.updateMenuChild(child.key, {
+            loading: false,
+            expanded: true,
+            descendants,
+            empty: descendants.length === 0,
+            error: false,
+          });
+        },
+        error: () => {
+          // Keep descendants unset so a temporary API failure can be retried.
+          this.updateMenuChild(child.key, {
+            loading: false,
+            expanded: false,
+            empty: false,
+            error: true,
+          });
+        },
+      });
   }
 
-  private updateMenuChild(id: string, patch: Partial<MenuChild>): void {
+  private updateMenuChild(key: string, patch: Partial<MenuChild>): void {
     this.menu.update((items) =>
       items.map((item) => ({
         ...item,
         children: item.children?.map((child) =>
-          child.id === id ? { ...child, ...patch } : child,
+          child.key === key ? { ...child, ...patch } : child,
         ),
       })),
     );
@@ -633,14 +669,19 @@ interface MenuItem {
 }
 
 interface MenuChild {
+  key: string;
   id: string;
   value: string;
   label: string;
   link: string;
   childLinkPrefix: string;
   hasChildren: boolean;
+  categoryId: string;
+  genderCategoryId?: string;
+  genderValueId?: string;
   loading?: boolean;
   expanded?: boolean;
   error?: boolean;
+  empty?: boolean;
   descendants?: { label: string; link: string }[];
 }

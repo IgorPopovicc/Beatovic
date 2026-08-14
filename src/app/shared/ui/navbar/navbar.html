@@ -106,7 +106,8 @@
                       <div class="sr-price">
                         @if (hasDiscount(v)) {
                           <span class="sr-old"
-                            >{{ v.originalPrice || 0 | number: '1.0-0' }} {{ currencyLabel(v.currency) }}</span
+                            >{{ v.originalPrice || 0 | number: '1.0-0' }}
+                            {{ currencyLabel(v.currency) }}</span
                           >
                         }
                         <span class="sr-new">
@@ -204,7 +205,8 @@
                     <div class="sr-price">
                       @if (hasDiscount(v)) {
                         <span class="sr-old">
-                          {{ v.originalPrice || 0 | number: '1.0-0' }} {{ currencyLabel(v.currency) }}
+                          {{ v.originalPrice || 0 | number: '1.0-0' }}
+                          {{ currencyLabel(v.currency) }}
                         </span>
                       }
                       <span class="sr-new">
@@ -283,7 +285,7 @@
       </div>
 
       <ul class="submenu-list">
-        @for (child of activeChildren(); track child.label) {
+        @for (child of activeChildren(); track child.key) {
           <li>
             <div class="submenu-row">
               <a [routerLink]="child.link" (click)="closeMenu()">
@@ -311,6 +313,8 @@
                   </li>
                 }
               </ul>
+            } @else if (child.expanded && child.empty) {
+              <div class="submenu-empty">Nema dostupnih potkategorija.</div>
             }
           </li>
         }
