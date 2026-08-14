@@ -3,7 +3,16 @@ function base64UrlToBase64(input: string): string {
   return (input + pad).replace(/-/g, '+').replace(/_/g, '/');
 }
 
-export function decodeJwtPayload(token: string): any | null {
+export interface JwtPayload {
+  exp?: number;
+  sub?: string;
+  name?: string;
+  email?: string;
+  preferred_username?: string;
+  realm_access?: { roles?: string[] };
+}
+
+export function decodeJwtPayload(token: string): JwtPayload | null {
   try {
     const parts = token.split('.');
     if (parts.length < 2) return null;
@@ -19,7 +28,8 @@ export function decodeJwtPayload(token: string): any | null {
               .join(''),
           );
 
-    return JSON.parse(json);
+    const parsed = JSON.parse(json) as unknown;
+    return parsed && typeof parsed === 'object' ? (parsed as JwtPayload) : null;
   } catch {
     return null;
   }

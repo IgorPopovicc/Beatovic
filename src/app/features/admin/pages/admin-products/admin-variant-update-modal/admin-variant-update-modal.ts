@@ -284,8 +284,8 @@ export class AdminVariantUpdateModal {
       sizeMap[valueId] = {
         id: a.id ?? crypto.randomUUID(),
         value: label,
-        qty: Number((a as any).quantity ?? 0),
-        attributeId: (a as any).attributeId ?? sizeAttr?.id ?? '',
+        qty: Number(a.quantity ?? 0),
+        attributeId: a.attributeId ?? sizeAttr?.id ?? '',
         attributeName: a.attributeName ?? 'VELICINA',
         attributeValueId: valueId,
       };
@@ -298,7 +298,7 @@ export class AdminVariantUpdateModal {
     const byDiscountId: Record<string, string> = {};
 
     for (const ad of details.activeDiscounts ?? []) {
-      const discountId = String((ad as any)?.discountId ?? ad?.id ?? '').trim();
+      const discountId = String(ad?.discountId ?? ad?.id ?? '').trim();
       const discountVariantId = String(ad?.id ?? '').trim();
       if (!discountId) continue;
 

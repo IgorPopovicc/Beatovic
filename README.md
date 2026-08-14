@@ -9,10 +9,26 @@ The backend is implemented in **Spring Boot**, exposing REST APIs for products, 
 
 Start the local dev server:
 
+```bash
 npm install
 npm start
+```
+
 Open http://localhost:4200 in your browser.
 The app will automatically reload on source file changes.
+
+Local `/api` and `/media/product` requests are proxied to a backend on
+`http://127.0.0.1:8080` by default. Override the complete backend paths when your local Spring
+application uses a context path or another port:
+
+```bash
+DEV_API_BASE_URL=http://127.0.0.1:8080/planetabih-webservice/api \
+DEV_MEDIA_PRODUCT_BASE_URL=http://127.0.0.1:8080/media/product \
+npm start
+```
+
+For a local HTTPS backend with a development-only self-signed certificate, add
+`DEV_PROXY_TLS_VERIFY=false`.
 
 --------------------
 

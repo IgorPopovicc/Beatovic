@@ -173,24 +173,7 @@ export class SeoService {
   }
 
   private requestHeader(name: string): string {
-    const headers = (this.request as any)?.headers;
-    if (!headers) return '';
-
-    if (typeof headers.get === 'function') {
-      return String(headers.get(name) ?? headers.get(name.toLowerCase()) ?? '')
-        .trim()
-        .split(',')[0]
-        .trim();
-    }
-
-    const raw =
-      headers[name] ??
-      headers[name.toLowerCase()] ??
-      headers[name.toUpperCase()] ??
-      '';
-
-    if (Array.isArray(raw)) return String(raw[0] ?? '').trim();
-    return String(raw).trim().split(',')[0].trim();
+    return String(this.request?.headers.get(name) ?? '').trim().split(',')[0].trim();
   }
 
   private isLocalHost(hostOrUrl: string): boolean {
@@ -235,7 +218,7 @@ export class SeoService {
       return `${protocol}://${forwardedHost}`.replace(/\/+$/, '');
     }
 
-    const requestUrl = String((this.request as any)?.url ?? '').trim();
+    const requestUrl = String(this.request?.url ?? '').trim();
     if (/^https?:\/\//i.test(requestUrl)) {
       try {
         const requestOrigin = new URL(requestUrl).origin.replace(/\/+$/, '');

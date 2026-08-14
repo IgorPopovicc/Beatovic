@@ -50,7 +50,7 @@ export class HeroSlider implements OnInit, OnDestroy {
 
   index = signal(0);
   paused = signal(false);
-  private timerId: any = null;
+  private timerId: ReturnType<typeof setInterval> | null = null;
   intervalMs = 10000; // 10s
 
   ngOnInit(): void {

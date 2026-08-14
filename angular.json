@@ -73,7 +73,8 @@
               "buildTarget": "Beatovic:build:production"
             },
             "development": {
-              "buildTarget": "Beatovic:build:development"
+              "buildTarget": "Beatovic:build:development",
+              "proxyConfig": "proxy.conf.cjs"
             }
           },
           "defaultConfiguration": "development"
