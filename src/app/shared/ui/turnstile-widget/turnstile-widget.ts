@@ -1,4 +1,4 @@
-import { isPlatformBrowser } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   AfterViewInit,
   Component,
@@ -40,6 +40,40 @@ declare global {
   }
 }
 
+const TURNSTILE_SCRIPT_ID = 'cloudflare-turnstile-script';
+const TURNSTILE_SCRIPT_URL =
+  'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+let turnstileScriptPromise: Promise<void> | null = null;
+
+function loadTurnstileScript(document: Document): Promise<void> {
+  if (window.turnstile) return Promise.resolve();
+  if (turnstileScriptPromise) return turnstileScriptPromise;
+
+  turnstileScriptPromise = new Promise<void>((resolve, reject) => {
+    const existing = document.getElementById(TURNSTILE_SCRIPT_ID) as HTMLScriptElement | null;
+    const script = existing ?? document.createElement('script');
+
+    const loaded = (): void => resolve();
+    const failed = (): void => {
+      turnstileScriptPromise = null;
+      reject(new Error('Cloudflare Turnstile script failed to load.'));
+    };
+
+    script.addEventListener('load', loaded, { once: true });
+    script.addEventListener('error', failed, { once: true });
+
+    if (!existing) {
+      script.id = TURNSTILE_SCRIPT_ID;
+      script.src = TURNSTILE_SCRIPT_URL;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  });
+
+  return turnstileScriptPromise;
+}
+
 @Component({
   selector: 'app-turnstile-widget',
   standalone: true,
@@ -48,12 +82,12 @@ declare global {
 })
 export class TurnstileWidgetComponent implements AfterViewInit {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
   private readonly tokens = inject(TurnstileTokenService);
   private readonly config = inject(RuntimeConfigService);
   private widgetId: string | null = null;
-  private renderTimer: ReturnType<typeof setInterval> | null = null;
-  private renderAttempts = 0;
+  private destroyed = false;
 
   readonly context = input.required<TurnstileContext>();
   readonly statusMessage = signal<string | null>(null);
@@ -81,27 +115,32 @@ export class TurnstileWidgetComponent implements AfterViewInit {
       return;
     }
 
-    this.tryRender();
-    if (!this.widgetId) {
-      this.renderTimer = setInterval(() => this.tryRender(), 100);
-    }
+    void loadTurnstileScript(this.document)
+      .then(() => this.tryRender())
+      .catch(() => {
+        if (!this.destroyed) {
+          this.statusMessage.set('Sigurnosna provjera trenutno nije dostupna.');
+        }
+      });
 
-    this.destroyRef.onDestroy(() => this.cleanup());
+    this.destroyRef.onDestroy(() => {
+      this.destroyed = true;
+      this.cleanup();
+    });
   }
 
   private tryRender(): void {
-    if (this.widgetId || !this.container?.nativeElement || !window.turnstile) {
-      this.renderAttempts += 1;
-      if (this.renderAttempts >= 100) {
-        this.statusMessage.set('Sigurnosna provjera trenutno nije dostupna.');
-        this.clearRenderTimer();
-      }
+    if (this.destroyed || this.widgetId || !this.container?.nativeElement) return;
+    if (!window.turnstile) {
+      this.statusMessage.set('Sigurnosna provjera trenutno nije dostupna.');
       return;
     }
 
     this.widgetId = window.turnstile.render(this.container.nativeElement, {
       sitekey: this.siteKey,
-      language: 'bs',
+      // Turnstile does not support the `bs` locale. Croatian keeps the security UI in the same
+      // Latin-script language family and avoids the widget's English fallback warning.
+      language: 'hr',
       theme: 'auto',
       callback: (token) => {
         this.statusMessage.set(null);
@@ -116,21 +155,13 @@ export class TurnstileWidgetComponent implements AfterViewInit {
         this.statusMessage.set('Sigurnosna provjera nije uspjela. Molimo pokušajte ponovo.');
       },
     });
-    this.clearRenderTimer();
   }
 
   private cleanup(): void {
-    this.clearRenderTimer();
     this.tokens.invalidate(this.context());
     if (this.widgetId && window.turnstile) {
       window.turnstile.remove(this.widgetId);
     }
     this.widgetId = null;
-  }
-
-  private clearRenderTimer(): void {
-    if (!this.renderTimer) return;
-    clearInterval(this.renderTimer);
-    this.renderTimer = null;
   }
 }

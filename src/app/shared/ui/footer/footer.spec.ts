@@ -19,7 +19,12 @@ describe('Footer', () => {
 
     await TestBed.configureTestingModule({
       imports: [Footer],
-      providers: [provideRouter([]), provideHttpClient(), provideZonelessChangeDetection(), { provide: ContactFormApiService, useValue: contactApi }],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideZonelessChangeDetection(),
+        { provide: ContactFormApiService, useValue: contactApi },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Footer);
@@ -29,5 +34,14 @@ describe('Footer', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('accepts email addresses up to the current API limit of 40 characters', () => {
+    const email = 'very.long.customer.address@example.com';
+    expect(email.length).toBeLessThanOrEqual(40);
+
+    component.form.controls.email.setValue(email);
+
+    expect(component.form.controls.email.errors?.['maxlength']).toBeUndefined();
   });
 });

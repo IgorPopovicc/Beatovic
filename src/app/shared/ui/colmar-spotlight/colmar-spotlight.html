@@ -1,7 +1,15 @@
 <section class="colmar-spotlight" aria-labelledby="colmar-spotlight-title">
-  <div class="bg" aria-hidden="true" [style.--brand-bg]="'url(' + backgroundImage() + ')'">
-    <div class="overlay"></div>
-  </div>
+  <picture class="campaign-media" aria-hidden="true">
+    <img
+      [src]="config.campaignImage"
+      alt=""
+      width="1600"
+      height="853"
+      loading="lazy"
+      decoding="async"
+    />
+  </picture>
+  <div class="overlay" aria-hidden="true"></div>
 
   <div class="content">
     <div class="copy">
@@ -11,23 +19,49 @@
         {{ config.description }}
       </p>
 
-      <a
-        class="cta"
-        [routerLink]="config.ctaLink"
-        [queryParams]="config.ctaQueryParams"
-      >
+      <a class="cta" [routerLink]="config.ctaLink" [queryParams]="config.ctaQueryParams">
         {{ config.ctaLabel }}
       </a>
     </div>
 
-    <div class="featured">
+    <div class="featured" aria-live="polite">
       @if (error()) {
         <div class="state error" role="alert">{{ error() }}</div>
       } @else if (loading()) {
         <div class="state loading" role="status">Učitavanje izdvojenog modela...</div>
       } @else {
         @if (product(); as p) {
-          <app-product-card [product]="p" variant="home"></app-product-card>
+          <a
+            class="product-callout"
+            [routerLink]="['/product', p.id]"
+            [state]="{ product: p }"
+            [attr.aria-label]="'Otvori ' + p.name"
+          >
+            <span class="product-kicker">Izdvojeni model</span>
+            <span class="product-image-shell">
+              <img
+                [src]="p.image.desktop"
+                [alt]="p.image.alt"
+                width="520"
+                height="520"
+                loading="lazy"
+                decoding="async"
+              />
+            </span>
+            <span class="product-copy">
+              <strong>{{ p.name }}</strong>
+              @if (p.subtitle) {
+                <small>{{ p.subtitle }}</small>
+              }
+              <span class="product-price">
+                @if (p.oldPrice && p.oldPrice > p.price) {
+                  <del>{{ p.oldPrice | number: '1.0-0' }} {{ currencyLabel() }}</del>
+                }
+                <b>{{ p.price | number: '1.0-0' }} {{ currencyLabel() }}</b>
+                <span aria-hidden="true">↗</span>
+              </span>
+            </span>
+          </a>
         } @else {
           <div class="state empty">Trenutno nema dostupnog modela.</div>
         }

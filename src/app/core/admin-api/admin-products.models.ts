@@ -176,7 +176,7 @@ export interface AttributeValueDTO {
 }
 
 export interface CreateProductVariantAttributeDTO {
-  id: string;
+  id?: string;
   attributeId: string;
   attributeName: string;
   attributeValueId: string;
@@ -186,10 +186,10 @@ export interface CreateProductVariantAttributeDTO {
 
 export interface CreateProductVariantDTO {
   productId: string;
-  sku: string;
+  sku?: string;
   price: number;
-  isNew: boolean;
-  isOutlet: boolean;
+  isNew?: boolean;
+  isOutlet?: boolean;
   attributes: CreateProductVariantAttributeDTO[];
   discountIds?: string[];
   displayImageName?: string;

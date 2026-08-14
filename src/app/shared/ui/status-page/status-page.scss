@@ -3,6 +3,7 @@
 }
 
 .status-shell {
+  min-width: 0;
   min-height: min(72vh, 680px);
   display: grid;
   place-items: center;
@@ -10,6 +11,7 @@
 }
 
 .card {
+  min-width: 0;
   width: min(760px, 100%);
   text-align: center;
   padding: clamp(20px, 3.2vw, 34px);
@@ -60,6 +62,7 @@ h1 {
   color: rgba(0, 0, 0, 0.72);
   font-weight: 600;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .details {

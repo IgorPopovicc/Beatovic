@@ -31,7 +31,7 @@ export interface AdminOrderItem {
 export interface AdminOrder {
   orderId: string;
   orderNumber: string;
-  pantheonOrderId?: string | null;
+  pantheonOrderId?: number | null;
   status: OrderStatus;
   totalPrice: number;
   description: string;

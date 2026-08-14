@@ -114,35 +114,21 @@
             </button>
           </div>
 
-          @if (variantsLoading()) {
-            <div class="state">Učitavanje modela...</div>
-          } @else if (variantsError()) {
-            <div class="error">{{ variantsError() }}</div>
+          @if (variants().length === 0) {
+            <div class="empty">Još nema modela za ovaj proizvod.</div>
           } @else {
-            @if (variants().length === 0) {
-              <div class="empty">Još nema modela za ovaj proizvod.</div>
-            } @else {
-              <div class="variant-list" role="list">
-                @for (v of variants(); track v.id) {
-                  <div class="variant-row" role="listitem">
-                    <div class="v-main">
-                      <div class="v-name">{{ v.displaySku || v.sku }}</div>
-                      <div class="v-meta">
-                        Cijena: <strong>{{ formatPrice(v.finalPrice) }}</strong> KM
-                      </div>
-                      <div class="v-meta">
-                        Atributi:
-                        <span class="chips">
-                          @for (a of v.attributes; track a.id) {
-                            <span class="chip">{{ a.attributeName }}: {{ a.value }}</span>
-                          }
-                        </span>
-                      </div>
-                    </div>
+            <div class="variant-list" role="list">
+              @for (v of variants(); track v.id) {
+                <div class="variant-row" role="listitem">
+                  <div class="v-main">
+                    <div class="v-name">{{ v.displaySku || v.sku || 'Model bez SKU-a' }}</div>
+                    @if (v.colorVariantAttributeValue) {
+                      <div class="v-meta">Boja: {{ colorLabel(v.colorVariantAttributeValue) }}</div>
+                    }
                   </div>
-                }
-              </div>
-            }
+                </div>
+              }
+            </div>
           }
         </section>
 
@@ -174,7 +160,9 @@
                       placeholder="Ostavite prazno za automatski SKU"
                       (blur)="onSkuInputBlur()"
                     />
-                    <div class="sku-help">Backend generiše zadani SKU kada polje ostane prazno.</div>
+                    <div class="sku-help">
+                      Backend generiše zadani SKU kada polje ostane prazno.
+                    </div>
                     @if ((form.controls.sku.touched || submitting()) && duplicateSku()) {
                       <div class="field-err">Ovaj SKU već postoji za izabrani proizvod.</div>
                     }
@@ -242,10 +230,7 @@
                             <button type="button" class="dd-item" (click)="selectColor(o.id)">
                               <span class="dd-label color">
                                 @if (colorSwatch(o.value); as background) {
-                                  <span
-                                    class="swatch"
-                                    [style.background]="background"
-                                  ></span>
+                                  <span class="swatch" [style.background]="background"></span>
                                   <span class="text">{{ colorLabel(o.value) }}</span>
                                 } @else {
                                   <span class="text">{{ o.value }}</span>
@@ -291,7 +276,9 @@
                             <input
                               type="checkbox"
                               [checked]="isSizeSelected(s.id)"
-                              (change)="toggleSize(s.id, optionLabel(s), $any($event.target).checked)"
+                              (change)="
+                                toggleSize(s.id, optionLabel(s), $any($event.target).checked)
+                              "
                             />
                             <span class="lbl">{{ optionLabel(s) }}</span>
                           </label>

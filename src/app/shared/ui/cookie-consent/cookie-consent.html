@@ -1,0 +1,82 @@
+@if (consent.bannerVisible()) {
+  <aside class="cookie-banner" aria-labelledby="cookie-title" aria-describedby="cookie-copy">
+    <div class="cookie-copy">
+      <span class="cookie-mark" aria-hidden="true">◉</span>
+      <div>
+        <h2 id="cookie-title">Privatnost i pohrana u pregledniku</h2>
+        <p id="cookie-copy">
+          Koristimo samo neophodnu lokalnu pohranu za korpu, administratorsku prijavu i pamćenje ove
+          odluke. Ne koristimo analitičke ni marketinške kolačiće.
+          <a routerLink="/politika-privatnosti" fragment="kolacici">Saznajte više</a>.
+        </p>
+      </div>
+    </div>
+
+    <div class="cookie-actions">
+      <button type="button" class="secondary" (click)="openSettings()">Detalji</button>
+      <button type="button" class="primary" (click)="acceptNecessary()">Razumijem</button>
+    </div>
+  </aside>
+}
+
+@if (consent.settingsOpen()) {
+  <div class="settings-backdrop" (click)="closeSettings()" aria-hidden="true"></div>
+  <section
+    class="settings-wrap"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="cookie-settings-title"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="settings-card">
+      <header>
+        <div>
+          <p class="eyebrow">Planeta webshop</p>
+          <h2 id="cookie-settings-title">Postavke kolačića</h2>
+        </div>
+        <button
+          #settingsClose
+          type="button"
+          class="close"
+          (click)="closeSettings()"
+          aria-label="Zatvori postavke kolačića"
+        >
+          ×
+        </button>
+      </header>
+
+      <p class="intro">
+        Trenutna verzija stranice nema opcionalne analitičke ili marketinške kategorije, pa nema
+        neophodnih skripti koje čekaju dodatnu saglasnost.
+      </p>
+
+      <div class="category">
+        <div class="category-head">
+          <div>
+            <h3>Neophodno</h3>
+            <p>Uvijek aktivno</p>
+          </div>
+          <span class="locked" aria-label="Neophodna kategorija je uvijek aktivna">Uključeno</span>
+        </div>
+        <ul>
+          <li>korpa u lokalnoj pohrani preglednika;</li>
+          <li>administratorska prijava i sigurnosna sesija;</li>
+          <li>ova odluka o privatnosti;</li>
+          <li>Cloudflare Turnstile zaštita obrazaca od zloupotrebe.</li>
+        </ul>
+      </div>
+
+      <p class="note">
+        Google Fonts se učitava radi tipografije, ali aplikacija ne instalira Google Analytics, Tag
+        Manager, Meta Pixel niti druge marketinške trackere.
+      </p>
+
+      <div class="settings-actions">
+        <a routerLink="/politika-privatnosti" fragment="kolacici" (click)="closeSettings()">
+          Politika privatnosti
+        </a>
+        <button type="button" class="primary" (click)="acceptNecessary()">Sačuvaj</button>
+      </div>
+    </div>
+  </section>
+}

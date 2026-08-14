@@ -5,7 +5,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { catchError, finalize, startWith, tap } from 'rxjs/operators';
 import { AdminOrder, OrderStatus } from '../../../../core/admin-api/admin-orders.models';
-import { AdminOrdersApi, UpdateOrderItemRequest } from '../../../../core/admin-api/admin-prders-api';
+import {
+  AdminOrdersApi,
+  UpdateOrderItemRequest,
+} from '../../../../core/admin-api/admin-prders-api';
 import { ConfirmDialog, ConfirmVariant } from '../../../../shared/ui/confirm-dialog/confirm-dialog';
 
 type OrderAction = 'approve' | 'cancel' | 'details';
@@ -182,7 +185,7 @@ export class AdminOrders implements OnDestroy {
     () => this.orderNumberValue().length > 0 && !this.loading(),
   );
   readonly canSearchByPantheonId = computed(
-    () => this.pantheonOrderIdValue().length > 0 && !this.loading(),
+    () => /^\d+$/.test(this.pantheonOrderIdValue()) && !this.loading(),
   );
 
   readonly confirmTitle = computed(() => {
@@ -219,7 +222,9 @@ export class AdminOrders implements OnDestroy {
   });
 
   readonly confirmIcon = computed(() => {
-    return this.confirmAction() === 'cancel' || this.confirmAction() === 'remove-coupon' ? '⚠' : '✓';
+    return this.confirmAction() === 'cancel' || this.confirmAction() === 'remove-coupon'
+      ? '⚠'
+      : '✓';
   });
 
   ngOnDestroy(): void {
@@ -276,7 +281,10 @@ export class AdminOrders implements OnDestroy {
 
   onSearchByPantheonId(): void {
     const pantheonOrderId = this.pantheonOrderIdValue();
-    if (!pantheonOrderId) return;
+    if (!/^\d+$/.test(pantheonOrderId)) {
+      this.error.set('Pantheon ID mora biti cijeli broj.');
+      return;
+    }
     this.lastSearchContext.set({ mode: 'pantheon-id', pantheonOrderId });
     this.fetchSingleOrder(
       this.api.getByPantheonId(pantheonOrderId),
@@ -290,27 +298,25 @@ export class AdminOrders implements OnDestroy {
   ): void {
     this.loading.set(true);
     this.error.set(null);
-    request$
-      .pipe(finalize(() => this.loading.set(false)))
-      .subscribe({
-        next: (order) => {
-          this.orders.set(order ? [order] : []);
-          this.editedItemQuantities.set({});
-          this.expandedOrderId.set(order?.orderId ?? null);
-        },
-        error: (err: unknown) => {
-          this.orders.set([]);
-          this.editedItemQuantities.set({});
-          const status = this.statusFromError(err);
-          this.error.set(
-            status === 404
-              ? notFound
-              : status === 401 || status === 403
-                ? 'Nemate dozvolu za ovu pretragu.'
-                : 'Pretraga narudžbe trenutno nije uspjela. Pokušajte ponovo.',
-          );
-        },
-      });
+    request$.pipe(finalize(() => this.loading.set(false))).subscribe({
+      next: (order) => {
+        this.orders.set(order ? [order] : []);
+        this.editedItemQuantities.set({});
+        this.expandedOrderId.set(order?.orderId ?? null);
+      },
+      error: (err: unknown) => {
+        this.orders.set([]);
+        this.editedItemQuantities.set({});
+        const status = this.statusFromError(err);
+        this.error.set(
+          status === 404
+            ? notFound
+            : status === 401 || status === 403
+              ? 'Nemate dozvolu za ovu pretragu.'
+              : 'Pretraga narudžbe trenutno nije uspjela. Pokušajte ponovo.',
+        );
+      },
+    });
   }
 
   private fetchOrders(start: string, end: string): void {
@@ -567,7 +573,9 @@ export class AdminOrders implements OnDestroy {
   }
 
   isReconfirmBusy(order: AdminOrder): boolean {
-    return this.rowActionBusyOrderId() === order.orderId && this.rowActionBusyType() === 'reconfirm';
+    return (
+      this.rowActionBusyOrderId() === order.orderId && this.rowActionBusyType() === 'reconfirm'
+    );
   }
 
   hasItemsChanged(order: AdminOrder): boolean {
@@ -622,7 +630,9 @@ export class AdminOrders implements OnDestroy {
   }
 
   isUpdateItemsBusy(order: AdminOrder): boolean {
-    return this.rowActionBusyOrderId() === order.orderId && this.rowActionBusyType() === 'update-items';
+    return (
+      this.rowActionBusyOrderId() === order.orderId && this.rowActionBusyType() === 'update-items'
+    );
   }
 
   saveOrderItems(order: AdminOrder): void {
@@ -633,7 +643,9 @@ export class AdminOrders implements OnDestroy {
       quantity: this.editedItemQuantity(order.orderId, item.sizeAttributeVariantId, item.quantity),
     }));
 
-    const invalidQty = payload.some((item) => !Number.isInteger(item.quantity) || item.quantity <= 0);
+    const invalidQty = payload.some(
+      (item) => !Number.isInteger(item.quantity) || item.quantity <= 0,
+    );
     if (invalidQty) {
       const msg = 'Količina mora biti cijeli broj veći od 0.';
       this.error.set(msg);

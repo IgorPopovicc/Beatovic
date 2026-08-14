@@ -50,6 +50,10 @@ export class Navbar implements OnInit, OnDestroy {
   private cart = inject(CartStore);
   private productsApi = inject(ProductsApiService);
   private navigationStartSub?: Subscription;
+  private mobileMediaQuery?: MediaQueryList;
+  private readonly onMobileMediaChange = (event: MediaQueryListEvent): void => {
+    this.isMobile = event.matches;
+  };
   private bodyScrollLocked = false;
   private bodyScrollTop = 0;
 
@@ -134,23 +138,23 @@ export class Navbar implements OnInit, OnDestroy {
             sortOrder: 'ASC',
           })
           .pipe(
-          tap((res) => {
-            const items = (res.variants ?? []) as Variant[];
-            this.variants.set(items);
-            this.totalVariants.set(res.totalResults ?? items.length);
-            this.loadingSearch.set(false);
-          }),
-          map(() => null),
-          catchError((err) => {
-            this.loadingSearch.set(false);
-            this.variants.set([]);
-            this.totalVariants.set(0);
+            tap((res) => {
+              const items = (res.variants ?? []) as Variant[];
+              this.variants.set(items);
+              this.totalVariants.set(res.totalResults ?? items.length);
+              this.loadingSearch.set(false);
+            }),
+            map(() => null),
+            catchError((err) => {
+              this.loadingSearch.set(false);
+              this.variants.set([]);
+              this.totalVariants.set(0);
 
-            const msg = 'Greška pri pretrazi. Pokušajte ponovo.';
-            this.searchError.set(msg);
-            return of(null);
-          }),
-        );
+              const msg = 'Greška pri pretrazi. Pokušajte ponovo.';
+              this.searchError.set(msg);
+              return of(null);
+            }),
+          );
       }),
     ),
     { initialValue: null },
@@ -179,9 +183,9 @@ export class Navbar implements OnInit, OnDestroy {
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
-      const mq = window.matchMedia('(max-width: 768px)');
-      this.isMobile = mq.matches;
-      mq.addEventListener?.('change', (e) => (this.isMobile = e.matches));
+      this.mobileMediaQuery = window.matchMedia('(max-width: 768px)');
+      this.isMobile = this.mobileMediaQuery.matches;
+      this.mobileMediaQuery.addEventListener?.('change', this.onMobileMediaChange);
       this.lastScrollY = this.currentScrollY();
 
       this.navigationStartSub = this.router.events
@@ -194,6 +198,7 @@ export class Navbar implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.navigationStartSub?.unsubscribe();
+    this.mobileMediaQuery?.removeEventListener?.('change', this.onMobileMediaChange);
     this.lockBodyScroll(false);
   }
 
@@ -239,29 +244,7 @@ export class Navbar implements OnInit, OnDestroy {
           this.menu.set(base);
         };
 
-        const rootsWithChildren = rootCategories.filter((value) => value.hasChildren === true);
-        if (rootsWithChildren.length === 0) {
-          buildMenu(rootCategories);
-          return;
-        }
-
-        const childrenRequests = rootsWithChildren.map((root) =>
-          this.catalogApi.getCategoryValueChildren(root.id).pipe(
-            catchError(() => of([])),
-            map((children) => ({ rootId: root.id, children })),
-          ),
-        );
-
-        forkJoin(childrenRequests).subscribe((childrenGroups) => {
-          const flatChildren = childrenGroups.flatMap((group) => group.children);
-          if (flatChildren.length === 0) {
-            buildMenu(rootCategories);
-            return;
-          }
-
-          const rootsWithoutChildren = rootCategories.filter((root) => root.hasChildren !== true);
-          buildMenu([...rootsWithoutChildren, ...flatChildren]);
-        });
+        buildMenu(rootCategories);
       });
     });
   }
@@ -349,14 +332,9 @@ export class Navbar implements OnInit, OnDestroy {
 
   pickMetaLine(v: Variant): string {
     const cats = v.categories ?? [];
-    const categoryValue = (c?: VariantCategory) =>
-      String(c?.displayValue ?? c?.value ?? '').trim();
-    const brand = categoryValue(
-      cats.find((c) => (c.categoryName ?? '').toUpperCase() === 'BREND'),
-    );
-    const gender = categoryValue(
-      cats.find((c) => (c.categoryName ?? '').toUpperCase() === 'POL'),
-    );
+    const categoryValue = (c?: VariantCategory) => String(c?.displayValue ?? c?.value ?? '').trim();
+    const brand = categoryValue(cats.find((c) => (c.categoryName ?? '').toUpperCase() === 'BREND'));
+    const gender = categoryValue(cats.find((c) => (c.categoryName ?? '').toUpperCase() === 'POL'));
     const cat = categoryValue(
       cats.find((c) => (c.categoryName ?? '').toUpperCase() === 'KATEGORIJA'),
     );

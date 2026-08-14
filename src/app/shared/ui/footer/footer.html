@@ -3,7 +3,14 @@
 
   <div class="footer-grid">
     <div class="footer-section logo">
-      <img src="assets/images/logo/planets_main_logo.png" alt="Planeta Logo" />
+      <img
+        src="assets/images/logo/planets_main_logo.png"
+        alt="Planeta Logo"
+        width="716"
+        height="583"
+        loading="lazy"
+        decoding="async"
+      />
     </div>
 
     <div class="footer-section contact">
@@ -49,11 +56,14 @@
         Prijavite se
       </button>
     </div>
-
   </div>
 
   <div class="footer-bottom">
     <a routerLink="/politika-privatnosti">Politika privatnosti</a>
+    <span aria-hidden="true"> · </span>
+    <button type="button" class="cookie-settings-link" (click)="openCookieSettings()">
+      Postavke kolačića
+    </button>
     <br />
     Web stranicu izradio
     <a href="https://www.linkedin.com/in/igpopovic" target="_blank" rel="noopener">
@@ -101,13 +111,17 @@
           <label class="field">
             <span>Ime i prezime</span>
             <input type="text" formControlName="name" placeholder="npr. Amar Hadžić" />
-            <span class="field-msg" [class.error]="hasFieldError('name')">{{ fieldError('name') }}</span>
+            <span class="field-msg" [class.error]="hasFieldError('name')">{{
+              fieldError('name')
+            }}</span>
           </label>
 
           <label class="field">
             <span>E-mail *</span>
             <input type="email" formControlName="email" placeholder="vas@email.com" />
-            <span class="field-msg" [class.error]="hasFieldError('email')">{{ fieldError('email') }}</span>
+            <span class="field-msg" [class.error]="hasFieldError('email')">{{
+              fieldError('email')
+            }}</span>
           </label>
         </div>
 
@@ -136,7 +150,9 @@
             rows="5"
             placeholder="Unesite sadržaj poruke..."
           ></textarea>
-          <span class="field-msg" [class.error]="hasFieldError('message')">{{ fieldError('message') }}</span>
+          <span class="field-msg" [class.error]="hasFieldError('message')">{{
+            fieldError('message')
+          }}</span>
         </label>
 
         <label class="field privacy-field">
@@ -154,7 +170,12 @@
 
         <div class="contact-actions">
           <app-turnstile-widget context="contact" />
-          <button type="button" class="btn ghost" (click)="closeContactModal()" [disabled]="submitting()">
+          <button
+            type="button"
+            class="btn ghost"
+            (click)="closeContactModal()"
+            [disabled]="submitting()"
+          >
             Zatvori
           </button>
 

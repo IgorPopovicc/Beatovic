@@ -57,6 +57,11 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
+    min-width: 0;
+  }
+
+  .footer-section a {
+    overflow-wrap: anywhere;
   }
 
   .icons {
@@ -121,6 +126,20 @@
 }
 
 .footer-bottom a:hover {
+  color: #010101;
+  text-decoration: none;
+}
+
+.cookie-settings-link {
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: #ee2e24;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.cookie-settings-link:hover {
   color: #010101;
   text-decoration: none;
 }

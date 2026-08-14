@@ -8,6 +8,7 @@ import { RouterLink } from '@angular/router';
 import { TurnstileWidgetComponent } from '../turnstile-widget/turnstile-widget';
 import { TurnstileTokenService } from '../../../core/security/turnstile-token.service';
 import { isTurnstileVerificationError } from '../../../core/security/turnstile.interceptor';
+import { CookieConsentService } from '../../../core/privacy/cookie-consent.service';
 
 const PHONE_REGEX = /^\+?[0-9\-\s]{7,15}$/;
 
@@ -27,6 +28,7 @@ export class Footer implements OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly contactApi = inject(ContactFormApiService);
   private readonly notices = inject(AppNoticeService);
+  private readonly cookieConsent = inject(CookieConsentService);
   readonly turnstile = inject(TurnstileTokenService);
   private bodyOverflowBeforeModal: string | null = null;
 
@@ -36,7 +38,7 @@ export class Footer implements OnDestroy {
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.maxLength(30)]],
-    email: ['', [Validators.required, Validators.email, Validators.maxLength(20)]],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(40)]],
     phoneNumber: ['', [Validators.pattern(PHONE_REGEX)]],
     subject: ['', [Validators.maxLength(30)]],
     message: ['', [Validators.required, Validators.maxLength(1000)]],
@@ -59,6 +61,10 @@ export class Footer implements OnDestroy {
     this.contactOpen.set(true);
     this.submitError.set(null);
     this.lockBodyScroll();
+  }
+
+  openCookieSettings(): void {
+    this.cookieConsent.openSettings();
   }
 
   closeContactModal(): void {
@@ -98,6 +104,7 @@ export class Footer implements OnDestroy {
     }
 
     const raw = this.form.getRawValue();
+    const name = String(raw.name ?? '').trim();
     const email = String(raw.email ?? '').trim();
     const message = String(raw.message ?? '').trim();
 
@@ -108,11 +115,11 @@ export class Footer implements OnDestroy {
     }
 
     const payload = {
+      name,
       email,
       message,
       privacyPolicyAccepted: true,
       website: String(raw.website ?? ''),
-      ...(hasVisibleText(raw.name) ? { name: String(raw.name).trim() } : {}),
       ...(hasVisibleText(raw.phoneNumber) ? { phoneNumber: String(raw.phoneNumber).trim() } : {}),
       ...(hasVisibleText(raw.subject) ? { subject: String(raw.subject).trim() } : {}),
     };
@@ -152,7 +159,7 @@ export class Footer implements OnDestroy {
       case 'email':
         if (control.errors?.['required']) return 'E-mail je obavezan.';
         if (control.errors?.['email']) return 'Unesite ispravan e-mail.';
-        if (control.errors?.['maxlength']) return 'E-mail može imati najviše 20 karaktera.';
+        if (control.errors?.['maxlength']) return 'E-mail može imati najviše 40 karaktera.';
         return 'Unesite ispravan e-mail.';
       case 'phoneNumber':
         if (control.errors?.['pattern']) return 'Telefon mora biti u formatu +387 61 123 456.';
@@ -199,8 +206,8 @@ export class Footer implements OnDestroy {
         ((error as { error?: Record<string, unknown> })?.error ?? {})['email'] ?? '',
       ).toLowerCase();
 
-      if (backendEmailError.includes('between 0 and 20') || backendEmailError.includes('20')) {
-        return 'E-mail može imati najviše 20 karaktera.';
+      if (backendEmailError.includes('between 0 and 40') || backendEmailError.includes('40')) {
+        return 'E-mail može imati najviše 40 karaktera.';
       }
 
       return 'Provjerite unesene podatke i pokušajte ponovo.';

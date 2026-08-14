@@ -7,10 +7,18 @@ import { BackendFallbackComponent } from './features/backend-fallback/backend-fa
 import { RouteSeoService } from './core/seo/route-seo.service';
 import { SeoService } from './core/seo/seo.service';
 import { CartAddToastComponent } from './shared/ui/cart-add-toast/cart-add-toast';
+import { CookieConsentComponent } from './shared/ui/cookie-consent/cookie-consent';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, Footer, BackendFallbackComponent, CartAddToastComponent],
+  imports: [
+    RouterOutlet,
+    Navbar,
+    Footer,
+    BackendFallbackComponent,
+    CartAddToastComponent,
+    CookieConsentComponent,
+  ],
   templateUrl: './app.html',
 })
 export class App {

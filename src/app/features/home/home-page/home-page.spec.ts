@@ -24,7 +24,10 @@ describe('HomePage', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [HomePage],
-      providers: [provideRouter([]), provideHttpClient(), provideZonelessChangeDetection(),
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideZonelessChangeDetection(),
         {
           provide: ProductsApiService,
           useValue: {
@@ -48,11 +51,18 @@ describe('HomePage', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomePage);
+    const host = fixture.nativeElement as HTMLElement;
+    host.style.width = '1440px';
+    host.style.minHeight = '900px';
+    document.body.appendChild(host);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  afterEach(() => (fixture.nativeElement as HTMLElement).remove());
+
+  it('should create', async () => {
     expect(component).toBeTruthy();
+    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 });

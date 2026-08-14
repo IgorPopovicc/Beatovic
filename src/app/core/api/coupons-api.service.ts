@@ -7,11 +7,10 @@ import type { CouponDetails } from '../admin-api/admin-coupons.models';
 
 export type CheckoutCouponDiscountType = CouponDetails['discountType'];
 
-export interface CheckoutCoupon
-  extends Omit<
-    Pick<CouponDetails, 'id' | 'code' | 'discountType' | 'discountValue' | 'remainingUsageCount'>,
-    'remainingUsageCount'
-  > {
+export interface CheckoutCoupon extends Omit<
+  Pick<CouponDetails, 'id' | 'code' | 'discountType' | 'discountValue' | 'remainingUsageCount'>,
+  'remainingUsageCount'
+> {
   remainingUsageCount: number | null;
 }
 
@@ -41,7 +40,9 @@ function asRawCouponArray(response: unknown): RawCoupon[] {
 }
 
 function normalizeDiscountType(raw: unknown): CheckoutCouponDiscountType | null {
-  const normalized = String(raw ?? '').trim().toUpperCase();
+  const normalized = String(raw ?? '')
+    .trim()
+    .toUpperCase();
   if (normalized === 'PERCENTAGE') return 'PERCENTAGE';
   if (normalized === 'FIXED_AMOUNT') return 'FIXED_AMOUNT';
   return null;
@@ -81,7 +82,7 @@ function normalizeCode(value: string): string {
 @Injectable({ providedIn: 'root' })
 export class CouponsApiService {
   private readonly http = inject(HttpClient);
-  private readonly endpoint = runtimeApiUrl(`/admin/coupons/active`);
+  private readonly endpoint = runtimeApiUrl(`/coupons/admin/active`);
 
   lookupCouponByCode(code: string): Observable<CouponLookupResult> {
     const normalizedCode = normalizeCode(code);

@@ -64,18 +64,16 @@ export class CatalogApiService {
 
   getCategories(): Observable<ApiCategory[]> {
     if (!this.categories$) {
-      this.categories$ = this.http
-        .get<RawApiCategory[]>(`${this.baseUrl}/categories`)
-        .pipe(
-          map((items) =>
-            items.map(normalizeCategory).filter((item): item is ApiCategory => item !== null),
-          ),
-          catchError((error) => {
-            this.categories$ = undefined;
-            return throwError(() => error);
-          }),
-          shareReplay({ bufferSize: 1, refCount: false }),
-        );
+      this.categories$ = this.http.get<RawApiCategory[]>(`${this.baseUrl}/categories`).pipe(
+        map((items) =>
+          items.map(normalizeCategory).filter((item): item is ApiCategory => item !== null),
+        ),
+        catchError((error) => {
+          this.categories$ = undefined;
+          return throwError(() => error);
+        }),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
     }
     return this.categories$;
   }
@@ -105,32 +103,6 @@ export class CatalogApiService {
 
     const req$ = this.http
       .get<RawApiCategoryValue[]>(`${this.baseUrl}/categories/${categoryId}/values`, { params })
-      .pipe(
-        map((items) =>
-          items
-            .map(normalizeCategoryValue)
-            .filter((item): item is ApiCategoryValue => item !== null),
-        ),
-        catchError((error) => {
-          this.valuesCache.delete(cacheKey);
-          return throwError(() => error);
-        }),
-        shareReplay({ bufferSize: 1, refCount: false }),
-      );
-
-    this.valuesCache.set(cacheKey, req$);
-    return req$;
-  }
-
-  getCategoryValueChildren(parentCategoryValueId: string): Observable<ApiCategoryValue[]> {
-    const cacheKey = `children|${parentCategoryValueId}`;
-    const existing = this.valuesCache.get(cacheKey);
-    if (existing) return existing;
-
-    const req$ = this.http
-      .get<RawApiCategoryValue[]>(
-        `${this.baseUrl}/categories/values/${parentCategoryValueId}/children`,
-      )
       .pipe(
         map((items) =>
           items

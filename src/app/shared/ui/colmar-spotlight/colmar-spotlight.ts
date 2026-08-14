@@ -5,7 +5,7 @@ import { catchError, of, tap } from 'rxjs';
 import { ProductsApiService } from '../../../core/api/products-api.service';
 import { ProductCard } from '../product-card/product-card';
 import { mapVariantToProductCard, variantMatchesBrand } from '../product-card/product-card.mapper';
-import { ProductCardComponent } from '../product-card/product-card';
+import { currencyDisplayLabel } from '../../utils/currency';
 
 type BrandSpotlightConfig = {
   brandKey: string;
@@ -16,13 +16,13 @@ type BrandSpotlightConfig = {
   ctaLabel: string;
   ctaLink: string[];
   ctaQueryParams: Record<string, string>;
-  fallbackBackgroundImage: string;
+  campaignImage: string;
 };
 
 @Component({
   selector: 'app-colmar-spotlight',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProductCardComponent],
+  imports: [CommonModule, RouterLink],
   templateUrl: './colmar-spotlight.html',
   styleUrl: './colmar-spotlight.scss',
 })
@@ -39,15 +39,13 @@ export class ColmarSpotlight {
     ctaLabel: 'Pogledaj sve Colmar modele',
     ctaLink: ['/catalog', 'muskarci', 'obuca'],
     ctaQueryParams: { q: 'colmar' },
-    fallbackBackgroundImage: 'assets/images/home/hero-slide-2.jpg',
+    campaignImage: 'assets/images/home/colmar-performance-campaign.jpg',
   };
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly product = signal<ProductCard | null>(null);
-  readonly backgroundImage = computed(
-    () => this.product()?.image.desktop || this.config.fallbackBackgroundImage,
-  );
+  readonly currencyLabel = computed(() => currencyDisplayLabel(this.product()?.currency));
 
   constructor() {
     this.loadFeaturedBrand();

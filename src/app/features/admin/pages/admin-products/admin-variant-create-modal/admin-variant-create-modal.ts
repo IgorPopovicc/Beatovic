@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import {
   Component,
+  DestroyRef,
   EventEmitter,
   HostListener,
   Output,
@@ -10,7 +11,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormControl } from '@angular/forms';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   debounceTime,
   distinctUntilChanged,
@@ -30,7 +31,6 @@ import {
   AttributeValueDTO,
   CreateProductVariantDTO,
   Product,
-  ProductVariant,
 } from '../../../../../core/admin-api/admin-products.models';
 import { AdminAttributesApi } from '../../../../../core/admin-api/admin-attributes-api';
 import { colorSwatchLabel, parseColorSwatch } from '../../../../../shared/utils/color-swatch';
@@ -38,6 +38,7 @@ import { colorSwatchLabel, parseColorSwatch } from '../../../../../shared/utils/
 type DropdownKey = 'color';
 
 type FileItem = { _id: string; file: File };
+type ProductVariantSummary = NonNullable<Product['variants']>[number];
 
 @Component({
   selector: 'app-admin-variant-create-modal',
@@ -48,6 +49,7 @@ type FileItem = { _id: string; file: File };
 })
 export class AdminVariantCreateModal {
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly productsApi = inject(AdminProductsApi);
   private readonly attrApi = inject(AdminAttributesApi);
 
@@ -62,9 +64,7 @@ export class AdminVariantCreateModal {
 
   readonly selectedProduct = signal<Product | null>(null);
 
-  readonly variantsLoading = signal(false);
-  readonly variantsError = signal<string | null>(null);
-  readonly variants = signal<ProductVariant[]>([]);
+  readonly variants = signal<ProductVariantSummary[]>([]);
 
   readonly createFormOpen = signal(false);
 
@@ -168,7 +168,7 @@ export class AdminVariantCreateModal {
 
           this.productLoading.set(true);
 
-          return this.productsApi.searchProduct(q).pipe(
+          return this.productsApi.searchProduct(q, 0, 10).pipe(
             tap((list) => {
               this.productResults.set(list ?? []);
             }),
@@ -184,6 +184,7 @@ export class AdminVariantCreateModal {
             finalize(() => this.productLoading.set(false)),
           );
         }),
+        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe();
   }
@@ -216,6 +217,7 @@ export class AdminVariantCreateModal {
           });
         }),
         finalize(() => this.formLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(({ colors, sizes }) => {
         this.colorOptions.set(colors ?? []);
@@ -240,29 +242,7 @@ export class AdminVariantCreateModal {
       displayImageName: '',
     });
 
-    this.loadVariants(p.id);
-  }
-
-  private loadVariants(productId: string): void {
-    this.variantsLoading.set(true);
-    this.variantsError.set(null);
-    this.variants.set([]);
-
-    this.productsApi
-      .getVariantsByProductId(productId)
-      .pipe(finalize(() => this.variantsLoading.set(false)))
-      .subscribe({
-        next: (list) => {
-          this.variants.set(list ?? []);
-        },
-        error: (err) => {
-          const msg =
-            err?.status === 401 || err?.status === 403
-              ? 'Nemate dozvolu (provjeri admin token / role).'
-              : 'Greška pri učitavanju modela za proizvod.';
-          this.variantsError.set(msg);
-        },
-      });
+    this.variants.set(p.variants ?? []);
   }
 
   openCreateForm(): void {
@@ -399,7 +379,6 @@ export class AdminVariantCreateModal {
 
     const attributes = [
       {
-        id: crypto.randomUUID(),
         attributeId: colorAttr.id,
         attributeName: colorAttr.name,
         attributeValueId: colorValueId,
@@ -407,7 +386,6 @@ export class AdminVariantCreateModal {
         quantity: 0,
       },
       ...sizeEntries.map(([sizeValueId, meta]) => ({
-        id: crypto.randomUUID(),
         attributeId: sizeAttr.id,
         attributeName: sizeAttr.name,
         attributeValueId: sizeValueId,
@@ -418,7 +396,7 @@ export class AdminVariantCreateModal {
 
     const dto: CreateProductVariantDTO = {
       productId: product.id,
-      sku: finalSku,
+      ...(finalSku ? { sku: finalSku } : {}),
       price: Number(v.price),
       isNew: !!v.isNew,
       isOutlet: !!v.isOutlet,
@@ -432,10 +410,26 @@ export class AdminVariantCreateModal {
 
     this.productsApi
       .createVariantMultipart(dto, images)
-      .pipe(finalize(() => this.submitting.set(false)))
+      .pipe(
+        finalize(() => this.submitting.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe({
         next: (createdVariant) => {
-          const updated = [createdVariant, ...this.variants()];
+          const updated: ProductVariantSummary[] = [
+            {
+              id: createdVariant.id,
+              sku: createdVariant.sku,
+              displaySku: createdVariant.displaySku,
+              colorVariantAttributeValue: createdVariant.attributes?.find(
+                (attribute) => this.normalizeKey(attribute.attributeName) === 'BOJA',
+              )?.value,
+              mainImageName: createdVariant.mainImageName,
+              mainImageWebUrl: createdVariant.mainImageWebUrl,
+              mainImageThumbnailUrl: createdVariant.mainImageThumbnailUrl,
+            },
+            ...this.variants(),
+          ];
           this.variants.set(updated);
 
           this.createFormOpen.set(false);
@@ -463,14 +457,6 @@ export class AdminVariantCreateModal {
           this.submitError.set(msg);
         },
       });
-  }
-
-  formatPrice(value: number | null | undefined): string {
-    if (value === null || value === undefined) return '-';
-    return new Intl.NumberFormat('bs-BA', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(Number(value));
   }
 
   onOverlayMouseDown(): void {
@@ -518,7 +504,9 @@ export class AdminVariantCreateModal {
 
   private isAttribute(attr: AttributeDTO | null | undefined, target: string): boolean {
     const normTarget = this.normalizeKey(target);
-    return [attr?.name, attr?.displayValue].some((value) => this.normalizeKey(value) === normTarget);
+    return [attr?.name, attr?.displayValue].some(
+      (value) => this.normalizeKey(value) === normTarget,
+    );
   }
 
   private normalizeKey(value: unknown): string {
@@ -537,5 +525,4 @@ export class AdminVariantCreateModal {
       .replace(/^-+|-+$/g, '')
       .toUpperCase();
   }
-
 }

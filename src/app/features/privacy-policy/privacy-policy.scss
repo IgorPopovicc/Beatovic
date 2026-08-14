@@ -57,6 +57,12 @@ section p {
   margin: 0;
 }
 
+code {
+  overflow-wrap: anywhere;
+  color: #8f151c;
+  font-weight: 800;
+}
+
 .actions {
   display: flex;
   gap: 10px;

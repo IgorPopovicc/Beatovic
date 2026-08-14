@@ -16,11 +16,18 @@ describe('HeroSlider', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(HeroSlider);
+    const host = fixture.nativeElement as HTMLElement;
+    host.style.width = '1440px';
+    host.style.height = '620px';
+    document.body.appendChild(host);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  afterEach(() => (fixture.nativeElement as HTMLElement).remove());
+
+  it('should create', async () => {
     expect(component).toBeTruthy();
+    await new Promise((resolve) => setTimeout(resolve, 250));
   });
 });

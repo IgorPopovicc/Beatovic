@@ -100,7 +100,7 @@ export class CartStore {
     });
   }
 
-  add(item: Omit<CartItem, 'qty'> & { qty?: number }) {
+  add(item: Omit<CartItem, 'qty'> & { qty?: number }): void {
     const candidate = this.normalizeRuntimeItem(item);
     const qtyToAdd = Math.max(1, candidate.qty);
     const current = this._items();
@@ -126,7 +126,7 @@ export class CartStore {
     this.emitAddEvent(created, created.qty, false);
   }
 
-  setQty(id: string, qty: number) {
+  setQty(id: string, qty: number): void {
     const current = this._items();
     const idx = current.findIndex((x) => x.id === id);
     if (idx < 0) return;
@@ -137,24 +137,24 @@ export class CartStore {
     this._items.set(next);
   }
 
-  inc(id: string) {
+  inc(id: string): void {
     const it = this._items().find((x) => x.id === id);
     if (!it) return;
     this.setQty(id, it.qty + 1);
   }
 
-  dec(id: string) {
+  dec(id: string): void {
     const it = this._items().find((x) => x.id === id);
     if (!it) return;
     if (it.qty <= 1) return;
     this.setQty(id, it.qty - 1);
   }
 
-  remove(id: string) {
+  remove(id: string): void {
     this._items.set(this._items().filter((x) => x.id !== id));
   }
 
-  clear() {
+  clear(): void {
     this._items.set([]);
   }
 
@@ -194,7 +194,7 @@ export class CartStore {
     }
   }
 
-  private writeToStorage(items: CartItem[]) {
+  private writeToStorage(items: CartItem[]): void {
     if (!this.isBrowser) return;
     try {
       this.storage?.setItem(this.storageKey, JSON.stringify(items));
@@ -219,7 +219,9 @@ export class CartStore {
     const productId = this.normalizeOptionalText(
       entry['productId'] ?? entry['variantId'] ?? entry['productVariantId'],
     );
-    const sku = this.normalizeOptionalText(entry['sku'] ?? entry['productSku'] ?? entry['variantSku']);
+    const sku = this.normalizeOptionalText(
+      entry['sku'] ?? entry['productSku'] ?? entry['variantSku'],
+    );
     const displaySku = this.normalizeOptionalText(entry['displaySku']) ?? sku;
     const size = this.normalizeSize(entry['size'] ?? entry['selectedSize'] ?? entry['sizeValue']);
 
@@ -284,7 +286,9 @@ export class CartStore {
   }
 
   private findMatchingIndex(items: CartItem[], candidate: CartItem): number {
-    const exactIdIndex = items.findIndex((x) => this.normalizeText(x.id) === this.normalizeText(candidate.id));
+    const exactIdIndex = items.findIndex(
+      (x) => this.normalizeText(x.id) === this.normalizeText(candidate.id),
+    );
     if (exactIdIndex >= 0) return exactIdIndex;
 
     const candidateKey = this.dedupKey(candidate);
@@ -312,7 +316,9 @@ export class CartStore {
       ...existing,
       ...incoming,
       id: this.normalizeText(incoming.id) || this.normalizeText(existing.id),
-      productId: this.normalizeOptionalText(incoming.productId) ?? this.normalizeOptionalText(existing.productId),
+      productId:
+        this.normalizeOptionalText(incoming.productId) ??
+        this.normalizeOptionalText(existing.productId),
       sku: this.normalizeOptionalText(incoming.sku) ?? this.normalizeOptionalText(existing.sku),
       displaySku:
         this.normalizeOptionalText(incoming.displaySku) ??

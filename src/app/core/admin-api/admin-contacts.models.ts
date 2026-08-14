@@ -5,7 +5,7 @@ export interface ContactSearchRequest {
 }
 
 export interface CreateContactMessageRequest {
-  name?: string;
+  name: string;
   email: string;
   subject?: string;
   message: string;

@@ -3,6 +3,7 @@
 }
 
 .outage {
+  min-width: 0;
   min-height: min(70vh, 620px);
   display: grid;
   place-items: center;
@@ -10,6 +11,7 @@
 }
 
 .card {
+  min-width: 0;
   width: min(760px, 100%);
   padding: clamp(20px, 3.2vw, 32px);
   border-radius: 18px;
@@ -46,6 +48,7 @@ p {
   color: rgba(0, 0, 0, 0.7);
   font-weight: 600;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .actions {

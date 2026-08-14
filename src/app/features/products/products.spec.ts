@@ -2,7 +2,9 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
+import { ProductsApiService } from '../../core/api/products-api.service';
 import { Products } from './products';
 
 describe('Products', () => {
@@ -11,7 +13,23 @@ describe('Products', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      providers: [provideRouter([]), provideHttpClient(), provideZonelessChangeDetection()],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideZonelessChangeDetection(),
+        {
+          provide: ProductsApiService,
+          useValue: {
+            search: () =>
+              of({
+                variants: [],
+                availableCategories: [],
+                availableAttributes: [],
+                totalResults: 0,
+              }),
+          },
+        },
+      ],
       imports: [Products],
     }).compileComponents();
 

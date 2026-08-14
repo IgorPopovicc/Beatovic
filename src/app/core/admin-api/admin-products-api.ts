@@ -41,7 +41,7 @@ export class AdminProductsApi {
     );
   }
 
-  searchProduct(searchQuery: string, page = 0, pageSize = 20): Observable<Product[]> {
+  searchProduct(searchQuery: string, page = 0, pageSize = 10): Observable<Product[]> {
     const url = runtimeApiUrl(`/products/search-product`);
     let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     const token = this.auth.accessToken();
@@ -104,25 +104,6 @@ export class AdminProductsApi {
       );
   }
 
-  /** Lista varijanti za izabrani proizvod. */
-  getVariantsByProductId(productId: string): Observable<ProductVariant[]> {
-    const token = this.auth.accessToken();
-    if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
-
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${token}`,
-    });
-
-    const url = runtimeApiUrl(`/products/admin/variants/by-product/${encodeURIComponent(productId)}`);
-
-    return this.http.get<ProductVariant[]>(url, { headers }).pipe(
-      catchError((err) => {
-        console.error('[AdminProductsApi] getVariantsByProductId failed:', err);
-        return throwError(() => err);
-      }),
-    );
-  }
-
   /**
    * Kreiranje varijante (modela) preko multipart/form-data:
    * - "variant" = JSON Blob (CreateProductVariantDTO)
@@ -146,11 +127,9 @@ export class AdminProductsApi {
     // BITNO: NIKAD ne setuj Content-Type za FormData
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
 
-    return this.http.post<ProductVariant>(
-      runtimeApiUrl(`/products/admin/variants`),
-      formData,
-      { headers },
-    );
+    return this.http.post<ProductVariant>(runtimeApiUrl(`/products/admin/variants`), formData, {
+      headers,
+    });
   }
 
   getVariantDetails(variantId: string): Observable<ProductVariant> {
@@ -214,7 +193,7 @@ export class AdminProductsApi {
         console.error('[AdminProductsApi] deleteVariant failed:', err);
         return throwError(() => err);
       }),
-      );
+    );
   }
 
   getProductIdSkuPairs(): Observable<ProductIdSkuPair[]> {

@@ -81,7 +81,7 @@ export class AdminCouponsApi {
       return throwError(() => err);
     }
 
-    return this.http.get<unknown>(runtimeApiUrl(`/admin/coupons/active`), { headers }).pipe(
+    return this.http.get<unknown>(runtimeApiUrl(`/coupons/admin/active`), { headers }).pipe(
       map((response) =>
         toRawCouponArray(response)
           .map((item) => normalizeCoupon(item))
@@ -129,7 +129,7 @@ export class AdminCouponsApi {
 
     const safeId = encodeURIComponent(couponId);
     return this.http
-      .delete(runtimeApiUrl(`/admin/coupons/${safeId}`), {
+      .delete(runtimeApiUrl(`/coupons/admin/${safeId}`), {
         headers,
         responseType: 'text',
       })
