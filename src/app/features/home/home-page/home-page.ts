@@ -7,6 +7,7 @@ import { ColmarSpotlight } from '../../../shared/ui/colmar-spotlight/colmar-spot
 import { HomeBenefitsStrip } from '../../../shared/ui/home-benefits-strip/home-benefits-strip';
 import { HomeNewsletter } from '../../../shared/ui/home-newsletter/home-newsletter';
 import { SeoService } from '../../../core/seo/seo.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-home-page',
@@ -24,8 +25,24 @@ import { SeoService } from '../../../core/seo/seo.service';
 })
 export class HomePage implements OnInit {
   private readonly seo = inject(SeoService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   ngOnInit(): void {
+    const newsletterStatus = String(this.route.snapshot.queryParamMap.get('newsletter') ?? '')
+      .trim()
+      .toLowerCase();
+    const newsletterRoutes: Record<string, string> = {
+      confirmed: '/newsletter/confirmed',
+      invalid: '/newsletter/invalid',
+      unsubscribed: '/newsletter/unsubscribed',
+      'unsubscribe-failed': '/newsletter/unsubscribe-failed',
+    };
+    if (newsletterRoutes[newsletterStatus]) {
+      void this.router.navigateByUrl(newsletterRoutes[newsletterStatus], { replaceUrl: true });
+      return;
+    }
+
     const homeUrl = this.seo.absoluteUrl('/');
     const brandLogo = this.seo.absoluteUrl('/assets/images/logo/planets_main_logo.png');
     const shareImage = this.seo.absoluteUrl('/planeta-share.png');

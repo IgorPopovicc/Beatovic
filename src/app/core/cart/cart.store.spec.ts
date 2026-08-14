@@ -51,6 +51,18 @@ describe('CartStore', () => {
     expect(store.itemsCount()).toBe(2);
   });
 
+  it('keeps different product variants separate even when their size labels match', () => {
+    store.add(item('variant-a-size-42::42', '42'));
+    store.add({
+      ...item('variant-b-size-42::42', '42'),
+      productId: 'variant-2',
+      sku: 'MODEL-2',
+    });
+
+    expect(store.items().length).toBe(2);
+    expect(store.items().map((entry) => entry.productId)).toEqual(['variant-1', 'variant-2']);
+  });
+
   it('increments, decrements, and clamps quantity to available stock', () => {
     store.add(item('size-entry-42::42', '42', 2, 3));
 

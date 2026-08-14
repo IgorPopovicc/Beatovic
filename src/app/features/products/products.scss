@@ -36,6 +36,7 @@
 
 .sort {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 10px;
 }
@@ -47,6 +48,8 @@
 }
 
 .sort-select {
+  min-width: 0;
+  max-width: 100%;
   height: 40px;
   border-radius: 10px;
   border: 1px solid #ddd;
@@ -150,6 +153,46 @@
 .size-pill.active {
   border-color: #111;
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+.colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.color-pill {
+  min-width: 48px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 7px;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.color-pill.active {
+  border-color: #111;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+.color-swatch {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+}
+
+.color-count {
+  min-width: 1ch;
+  color: #555;
+  font-size: 0.75rem;
+  font-weight: 800;
 }
 
 .price-row {
@@ -461,6 +504,16 @@
 }
 
 @media (max-width: 420px) {
+  .sort {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .sort-select {
+    width: 100%;
+  }
+
   .page-btn {
     width: 100%;
   }

@@ -6,8 +6,8 @@ import { ProductDetailsResolved } from '../../features/product-details/product-d
 import { normalizeCurrencyCode } from '../../shared/utils/currency';
 
 type RouteSeoData = {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   noindex?: boolean;
   ogType?: 'website' | 'product' | 'article';
   image?: string | null;
@@ -59,8 +59,8 @@ export class RouteSeoService {
     }
 
     this.seo.setPage({
-      title: seoData.title,
-      description: seoData.description,
+      title: seoData.title?.trim() || this.defaultTitle,
+      description: seoData.description?.trim() || this.defaultDescription,
       noindex: seoData.noindex,
       ogType: seoData.ogType ?? 'website',
       image: seoData.image ?? null,

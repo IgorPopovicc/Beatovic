@@ -7,10 +7,7 @@ import { of } from 'rxjs';
 import { AdminOrdersApi } from '../../../../core/admin-api/admin-prders-api';
 import { AdminOrder, OrderStatus } from '../../../../core/admin-api/admin-orders.models';
 import { AdminProductsApi } from '../../../../core/admin-api/admin-products-api';
-import {
-  ProductIdSkuPair,
-  ProductVariantIdSkuPair,
-} from '../../../../core/admin-api/admin-products.models';
+import { ProductVariantIdSkuPair } from '../../../../core/admin-api/admin-products.models';
 import { AdminDiscountsApi } from '../../../../core/admin-api/admin-discount-api';
 import { DiscountListItem } from '../../../../core/admin-api/admin-discount.model';
 import { AdminCouponsApi } from '../../../../core/admin-api/admin-coupons-api';
@@ -113,7 +110,6 @@ export class AdminDashboard {
 
   readonly productsLoading = signal(false);
   readonly productsError = signal<string | null>(null);
-  readonly productPairs = signal<ProductIdSkuPair[]>([]);
   readonly variantPairs = signal<ProductVariantIdSkuPair[]>([]);
 
   readonly discountsLoading = signal(false);
@@ -308,15 +304,9 @@ export class AdminDashboard {
       tone: 'danger',
     });
     cards.push({
-      title: 'Proizvodi',
-      value: this.productsError() ? '-' : this.formatInt(this.productPairs().length),
-      hint: this.productsError() ?? 'Broj proizvoda iz admin endpointa',
-      tone: 'default',
-    });
-    cards.push({
-      title: 'Modeli proizvoda',
+      title: 'Broj artikala',
       value: this.productsError() ? '-' : this.formatInt(this.variantPairs().length),
-      hint: this.productsError() ?? 'Broj modela (varijanti)',
+      hint: this.productsError() ?? '',
       tone: 'default',
     });
     cards.push({
@@ -449,36 +439,7 @@ export class AdminDashboard {
   private loadProducts(): void {
     this.productsLoading.set(true);
     this.productsError.set(null);
-    this.productPairs.set([]);
     this.variantPairs.set([]);
-
-    let doneCount = 0;
-    const done = (): void => {
-      doneCount += 1;
-      if (doneCount < 2) return;
-      this.productsLoading.set(false);
-      this.markRefreshedIfIdle();
-    };
-
-    this.productsApi
-      .getProductIdSkuPairs()
-      .pipe(
-        tap((list) => {
-          this.productPairs.set(
-            (list ?? []).filter((item) => !!String(item?.id ?? '').trim() && !!String(item?.sku ?? '').trim()),
-          );
-        }),
-        catchError((err) => {
-          const msg =
-            err?.status === 401 || err?.status === 403
-              ? 'Nemate dozvolu za pregled proizvoda.'
-              : 'Proizvodi trenutno nisu dostupni.';
-          this.productsError.set(msg);
-          return of([] as ProductIdSkuPair[]);
-        }),
-        finalize(done),
-      )
-      .subscribe();
 
     this.productsApi
       .getVariantIdSkuPairs()
@@ -496,7 +457,10 @@ export class AdminDashboard {
           this.productsError.set(msg);
           return of([] as ProductVariantIdSkuPair[]);
         }),
-        finalize(done),
+        finalize(() => {
+          this.productsLoading.set(false);
+          this.markRefreshedIfIdle();
+        }),
       )
       .subscribe();
   }
@@ -678,6 +642,7 @@ export class AdminDashboard {
 
     for (const order of orders) {
       const statusKey = this.normalizeStatus(order.status);
+      const isCompleted = statusKey === 'COMPLETED';
       statusCounter.set(statusKey, (statusCounter.get(statusKey) ?? 0) + 1);
 
       if (statusKey === 'PENDING') pendingOrders++;
@@ -687,7 +652,7 @@ export class AdminDashboard {
       if (statusKey === 'EXPIRED') expiredOrders++;
 
       const amount = this.safeNumber(order.totalPrice);
-      if (amount !== null) {
+      if (isCompleted && amount !== null) {
         totalRevenue += amount;
         priceCount += 1;
 
@@ -708,12 +673,12 @@ export class AdminDashboard {
 
         if (orderDate.getTime() >= startYear.getTime() && orderDate.getTime() <= now.getTime()) {
           yearOrders += 1;
-          if (amount !== null) yearRevenue += amount;
+          if (isCompleted && amount !== null) yearRevenue += amount;
         }
 
         if (orderDate.getTime() >= startMonth.getTime() && orderDate.getTime() <= now.getTime()) {
           monthOrders += 1;
-          if (amount !== null) monthRevenue += amount;
+          if (isCompleted && amount !== null) monthRevenue += amount;
         }
 
         if (orderDate.getTime() >= startToday.getTime() && orderDate.getTime() <= now.getTime()) {
@@ -726,6 +691,8 @@ export class AdminDashboard {
       } else {
         ordersWithMissingDate += 1;
       }
+
+      if (!isCompleted) continue;
 
       for (const item of order.items ?? []) {
         const sku = String(item.productSku ?? '').trim();

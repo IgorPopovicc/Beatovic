@@ -258,7 +258,8 @@
           </div>
 
           <div class="micro muted">
-            Klikom na “Poruči” potvrđuješ da su podaci tačni. Detalji narudžbe stižu na e-mail.
+            Klikom na “Poruči” potvrđuješ da su podaci tačni. Na e-mail stiže link za potvrdu koji
+            vrijedi 60 minuta.
           </div>
         </form>
       </section>
@@ -325,11 +326,14 @@
               {{ total().amount | number: '1.2-2' }} {{ currencyLabel(total().currency) }}
             </div>
           </div>
+          <p class="shipping-exclusion">
+            Troškovi dostave nisu uključeni u prikazanu ukupnu cijenu narudžbe.
+          </p>
         </div>
 
         <div class="note">
           <div class="ico" aria-hidden="true">📧</div>
-          <div class="txt">Nakon poručivanja, provjeri e-mail za detalje narudžbe.</div>
+          <div class="txt">Nakon poručivanja, provjeri e-mail i potvrdi narudžbu u roku od 60 minuta.</div>
         </div>
       </aside>
     </div>

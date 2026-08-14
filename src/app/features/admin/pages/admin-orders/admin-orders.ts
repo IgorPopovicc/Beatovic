@@ -1,5 +1,6 @@
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
@@ -102,8 +103,10 @@ const ORDER_STATUS_UI: Record<OrderStatus, OrderStatusUiConfig> = {
   templateUrl: './admin-orders.html',
   styleUrl: './admin-orders.scss',
 })
-export class AdminOrders implements OnDestroy {
+export class AdminOrders implements OnInit, OnDestroy {
   private readonly api = inject(AdminOrdersApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly platformId = inject(PLATFORM_ID);
   private noticeTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly startDate = new FormControl<string>('', { nonNullable: true });
@@ -227,8 +230,55 @@ export class AdminOrders implements OnDestroy {
       : '✓';
   });
 
+  ngOnInit(): void {
+    const requestedId = String(this.route.snapshot.paramMap.get('orderId') ?? '').trim();
+    if (!requestedId) return;
+
+    const stateOrder = this.navigationOrder();
+    if (stateOrder?.orderId === requestedId) {
+      this.orders.set([stateOrder]);
+      this.expandedOrderId.set(requestedId);
+      return;
+    }
+
+    this.loadOrderByUuid(requestedId);
+  }
+
   ngOnDestroy(): void {
     this.clearNoticeTimer();
+  }
+
+  private navigationOrder(): AdminOrder | null {
+    if (!isPlatformBrowser(this.platformId) || typeof history === 'undefined') return null;
+    const order = (history.state as { order?: AdminOrder } | null)?.order;
+    return order?.orderId ? order : null;
+  }
+
+  private loadOrderByUuid(orderId: string): void {
+    this.loading.set(true);
+    this.error.set(null);
+    const now = new Date().toISOString().slice(0, 19);
+
+    this.api
+      .getByDate('2000-01-01T00:00:00', now)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (orders) => {
+          const selected = (orders ?? []).find((order) => order.orderId === orderId) ?? null;
+          this.orders.set(selected ? [selected] : []);
+          this.expandedOrderId.set(selected?.orderId ?? null);
+          if (!selected) this.error.set('Narudžba sa izabranim UUID-om nije pronađena.');
+        },
+        error: (err: unknown) => {
+          const status = this.statusFromError(err);
+          this.orders.set([]);
+          this.error.set(
+            status === 401 || status === 403
+              ? 'Nemate dozvolu za pregled ove narudžbe.'
+              : 'Detalji izabrane narudžbe trenutno nisu dostupni.',
+          );
+        },
+      });
   }
 
   onSearch(): void {

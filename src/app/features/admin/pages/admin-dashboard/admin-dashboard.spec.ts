@@ -11,6 +11,7 @@ import { AdminDiscountsApi } from '../../../../core/admin-api/admin-discount-api
 import { AdminCouponsApi } from '../../../../core/admin-api/admin-coupons-api';
 import { AdminNewsletterApi } from '../../../../core/admin-api/admin-newsletter-api';
 import { AdminContactsApi } from '../../../../core/admin-api/admin-contacts-api';
+import { AdminOrder } from '../../../../core/admin-api/admin-orders.models';
 
 describe('AdminDashboard', () => {
   let component: AdminDashboard;
@@ -72,5 +73,51 @@ describe('AdminDashboard', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('calculates revenue and best-selling metrics only from COMPLETED orders', () => {
+    const base: AdminOrder = {
+      orderId: 'completed-id',
+      orderNumber: '100',
+      status: 'COMPLETED',
+      totalPrice: 120,
+      description: '',
+      couponCode: null,
+      couponValue: null,
+      couponType: null,
+      userDetails: null,
+      orderDate: new Date().toISOString(),
+      items: [
+        {
+          sizeAttributeVariantId: 'size-1',
+          sizeVariantAttributeValue: '42',
+          productName: 'Završeni artikal',
+          productSku: 'DONE',
+          quantity: 2,
+          pricePerUnit: 60,
+          totalItemPrice: 120,
+        },
+      ],
+    };
+
+    component.orders.set([
+      base,
+      {
+        ...base,
+        orderId: 'pending-id',
+        orderNumber: '101',
+        status: 'PENDING',
+        totalPrice: 999,
+        items: [{ ...base.items[0], productName: 'Nezavršen artikal', productSku: 'PENDING', quantity: 9 }],
+      },
+    ]);
+
+    const analytics = component.orderAnalytics();
+    expect(analytics.totalRevenue).toBe(120);
+    expect(analytics.avgOrderValue).toBe(120);
+    expect(analytics.totalSoldUnits).toBe(2);
+    expect(analytics.topByQuantity.map((item) => item.sku)).toEqual(['DONE']);
+    expect(component.kpiCards().some((card) => card.title === 'Proizvodi')).toBeFalse();
+    expect(component.kpiCards().some((card) => card.title === 'Broj artikala')).toBeTrue();
   });
 });

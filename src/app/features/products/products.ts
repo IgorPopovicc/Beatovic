@@ -1,5 +1,12 @@
-import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { CommonModule, ViewportScroller } from '@angular/common';
+import {
+  Component,
+  computed,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, combineLatest, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -11,6 +18,7 @@ import { mapVariantToProductCard } from '../../shared/ui/product-card/product-ca
 import { CatalogApiService } from '../../core/api/catalog-api.sevice';
 import { fromSlug, toLabel } from '../../core/api/catalog-slug';
 import { SeoService } from '../../core/seo/seo.service';
+import { colorSwatchLabel, parseColorSwatch } from '../../shared/utils/color-swatch';
 
 type SortKey = 'novo' | 'cijena_rastuce' | 'cijena_opadajuce';
 type SortBy = 'NAME' | 'PRICE';
@@ -23,13 +31,17 @@ type FilterOption = {
   selected: boolean;
 };
 
+type ColorFilterOption = FilterOption & { background: string };
+
 type RouteContext = {
   genderSlug: string;
   categorySlug: string;
+  subcategorySlug: string;
   searchQuery: string;
   searchMode: boolean;
   forceSale: boolean;
   initialCategoryFilters: Record<string, string[]>;
+  categoryFilters: Record<string, string[]>;
 };
 
 type RouteResolution =
@@ -75,9 +87,11 @@ export class Products implements OnInit, OnDestroy {
   private readonly catalogApi = inject(CatalogApiService);
   private readonly productsApi = inject(ProductsApiService);
   private readonly seo = inject(SeoService);
+  private readonly viewportScroller = inject(ViewportScroller);
 
   private routeSub?: Subscription;
   private searchSub?: Subscription;
+  private scrollAfterPageLoad = false;
 
   filtersOpen = signal(false);
   loading = signal(true);
@@ -89,12 +103,13 @@ export class Products implements OnInit, OnDestroy {
 
   private readonly genderSlug = signal('');
   private readonly categorySlug = signal('');
+  private readonly subcategorySlug = signal('');
 
   searchTerm = computed(() => this.requestState()?.searchQuery?.trim() ?? '');
   isSearchMode = computed(() => this.searchTerm().length > 0);
   isAllProductsMode = computed(() => {
     if (this.isSearchMode()) return false;
-    return !this.genderSlug() && !this.categorySlug();
+    return !this.genderSlug() && !this.categorySlug() && !this.subcategorySlug();
   });
 
   heading = computed(() => {
@@ -108,9 +123,11 @@ export class Products implements OnInit, OnDestroy {
 
     const gender = this.genderSlug();
     const category = this.categorySlug();
+    const subcategory = this.subcategorySlug();
     const g = gender ? toLabel(fromSlug(gender)) : '';
     const c = category ? toLabel(fromSlug(category)) : '';
-    return [g, c].filter(Boolean).join(' / ');
+    const s = subcategory ? toLabel(fromSlug(subcategory)) : '';
+    return [g, c, s].filter(Boolean).join(' / ');
   });
 
   sectionLabel = computed(() => {
@@ -126,6 +143,11 @@ export class Products implements OnInit, OnDestroy {
   private readonly sizeAttributeGroup = computed(() => {
     const attributes = this.response()?.availableAttributes ?? [];
     return attributes.find((a) => this.normalizeKey(a.name) === 'VELICINA') ?? null;
+  });
+
+  private readonly colorAttributeGroup = computed(() => {
+    const attributes = this.response()?.availableAttributes ?? [];
+    return attributes.find((a) => this.normalizeKey(a.name) === 'BOJA') ?? null;
   });
 
   availableBrands = computed<FilterOption[]>(() => {
@@ -158,6 +180,27 @@ export class Products implements OnInit, OnDestroy {
       }))
       .filter((v) => !!v.label)
       .sort((a, b) => this.smartSizeCompare(a.label, b.label));
+  });
+
+  availableColors = computed<ColorFilterOption[]>(() => {
+    const group = this.colorAttributeGroup();
+    if (!group?.values?.length) return [];
+
+    const selected = this.selectedAttributeValueIds(group.id);
+    return group.values
+      .map((v) => {
+        const raw = String(v.displayValue ?? v.value ?? '').trim();
+        const swatch = parseColorSwatch(raw);
+        if (!swatch) return null;
+        return {
+          id: v.id,
+          label: colorSwatchLabel(raw),
+          background: swatch.background,
+          count: Number(v.count ?? 0),
+          selected: v.alreadySelected ?? selected.has(v.id),
+        } satisfies ColorFilterOption;
+      })
+      .filter((value): value is ColorFilterOption => value !== null);
   });
 
   priceBounds = computed(() => {
@@ -203,12 +246,15 @@ export class Products implements OnInit, OnDestroy {
       .pipe(
         switchMap(([params, queryParams]) => {
           const genderSlug = params.get('gender') ?? '';
-          const categorySlug = params.get('category') ?? '';
+          const sectionSlug = params.get('section') ?? '';
+          const categorySlug = params.get('category') ?? sectionSlug;
+          const subcategorySlug = params.get('subcategory') ?? '';
           const searchQuery = (queryParams.get('search') ?? queryParams.get('q') ?? '').trim();
           const forceSale = this.queryParamToBool(queryParams.get('sale'));
 
           this.genderSlug.set(genderSlug);
           this.categorySlug.set(categorySlug);
+          this.subcategorySlug.set(subcategorySlug);
 
           if (searchQuery) {
             return of<RouteResolution>({
@@ -216,26 +262,87 @@ export class Products implements OnInit, OnDestroy {
               context: {
                 genderSlug,
                 categorySlug,
+                subcategorySlug,
                 searchQuery,
                 searchMode: true,
                 forceSale,
                 initialCategoryFilters: {},
+                categoryFilters: {},
               },
             });
           }
 
-          if (!genderSlug && !categorySlug) {
+          if (!genderSlug && !categorySlug && !subcategorySlug) {
             return of<RouteResolution>({
               ok: true,
               context: {
                 genderSlug,
                 categorySlug,
+                subcategorySlug,
                 searchQuery: '',
                 searchMode: false,
                 forceSale,
                 initialCategoryFilters: {},
+                categoryFilters: {},
               },
             });
+          }
+
+          if (sectionSlug) {
+            return this.catalogApi.getCategoryIdByName('KATEGORIJA').pipe(
+              switchMap((katId) => {
+                if (!katId) {
+                  return of<RouteResolution>({
+                    ok: false,
+                    reason: 'catalog_unavailable',
+                    message: 'Katalog trenutno nije dostupan.',
+                    genderSlug,
+                    categorySlug,
+                  });
+                }
+
+                return this.catalogApi.getCategoryValues(katId, { onlyRoot: true }).pipe(
+                  map((values) => {
+                    const category = values.find(
+                      (value) =>
+                        this.normalizeKey(value.value) ===
+                        this.normalizeKey(fromSlug(sectionSlug)),
+                    );
+                    if (!category) {
+                      return {
+                        ok: false,
+                        reason: 'category_not_found',
+                        message: 'Tražena kategorija nije pronađena.',
+                        genderSlug,
+                        categorySlug,
+                      } satisfies RouteResolution;
+                    }
+                    return {
+                      ok: true,
+                      context: {
+                        genderSlug: '',
+                        categorySlug: sectionSlug,
+                        subcategorySlug: '',
+                        searchQuery: '',
+                        searchMode: false,
+                        forceSale,
+                        initialCategoryFilters: {},
+                        categoryFilters: { [katId]: [category.id] },
+                      },
+                    } satisfies RouteResolution;
+                  }),
+                );
+              }),
+              catchError(() =>
+                of<RouteResolution>({
+                  ok: false,
+                  reason: 'catalog_unavailable',
+                  message: 'Katalog trenutno nije dostupan.',
+                  genderSlug,
+                  categorySlug,
+                }),
+              ),
+            );
           }
 
           return forkJoin([
@@ -254,10 +361,10 @@ export class Products implements OnInit, OnDestroy {
               }
 
               return combineLatest([
-                this.catalogApi.getCategoryValues(polId),
-                this.catalogApi.getCategoryValues(katId),
+                this.catalogApi.getCategoryValues(polId, { onlyRoot: true }),
+                this.catalogApi.getCategoryValues(katId, { onlyRoot: true }),
               ]).pipe(
-                map(([polValues, katValues]) => {
+                switchMap(([polValues, katValues]) => {
                   const genderApiValue = fromSlug(genderSlug);
                   const categoryApiValue = fromSlug(categorySlug);
 
@@ -268,30 +375,91 @@ export class Products implements OnInit, OnDestroy {
                     (v) => this.normalizeKey(v.value) === this.normalizeKey(categoryApiValue),
                   );
 
+                  const standaloneParent =
+                    !subcategorySlug && !genderValue
+                      ? katValues.find(
+                          (v) =>
+                            this.normalizeKey(v.value) === this.normalizeKey(genderApiValue),
+                        )
+                      : null;
+
+                  if (standaloneParent) {
+                    return this.catalogApi.getCategoryChildren(standaloneParent.id).pipe(
+                      map((children) => {
+                        const child = children.find(
+                          (value) =>
+                            this.normalizeKey(value.value) ===
+                            this.normalizeKey(categoryApiValue),
+                        );
+                        return child
+                          ? ({
+                              ok: true,
+                              context: {
+                                genderSlug: '',
+                                categorySlug: genderSlug,
+                                subcategorySlug: categorySlug,
+                                searchQuery,
+                                searchMode: false,
+                                forceSale,
+                                initialCategoryFilters: {},
+                                categoryFilters: { [katId]: [child.id] },
+                              },
+                            } satisfies RouteResolution)
+                          : ({
+                              ok: false,
+                              reason: 'category_not_found',
+                              message: 'Tražena potkategorija nije pronađena.',
+                              genderSlug,
+                              categorySlug,
+                            } satisfies RouteResolution);
+                      }),
+                    );
+                  }
+
                   if (!genderValue || !categoryValue) {
-                    return {
+                    return of({
                       ok: false,
                       reason: 'category_not_found',
                       message: 'Tražena kategorija nije pronađena.',
                       genderSlug,
                       categorySlug,
-                    } satisfies RouteResolution;
+                    } satisfies RouteResolution);
                   }
 
-                  return {
+                  const buildContext = (categoryValueId: string): RouteResolution => ({
                     ok: true,
                     context: {
                       genderSlug,
                       categorySlug,
+                      subcategorySlug,
                       searchQuery,
                       searchMode: false,
                       forceSale,
-                      initialCategoryFilters: {
-                        [polId]: [genderValue.id],
-                        [katId]: [categoryValue.id],
-                      },
+                      initialCategoryFilters: { [polId]: [genderValue.id] },
+                      categoryFilters: { [katId]: [categoryValueId] },
                     },
-                  } satisfies RouteResolution;
+                  });
+
+                  if (!subcategorySlug) return of(buildContext(categoryValue.id));
+
+                  return this.catalogApi.getCategoryChildren(categoryValue.id).pipe(
+                    map((children) => {
+                      const child = children.find(
+                        (value) =>
+                          this.normalizeKey(value.value) ===
+                          this.normalizeKey(fromSlug(subcategorySlug)),
+                      );
+                      return child
+                        ? buildContext(child.id)
+                        : ({
+                            ok: false,
+                            reason: 'category_not_found',
+                            message: 'Tražena potkategorija nije pronađena.',
+                            genderSlug,
+                            categorySlug,
+                          } satisfies RouteResolution);
+                    }),
+                  );
                 }),
               );
             }),
@@ -320,7 +488,11 @@ export class Products implements OnInit, OnDestroy {
         if (resolution.context.searchMode) {
           this.applySearchSeo(resolution.context.searchQuery);
         } else {
-          this.applySeo(resolution.context.genderSlug, resolution.context.categorySlug);
+          this.applySeo(
+            resolution.context.genderSlug,
+            resolution.context.categorySlug,
+            resolution.context.subcategorySlug,
+          );
         }
         this.runSearch();
       });
@@ -399,6 +571,25 @@ export class Products implements OnInit, OnDestroy {
     });
   }
 
+  toggleColor(valueId: string): void {
+    const group = this.colorAttributeGroup();
+    if (!group?.id) return;
+
+    this.patchRequestState((prev) => {
+      const current = new Set(prev.attributeFilters[group.id] ?? []);
+      current.has(valueId) ? current.delete(valueId) : current.add(valueId);
+
+      const attributeFilters = { ...prev.attributeFilters };
+      if (current.size > 0) {
+        attributeFilters[group.id] = Array.from(current);
+      } else {
+        delete attributeFilters[group.id];
+      }
+
+      return { ...prev, attributeFilters, page: 0 };
+    });
+  }
+
   applyPrice(minRaw: string, maxRaw: string): void {
     const min = minRaw?.trim() ? Number(minRaw) : null;
     const max = maxRaw?.trim() ? Number(maxRaw) : null;
@@ -447,6 +638,8 @@ export class Products implements OnInit, OnDestroy {
   goPage(p: number): void {
     const max = this.totalPages();
     const clamped = Math.max(1, Math.min(p, max));
+    if (clamped === this.page()) return;
+    this.scrollAfterPageLoad = true;
     this.patchRequestState((prev) => ({ ...prev, page: clamped - 1 }));
   }
 
@@ -477,11 +670,16 @@ export class Products implements OnInit, OnDestroy {
         this.response.set(res ?? null);
         this.loading.set(false);
         this.applyCollectionStructuredData();
+        if (this.scrollAfterPageLoad) {
+          this.scrollAfterPageLoad = false;
+          this.viewportScroller.scrollToPosition([0, 0]);
+        }
       },
       error: (e) => {
         console.error(e);
         this.response.set(null);
         this.loading.set(false);
+        this.scrollAfterPageLoad = false;
         this.error.set('Trenutno ne možemo učitati katalog. Molimo pokušajte ponovo.');
       },
     });
@@ -513,7 +711,7 @@ export class Products implements OnInit, OnDestroy {
     return {
       searchQuery: context.searchQuery,
       initialCategoryFilters: context.initialCategoryFilters,
-      categoryFilters: {},
+      categoryFilters: context.categoryFilters,
       attributeFilters: {},
       minPrice: null,
       maxPrice: null,
@@ -547,13 +745,13 @@ export class Products implements OnInit, OnDestroy {
     this.seo.setPage({
       title: 'Kategorija nije pronađena | Planeta',
       description: 'Tražena kategorija ne postoji ili je uklonjena iz ponude.',
-      path: `/catalog/${resolution.genderSlug}/${resolution.categorySlug}`,
+      path: this.currentPath(),
       noindex: true,
     });
     this.seo.clearStructuredData();
   }
 
-  private applySeo(genderSlug: string, categorySlug: string): void {
+  private applySeo(genderSlug: string, categorySlug: string, subcategorySlug = ''): void {
     const path = this.currentPath();
     if (!genderSlug && !categorySlug) {
       this.seo.setPage({
@@ -568,7 +766,8 @@ export class Products implements OnInit, OnDestroy {
 
     const genderLabel = genderSlug ? toLabel(fromSlug(genderSlug)) : 'Proizvodi';
     const categoryLabel = categorySlug ? toLabel(fromSlug(categorySlug)) : '';
-    const joined = [genderLabel, categoryLabel].filter(Boolean).join(' / ');
+    const subcategoryLabel = subcategorySlug ? toLabel(fromSlug(subcategorySlug)) : '';
+    const joined = [genderLabel, categoryLabel, subcategoryLabel].filter(Boolean).join(' / ');
 
     this.seo.setPage({
       title: `${joined} | Planeta`,
@@ -586,6 +785,7 @@ export class Products implements OnInit, OnDestroy {
       description: `Pregled rezultata pretrage za "${searchQuery}" u Planeta webshopu.`,
       path: `${path}?search=${encoded}`,
       ogType: 'website',
+      noindex: true,
     });
   }
 

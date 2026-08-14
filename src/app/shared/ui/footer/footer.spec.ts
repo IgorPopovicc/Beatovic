@@ -44,4 +44,16 @@ describe('Footer', () => {
 
     expect(component.form.controls.email.errors?.['maxlength']).toBeUndefined();
   });
+
+  it('rejects contact email addresses longer than 40 characters', () => {
+    component.form.controls.email.setValue(`${'a'.repeat(30)}@example.com`);
+
+    expect(component.form.controls.email.errors?.['maxlength']).toBeTruthy();
+    component.openContactModal();
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector(
+      'input[formControlName="email"]',
+    ) as HTMLInputElement;
+    expect(input.maxLength).toBe(40);
+  });
 });

@@ -27,6 +27,9 @@ function proxyRoute(upstream, publicBasePath) {
   return {
     target: upstream.origin,
     changeOrigin: true,
+    // Some deployments validate Origin in addition to Host. Keep local browser requests
+    // same-origin while presenting the configured upstream origin to the backend.
+    headers: { origin: upstream.origin },
     secure: String(process.env.DEV_PROXY_TLS_VERIFY || 'true').toLowerCase() !== 'false',
     rewrite: (path) => `${upstreamBasePath}${path.slice(publicBasePath.length)}`,
   };

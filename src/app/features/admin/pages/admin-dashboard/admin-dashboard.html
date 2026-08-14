@@ -21,7 +21,9 @@
       <article class="kpi" [class.good]="card.tone === 'good'" [class.warn]="card.tone === 'warn'" [class.danger]="card.tone === 'danger'">
         <div class="kpi-title">{{ card.title }}</div>
         <div class="kpi-value">{{ card.value }}</div>
-        <div class="kpi-hint">{{ card.hint }}</div>
+        @if (card.hint && card.value === '-') {
+          <div class="kpi-hint">{{ card.hint }}</div>
+        }
       </article>
     }
   </section>
@@ -156,7 +158,11 @@
                 </td>
                 <td>{{ formatCurrency(o.totalPrice) }}</td>
                 <td>
-                  <a routerLink="/admin/orders" class="table-link">Detalji</a>
+                  <a
+                    [routerLink]="['/admin/orders', o.orderId]"
+                    [state]="{ order: o }"
+                    class="table-link"
+                  >Detalji</a>
                 </td>
               </tr>
             }

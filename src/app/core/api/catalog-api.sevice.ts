@@ -38,8 +38,9 @@ function normalizeCategoryValue(raw: RawApiCategoryValue): ApiCategoryValue | nu
   const id = String(raw?.id ?? '').trim();
   if (!id) return null;
 
-  // Backend can return either `value` or `displayValue` depending on API version.
-  const value = String(raw?.displayValue ?? raw?.value ?? '').trim();
+  // `value` is the stable API identifier used in URLs and matching. `displayValue`
+  // is presentation-only and may contain localized characters or change over time.
+  const value = String(raw?.value ?? raw?.displayValue ?? '').trim();
   if (!value) return null;
 
   const displayValue = String(raw?.displayValue ?? '').trim() || undefined;
@@ -86,6 +87,7 @@ export class CatalogApiService {
   }
 
   private valuesCache = new Map<string, Observable<ApiCategoryValue[]>>();
+  private childrenCache = new Map<string, Observable<ApiCategoryValue[]>>();
 
   getCategoryValues(
     categoryId: string,
@@ -117,6 +119,34 @@ export class CatalogApiService {
       );
 
     this.valuesCache.set(cacheKey, req$);
+    return req$;
+  }
+
+  getCategoryChildren(parentCategoryValueId: string): Observable<ApiCategoryValue[]> {
+    const parentId = String(parentCategoryValueId ?? '').trim();
+    if (!parentId) return of([]);
+
+    const existing = this.childrenCache.get(parentId);
+    if (existing) return existing;
+
+    const req$ = this.http
+      .get<RawApiCategoryValue[]>(
+        `${this.baseUrl}/categories/values/${encodeURIComponent(parentId)}/children`,
+      )
+      .pipe(
+        map((items) =>
+          items
+            .map(normalizeCategoryValue)
+            .filter((item): item is ApiCategoryValue => item !== null),
+        ),
+        catchError((error) => {
+          this.childrenCache.delete(parentId);
+          return throwError(() => error);
+        }),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
+
+    this.childrenCache.set(parentId, req$);
     return req$;
   }
 

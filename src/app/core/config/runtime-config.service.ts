@@ -132,6 +132,20 @@ export function isRuntimeApiUrl(url: string): boolean {
 export function runtimeMediaUrl(pathOrUrl: unknown): string {
   const value = text(pathOrUrl);
   if (!value) return '';
+
+  // The API sometimes publishes placeholder filenames as if they were real media.
+  // Never request those remote files: callers can continue through their candidates
+  // and ultimately use the local SVG fallback.
+  let mediaPath = value;
+  try {
+    mediaPath = new URL(value, 'https://runtime.invalid').pathname;
+  } catch {
+    // The normal URL/path validation below remains authoritative for malformed input.
+  }
+  if (/\/(?:no-image|no_image)[^/]*\.[a-z0-9]+$/i.test(mediaPath)) {
+    return '';
+  }
+
   if (/^https?:\/\//i.test(value)) return value;
   if (/^(?:data:|blob:)/i.test(value) || /^\/?assets\//i.test(value)) return value;
 

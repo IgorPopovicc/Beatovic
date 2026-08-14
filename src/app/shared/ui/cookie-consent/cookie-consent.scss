@@ -8,7 +8,8 @@
   right: clamp(12px, 2.5vw, 32px);
   bottom: clamp(12px, 2.5vw, 28px);
   left: clamp(12px, 2.5vw, 32px);
-  width: min(1160px, calc(100% - clamp(24px, 5vw, 64px)));
+  width: auto;
+  max-width: 1160px;
   margin-inline: auto;
   display: flex;
   align-items: center;
@@ -231,7 +232,7 @@ button.secondary {
   }
 }
 
-@media (max-width: 390px) {
+@media (max-width: 480px) {
   .cookie-copy {
     grid-template-columns: 1fr;
   }

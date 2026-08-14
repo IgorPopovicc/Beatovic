@@ -326,6 +326,40 @@
   font-size: 24px;
 }
 
+.submenu-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  align-items: center;
+}
+
+.submenu-expand {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #111;
+  cursor: pointer;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.submenu-expand:hover,
+.submenu-expand:focus-visible {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.submenu-nested {
+  margin: 0 0 6px 20px;
+  padding-left: 12px;
+  border-left: 1px solid #ddd;
+}
+
+.submenu-nested a {
+  min-height: 44px;
+  font-size: 16px;
+}
+
 .menu-icon {
   width: 48px;
   height: 48px;

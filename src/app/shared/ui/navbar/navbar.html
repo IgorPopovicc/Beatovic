@@ -285,9 +285,33 @@
       <ul class="submenu-list">
         @for (child of activeChildren(); track child.label) {
           <li>
-            <a [routerLink]="child.link" (click)="closeMenu()">
-              <span class="label">{{ child.label }}</span>
-            </a>
+            <div class="submenu-row">
+              <a [routerLink]="child.link" (click)="closeMenu()">
+                <span class="label">{{ child.label }}</span>
+              </a>
+              @if (child.hasChildren) {
+                <button
+                  type="button"
+                  class="submenu-expand"
+                  [attr.aria-label]="'Prikaži potkategorije za ' + child.label"
+                  [attr.aria-expanded]="child.expanded === true"
+                  (click)="toggleCategoryChildren(child)"
+                >
+                  {{ child.loading ? '…' : child.expanded ? '−' : '+' }}
+                </button>
+              }
+            </div>
+            @if (child.expanded && child.descendants?.length) {
+              <ul class="submenu-nested">
+                @for (descendant of child.descendants; track descendant.link) {
+                  <li>
+                    <a [routerLink]="descendant.link" (click)="closeMenu()">
+                      {{ descendant.label }}
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
           </li>
         }
       </ul>

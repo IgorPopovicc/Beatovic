@@ -111,7 +111,12 @@
 
           <label class="field">
             <span>E-mail *</span>
-            <input type="email" formControlName="email" placeholder="vas@email.com" />
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="vas@email.com"
+              maxlength="40"
+            />
             <span class="field-msg" [class.error]="hasFieldError('email')">{{
               fieldError('email')
             }}</span>

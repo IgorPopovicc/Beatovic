@@ -97,6 +97,27 @@
           </div>
         </div>
 
+        @if (availableColors().length > 0) {
+          <div class="filter-block">
+            <div class="filter-title">Boja</div>
+            <div class="colors" aria-label="Filter po boji">
+              @for (color of availableColors(); track color.id) {
+                <button
+                  type="button"
+                  class="color-pill"
+                  [class.active]="color.selected"
+                  [attr.aria-pressed]="color.selected"
+                  [attr.aria-label]="color.label + ' (' + color.count + ')'"
+                  (click)="toggleColor(color.id)"
+                >
+                  <span class="color-swatch" [style.background]="color.background"></span>
+                  <span class="color-count">{{ color.count }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        }
+
         <div class="filter-block">
           <div class="filter-title">Cijena</div>
 

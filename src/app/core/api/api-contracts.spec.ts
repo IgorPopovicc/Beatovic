@@ -7,6 +7,7 @@ import { AdminProductsApi } from '../admin-api/admin-products-api';
 import { AuthService } from '../auth/auth.service';
 import { CatalogApiService } from './catalog-api.sevice';
 import { CouponsApiService } from './coupons-api.service';
+import { AdminNewsletterApi } from '../admin-api/admin-newsletter-api';
 
 describe('current OpenAPI contracts', () => {
   let http: HttpTestingController;
@@ -65,5 +66,66 @@ describe('current OpenAPI contracts', () => {
     const request = http.expectOne('/api/categories/category-id/values?onlyRoot=true');
     expect(request.request.method).toBe('GET');
     request.flush([]);
+  });
+
+  it('uses the exact category-children endpoint and preserves stable API values', () => {
+    let firstResponse: unknown;
+    let cachedResponse: unknown;
+    const service = TestBed.inject(CatalogApiService);
+    service.getCategoryChildren('root-id').subscribe((value) => (firstResponse = value));
+    service.getCategoryChildren('root-id').subscribe((value) => (cachedResponse = value));
+
+    const request = http.expectOne('/api/categories/values/root-id/children');
+    expect(request.request.method).toBe('GET');
+    request.flush([
+      { id: 'child-id', value: 'OBUCA', displayValue: 'OBUĆA', hasChildren: false },
+    ]);
+
+    expect(firstResponse).toEqual([
+      { id: 'child-id', value: 'OBUCA', displayValue: 'OBUĆA', parent: null, hasChildren: false },
+    ]);
+    expect(cachedResponse).toEqual(firstResponse);
+  });
+
+  it('passes newsletter admin search through the q query parameter', () => {
+    TestBed.inject(AdminNewsletterApi)
+      .getActiveSubscriptions({ page: 0, size: 20, sort: 'subscribedAt,desc', q: 'gmail' })
+      .subscribe();
+
+    const request = http.expectOne(
+      '/api/newsletter/admin/subscriptions?page=0&size=20&q=gmail&sort=subscribedAt,desc',
+    );
+    expect(request.request.method).toBe('GET');
+    request.flush({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 20 });
+  });
+
+  it('creates an admin model with the current multipart variant and images fields', () => {
+    const image = new File(['image'], 'model.webp', { type: 'image/webp' });
+    TestBed.inject(AdminProductsApi)
+      .createVariantMultipart(
+        {
+          productId: 'product-id',
+          price: 100,
+          attributes: [
+            {
+              attributeId: 'attribute-id',
+              attributeName: 'VELICINA',
+              attributeValueId: 'attribute-value-id',
+              value: '42',
+              quantity: 3,
+            },
+          ],
+        },
+        [image],
+      )
+      .subscribe();
+
+    const request = http.expectOne('/api/products/admin/variants');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.headers.has('Content-Type')).toBeFalse();
+    const body = request.request.body as FormData;
+    expect(body.get('variant')).toEqual(jasmine.any(Blob));
+    expect(body.getAll('images')).toEqual([image]);
+    request.flush({ id: 'variant-id' });
   });
 });

@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { inject, Injectable, REQUEST } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { resolveRuntimeConfig } from '../config/runtime-config.service';
 
@@ -21,7 +21,6 @@ export class SeoService {
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
   private readonly document = inject(DOCUMENT);
-  private readonly request = inject(REQUEST, { optional: true });
 
   private readonly structuredDataId = 'app-structured-data';
   private readonly defaultSocialImagePath = '/planeta-share.png';
@@ -172,81 +171,9 @@ export class SeoService {
     return 'image/png';
   }
 
-  private requestHeader(name: string): string {
-    return String(this.request?.headers.get(name) ?? '').trim().split(',')[0].trim();
-  }
-
-  private isLocalHost(hostOrUrl: string): boolean {
-    const value = String(hostOrUrl ?? '').trim().toLowerCase();
-    if (!value) return false;
-
-    let host = value;
-
-    if (/^https?:\/\//i.test(host)) {
-      try {
-        host = new URL(host).hostname.toLowerCase();
-      } catch {
-        return false;
-      }
-    } else {
-      host = host.split('/')[0];
-      host = host.split('@').pop() ?? host;
-      host = host.split(':')[0];
-    }
-
-    return (
-      host === 'localhost' ||
-      host === '0.0.0.0' ||
-      host === '::1' ||
-      host === '[::1]' ||
-      host.startsWith('127.') ||
-      host.endsWith('.local')
-    );
-  }
-
   private resolveSiteUrl(): string {
-    const fromEnv = resolveRuntimeConfig().siteUrl;
-
-    const forwardedHost = this.requestHeader('x-forwarded-host') || this.requestHeader('host');
-    if (forwardedHost && !this.isLocalHost(forwardedHost)) {
-      const forwardedProto = this.requestHeader('x-forwarded-proto');
-      const protocol =
-        forwardedProto ||
-        (forwardedHost.startsWith('localhost') || forwardedHost.startsWith('127.0.0.1')
-          ? 'http'
-          : 'https');
-      return `${protocol}://${forwardedHost}`.replace(/\/+$/, '');
-    }
-
-    const requestUrl = String(this.request?.url ?? '').trim();
-    if (/^https?:\/\//i.test(requestUrl)) {
-      try {
-        const requestOrigin = new URL(requestUrl).origin.replace(/\/+$/, '');
-        if (!this.isLocalHost(requestOrigin)) {
-          return requestOrigin;
-        }
-      } catch {}
-    }
-
-    const origin = String(this.document?.location?.origin ?? '').trim().replace(/\/+$/, '');
-    if (origin && origin !== 'null' && !this.isLocalHost(origin)) return origin;
-
-    if (fromEnv && !this.isLocalHost(fromEnv)) return fromEnv;
-
-    if (forwardedHost) {
-      const forwardedProto = this.requestHeader('x-forwarded-proto');
-      const protocol =
-        forwardedProto ||
-        (forwardedHost.startsWith('localhost') || forwardedHost.startsWith('127.0.0.1')
-          ? 'http'
-          : 'https');
-      return `${protocol}://${forwardedHost}`.replace(/\/+$/, '');
-    }
-
-    if (origin && origin !== 'null') return origin;
-
-    if (fromEnv) return fromEnv;
-
-    return '';
+    // SITE_URL is the deployment authority for canonicals, social metadata and JSON-LD.
+    // Request Host headers must not leak internal proxy/container addresses into public SEO URLs.
+    return resolveRuntimeConfig().siteUrl.replace(/\/+$/, '');
   }
 }
