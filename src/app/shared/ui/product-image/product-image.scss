@@ -1,0 +1,164 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+}
+
+.product-image,
+.product-image picture,
+.product-image img,
+.placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.product-image {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.product-image picture {
+  display: grid;
+  place-items: center;
+}
+
+.product-image img {
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  background: #fff;
+}
+
+.placeholder {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #241f20;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(244, 241, 237, 0.98)),
+    #f6f3ef;
+}
+
+.placeholder::before,
+.placeholder::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.placeholder::before {
+  inset: 9%;
+  border: 1px solid rgba(40, 33, 34, 0.07);
+  transform: rotate(-7deg);
+  border-radius: 22%;
+}
+
+.placeholder::after {
+  width: 46%;
+  aspect-ratio: 1;
+  right: -17%;
+  bottom: -15%;
+  border: clamp(12px, 3vw, 34px) solid rgba(224, 24, 36, 0.07);
+  border-radius: 50%;
+}
+
+.orb {
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+.orb--one {
+  width: 34%;
+  aspect-ratio: 1;
+  top: -14%;
+  left: -10%;
+  background: rgba(224, 24, 36, 0.09);
+}
+
+.orb--two {
+  width: 20%;
+  aspect-ratio: 1;
+  top: 18%;
+  right: 10%;
+  border: 1px solid rgba(40, 33, 34, 0.08);
+}
+
+.placeholder-content {
+  display: grid;
+  justify-items: center;
+  gap: clamp(4px, 1vw, 10px);
+  padding: 12%;
+  text-align: center;
+}
+
+.brand-mark {
+  width: clamp(28px, 8vw, 52px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(145deg, #e62934, #a80e18);
+  box-shadow: 0 10px 24px rgba(177, 19, 29, 0.22);
+  font-size: clamp(0.82rem, 2.4vw, 1.35rem);
+  font-weight: 900;
+  font-style: italic;
+}
+
+.image-icon {
+  width: clamp(32px, 10vw, 64px);
+  fill: none;
+  stroke: rgba(36, 31, 32, 0.58);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.placeholder-title {
+  font-size: clamp(0.62rem, 1.6vw, 0.82rem);
+  font-weight: 850;
+  letter-spacing: 0.14em;
+}
+
+.placeholder-copy {
+  color: rgba(36, 31, 32, 0.55);
+  font-size: clamp(0.58rem, 1.35vw, 0.72rem);
+}
+
+.product-image--thumbnail .placeholder-content {
+  gap: 2px;
+  padding: 4px;
+}
+
+.product-image--thumbnail .brand-mark {
+  width: min(38%, 30px);
+  font-size: 0.7rem;
+  box-shadow: 0 5px 12px rgba(177, 19, 29, 0.18);
+}
+
+.product-image--thumbnail .image-icon,
+.product-image--thumbnail .placeholder-title,
+.product-image--thumbnail .placeholder-copy,
+.product-image--thumbnail .orb--two {
+  display: none;
+}
+
+.product-image--thumbnail .placeholder::before {
+  inset: 14%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .placeholder,
+  .brand-mark {
+    transition: none;
+  }
+}

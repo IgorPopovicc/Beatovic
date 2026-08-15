@@ -1,7 +1,8 @@
 import { Component, Input } from '@angular/core';
-import { DecimalPipe, NgOptimizedImage } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { currencyDisplayLabel } from '../../utils/currency';
+import { ProductImageComponent } from '../product-image/product-image';
 
 export interface ProductImage {
   desktop: string;
@@ -31,30 +32,13 @@ export type ProductCardVariant = 'default' | 'compact' | 'home';
 @Component({
   selector: 'app-product-card',
   standalone: true,
-  imports: [NgOptimizedImage, RouterLink, DecimalPipe],
+  imports: [RouterLink, DecimalPipe, ProductImageComponent],
   templateUrl: './product-card.html',
   styleUrl: './product-card.scss',
 })
 export class ProductCardComponent {
   @Input({ required: true }) product!: ProductCard;
   @Input() variant: ProductCardVariant = 'default';
-  private imageFallback = false;
-
-  get imageMobile(): string {
-    if (this.imageFallback) return 'assets/images/products/no-image.svg';
-    return this.product.image.mobile || this.product.image.desktop;
-  }
-
-  get imageDesktop(): string {
-    return this.imageFallback
-      ? 'assets/images/products/no-image.svg'
-      : this.product.image.desktop;
-  }
-
-  get showMobileSource(): boolean {
-    if (this.imageFallback) return false;
-    return !!this.product.image.mobile && this.product.image.mobile !== this.product.image.desktop;
-  }
 
   get hasDiscount() {
     const p = this.product;
@@ -82,9 +66,5 @@ export class ProductCardComponent {
     }
 
     return '(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw';
-  }
-
-  onImageError(): void {
-    this.imageFallback = true;
   }
 }

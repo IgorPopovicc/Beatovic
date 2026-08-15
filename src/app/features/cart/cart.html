@@ -59,11 +59,13 @@
             <div class="row">
               <div class="product">
                 <div class="thumb">
-                  @if (it.image?.url) {
-                    <img [src]="it.image?.url" [alt]="it.image?.alt || it.name" loading="lazy" />
-                  } @else {
-                    <div class="thumb-ph"></div>
-                  }
+                  <app-product-image
+                    [src]="it.image?.url"
+                    [alt]="it.image?.alt || it.name"
+                    [width]="72"
+                    [height]="92"
+                    variant="thumbnail"
+                  />
                 </div>
 
                 <div class="meta">

@@ -16,8 +16,8 @@ describe('ProductCardComponent', () => {
     price: 49.99,
     currency: 'BAM',
     image: {
-      desktop: 'assets/images/products/no-image.svg',
-      mobile: 'assets/images/products/no-image.svg',
+      desktop: '',
+      mobile: '',
       w: 1200,
       h: 1200,
       alt: 'Test proizvod',
@@ -38,5 +38,10 @@ describe('ProductCardComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('uses the branded missing-image state when no image is available', () => {
+    expect(fixture.nativeElement.querySelector('app-product-image [role="img"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-product-image img')).toBeNull();
   });
 });

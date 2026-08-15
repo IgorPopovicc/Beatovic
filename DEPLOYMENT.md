@@ -59,12 +59,15 @@ Update values in `.env`:
 - `BE_HOSTNAME`: public backend/frontend hostname without a protocol
 - `APP_HOST_CONTEXT_PATH`: backend application context path without leading/trailing slashes
 - `TURNSTILE_SITE_KEY`: public Cloudflare Turnstile site key for this frontend hostname
+- `MAINTENANCE_MODE`: optional runtime switch; set to `true` to return the maintenance page
+- `MAINTENANCE_MESSAGE`: optional customer-facing maintenance message
 - `PORT`: SSR container port (default `4000`)
 
 Important:
 - Do not set localhost values for public production URLs.
 - Compose derives `API_BASE_URL`, `MEDIA_PRODUCT_BASE_URL`, and `SITE_URL` from these values.
 - The container writes them to `runtime-config.js` when it starts; changing them does not rebuild Angular or the image.
+- During maintenance, public routes return HTTP `503`; `/admin/**` remains available behind its normal authentication.
 
 ## 4) Build and run SSR app (Docker)
 
@@ -198,6 +201,8 @@ export API_BASE_URL=https://example.com/context/api
 export MEDIA_PRODUCT_BASE_URL=https://example.com/media/product
 export SITE_URL=https://example.com
 export TURNSTILE_SITE_KEY=replace-with-site-key
+export MAINTENANCE_MODE=false
+export MAINTENANCE_MESSAGE=
 node scripts/write-runtime-config.cjs
 node dist/Beatovic/server/server.mjs
 ```

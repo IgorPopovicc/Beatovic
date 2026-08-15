@@ -31,17 +31,17 @@
             (touchend)="onTouchEnd($event)"
           >
             @if (activeImage(); as img) {
-              <picture class="stage-img">
-                <source [srcset]="img.mobile" media="(max-width: 768px)" />
-                <img
-                  [ngSrc]="img.desktop"
-                  [alt]="img.alt"
-                  [width]="img.w"
-                  [height]="img.h"
-                  [sizes]="'(max-width: 768px) 92vw, 55vw'"
-                  priority
-                />
-              </picture>
+              <app-product-image
+                class="stage-img"
+                [src]="img.desktop"
+                [mobileSrc]="img.mobile"
+                [alt]="img.alt"
+                [width]="img.w"
+                [height]="img.h"
+                sizes="(max-width: 768px) 92vw, 55vw"
+                [priority]="true"
+                variant="large"
+              />
             }
 
             <button class="nav prev" type="button" (click)="prev()" aria-label="Prethodna slika">
@@ -65,7 +65,13 @@
                 (click)="setActive(i)"
                 aria-label="Odaberi sliku {{ i + 1 }}"
               >
-                <img [ngSrc]="img.thumbnail || img.mobile" [alt]="img.alt" width="90" height="90" />
+                <app-product-image
+                  [src]="img.thumbnail || img.mobile"
+                  [alt]="img.alt"
+                  [width]="90"
+                  [height]="90"
+                  variant="thumbnail"
+                />
               </button>
             }
           </div>

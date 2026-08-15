@@ -9,6 +9,8 @@ services:
       MEDIA_PRODUCT_BASE_URL: https://${BE_HOSTNAME}/media/product
       SITE_URL: https://${BE_HOSTNAME}
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY}
+      MAINTENANCE_MODE: ${MAINTENANCE_MODE:-false}
+      MAINTENANCE_MESSAGE: ${MAINTENANCE_MESSAGE:-}
     ports:
       - "127.0.0.1:4000:4000"
     restart: unless-stopped

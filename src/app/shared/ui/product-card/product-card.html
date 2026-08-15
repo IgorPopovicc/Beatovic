@@ -16,22 +16,16 @@
         </span>
       }
 
-      <picture>
-        @if (showMobileSource) {
-          <source [srcset]="imageMobile" media="(max-width: 768px)" />
-        }
-        <img
-          [ngSrc]="imageDesktop"
-          [alt]="product.image.alt"
-          [width]="product.image.w"
-          [height]="product.image.h"
-          [sizes]="imageSizes"
-          [priority]="product.priority === true"
-          [attr.loading]="product.priority ? null : 'lazy'"
-          decoding="async"
-          (error)="onImageError()"
-        />
-      </picture>
+      <app-product-image
+        [src]="product.image.desktop"
+        [mobileSrc]="product.image.mobile"
+        [alt]="product.image.alt"
+        [width]="product.image.w"
+        [height]="product.image.h"
+        [sizes]="imageSizes"
+        [priority]="product.priority === true"
+        variant="card"
+      />
     </div>
 
     <div class="body">

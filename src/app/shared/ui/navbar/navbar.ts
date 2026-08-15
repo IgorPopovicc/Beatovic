@@ -11,7 +11,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { DecimalPipe, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
-import { NavigationStart, Router, RouterLink } from '@angular/router';
+import { NavigationStart, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Subscription, forkJoin, of } from 'rxjs';
 import {
   catchError,
@@ -33,13 +33,26 @@ import { ProductsApiService } from '../../../core/api/products-api.service';
 import { ApiCategoryValue, Variant } from '../../../core/api/catalog.models';
 import { runtimeMediaUrl } from '../../../core/config/runtime-config.service';
 import { currencyDisplayLabel } from '../../utils/currency';
+import { ProductImageComponent } from '../product-image/product-image';
 
 type VariantCategory = NonNullable<Variant['categories']>[number];
+
+const GENDER_NAVIGATION_ORDER = ['MUSKARCI', 'ZENE', 'DECA', 'BEBE'] as const;
+const GENDER_NAVIGATION_RANK = new Map<string, number>(
+  GENDER_NAVIGATION_ORDER.map((value, index) => [value, index]),
+);
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, NgOptimizedImage, ReactiveFormsModule, DecimalPipe],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    NgOptimizedImage,
+    ReactiveFormsModule,
+    DecimalPipe,
+    ProductImageComponent,
+  ],
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss',
 })
@@ -58,6 +71,7 @@ export class Navbar implements OnInit, OnDestroy {
   };
   private bodyScrollLocked = false;
   private bodyScrollTop = 0;
+  private lastParentTrigger?: HTMLElement;
 
   cartCount = computed(() => this.cart.itemsCount());
 
@@ -74,9 +88,14 @@ export class Navbar implements OnInit, OnDestroy {
 
   @ViewChild('searchInputInline') searchInputInline?: ElementRef<HTMLInputElement>;
   @ViewChild('searchInputMobile') searchInputMobile?: ElementRef<HTMLInputElement>;
+  @ViewChild('menuTrigger') menuTrigger?: ElementRef<HTMLButtonElement>;
+  @ViewChild('drawer') drawer?: ElementRef<HTMLElement>;
+  @ViewChild('drawerClose') drawerClose?: ElementRef<HTMLButtonElement>;
+  @ViewChild('submenuBack') submenuBack?: ElementRef<HTMLButtonElement>;
 
   // ===== MENU =====
   menu = signal<MenuItem[]>([{ label: 'Početna', link: '/' }]);
+  menuLoading = signal(true);
   activeParent = signal<number | null>(null);
 
   activeTitle = computed(() => {
@@ -254,16 +273,22 @@ export class Navbar implements OnInit, OnDestroy {
                 primaryCategoryValues.has(this.normalizeMenuValue(item.value)),
               );
 
-              const genderValues = new Set(['MUSKARCI', 'ZENE', 'DECA', 'BEBE']);
-
               const genderItems: MenuItem[] = polValues
                 .map(toMenuValue)
                 .filter(
                   (item): item is NonNullable<ReturnType<typeof toMenuValue>> => item !== null,
                 )
-                .filter((item) => genderValues.has(this.normalizeMenuValue(item.value)))
-                .map((gender) => ({
+                .filter((item) => GENDER_NAVIGATION_RANK.has(this.normalizeMenuValue(item.value)))
+                .sort(
+                  (a, b) =>
+                    (GENDER_NAVIGATION_RANK.get(this.normalizeMenuValue(a.value)) ??
+                      Number.MAX_SAFE_INTEGER) -
+                    (GENDER_NAVIGATION_RANK.get(this.normalizeMenuValue(b.value)) ??
+                      Number.MAX_SAFE_INTEGER),
+                )
+                .map((gender, index) => ({
                   label: gender.label,
+                  dividerBefore: index === 0,
                   children: primaryCategories.map((category) => ({
                     key: `${gender.id}:${category.id}`,
                     id: category.id,
@@ -294,6 +319,7 @@ export class Navbar implements OnInit, OnDestroy {
                   ? [
                       {
                         label: toys.label,
+                        dividerBefore: true,
                         children: [
                           {
                             key: `all:${toys.id}`,
@@ -313,6 +339,7 @@ export class Navbar implements OnInit, OnDestroy {
                   ? [
                       {
                         label: 'Ostalo',
+                        dividerBefore: !toys,
                         children: remaining.map((category) => ({
                           key: `all:${category.id}`,
                           id: category.id,
@@ -326,10 +353,11 @@ export class Navbar implements OnInit, OnDestroy {
                       },
                     ]
                   : []),
-                { label: 'Brendovi', link: '/brands' },
+                { label: 'Brendovi', link: '/brands', dividerBefore: true },
               ];
 
               this.menu.set(base);
+              this.menuLoading.set(false);
             };
 
             buildMenu(rootCategories);
@@ -343,9 +371,10 @@ export class Navbar implements OnInit, OnDestroy {
 
   private setFallbackMenu(): void {
     this.activeParent.set(null);
+    this.menuLoading.set(false);
     this.menu.set([
       { label: 'Početna', link: '/' },
-      { label: 'Brendovi', link: '/brands' },
+      { label: 'Brendovi', link: '/brands', dividerBefore: true },
     ]);
   }
 
@@ -369,8 +398,14 @@ export class Navbar implements OnInit, OnDestroy {
     this.searchError.set(null);
   }
 
-  openSub(i: number) {
-    if (this.menu()[i]?.children) this.activeParent.set(i);
+  openSub(i: number, trigger?: EventTarget | null) {
+    if (!this.menu()[i]?.children) return;
+
+    this.lastParentTrigger = trigger instanceof HTMLElement ? trigger : undefined;
+    this.activeParent.set(i);
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => this.submenuBack?.nativeElement.focus(), 0);
+    }
   }
 
   toggleCategoryChildren(child: MenuChild): void {
@@ -444,7 +479,11 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   closeSub() {
+    const returnTarget = this.lastParentTrigger;
     this.activeParent.set(null);
+    if (returnTarget && isPlatformBrowser(this.platformId)) {
+      setTimeout(() => returnTarget.focus(), 0);
+    }
   }
 
   go(url: string) {
@@ -513,22 +552,23 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   pickImageUrl(v: Variant): string {
-    // Search results use web-optimized images when the backend provides them.
-    const main = (v.mainImageWebUrl ?? v.mainImageUrl ?? v.mainImageName ?? '').trim();
-    if (main) {
-      return runtimeMediaUrl(main);
-    }
-
-    // Fall back to the backend image collection when the main image fields are absent.
     const imgs = v.images ?? [];
     const img = imgs.find((candidate) => candidate.displayed) ?? imgs[0];
-    const url = (img?.webUrl ?? img?.url ?? img?.originalUrl ?? '').trim();
-    if (url) {
-      return runtimeMediaUrl(url);
+    const candidates = [
+      v.mainImageWebUrl,
+      img?.webUrl,
+      v.mainImageUrl,
+      img?.url,
+      img?.originalUrl,
+      v.mainImageName,
+    ];
+
+    for (const candidate of candidates) {
+      const resolved = runtimeMediaUrl(candidate);
+      if (resolved) return resolved;
     }
 
-    // A real missing image gets one generic placeholder, never a fake product image.
-    return 'assets/images/products/no-image.svg';
+    return '';
   }
 
   @HostListener('window:scroll')
@@ -565,23 +605,63 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   toggleMenu() {
-    this.mobileOpen = !this.mobileOpen;
     if (this.mobileOpen) {
-      this._hidden.set(false);
+      this.closeMenu();
+      return;
     }
-    this.lockBodyScroll(this.mobileOpen);
+
+    this.closeSearch();
+    this.mobileOpen = true;
+    this._hidden.set(false);
+    this.lockBodyScroll(true);
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => this.drawerClose?.nativeElement.focus(), 0);
+    }
   }
 
-  closeMenu() {
+  closeMenu(restoreFocus = true) {
+    const wasOpen = this.mobileOpen;
     this.mobileOpen = false;
     this.lockBodyScroll(false);
-    this.closeSub();
+    this.activeParent.set(null);
+    this.lastParentTrigger = undefined;
+
+    if (wasOpen && restoreFocus && isPlatformBrowser(this.platformId)) {
+      setTimeout(() => this.menuTrigger?.nativeElement.focus(), 0);
+    }
   }
 
-  @HostListener('document:keydown.escape')
-  onEsc() {
-    this.closeMenu();
-    this.closeSearch();
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      if (this.mobileOpen) {
+        event.preventDefault();
+        this.closeMenu();
+      }
+      this.closeSearch();
+      return;
+    }
+
+    if (event.key !== 'Tab' || !this.mobileOpen || !this.drawer) return;
+
+    const focusable = Array.from(
+      this.drawer.nativeElement.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((element) => !element.closest('[inert]'));
+    if (!focusable.length) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const current = document.activeElement;
+
+    if (event.shiftKey && (current === first || !this.drawer.nativeElement.contains(current))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (current === last || !this.drawer.nativeElement.contains(current))) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   @HostListener('document:mousedown', ['$event'])
@@ -640,7 +720,8 @@ export class Navbar implements OnInit, OnDestroy {
   private resetTransientUiForNavigation(): void {
     this._hidden.set(false);
     this.mobileOpen = false;
-    this.closeSub();
+    this.activeParent.set(null);
+    this.lastParentTrigger = undefined;
     this.closeSearch();
     this.lockBodyScroll(false, { restoreScroll: false });
   }
@@ -665,6 +746,7 @@ export class Navbar implements OnInit, OnDestroy {
 interface MenuItem {
   label: string;
   link?: string;
+  dividerBefore?: boolean;
   children?: MenuChild[];
 }
 

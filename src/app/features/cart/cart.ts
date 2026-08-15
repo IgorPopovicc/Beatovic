@@ -5,11 +5,12 @@ import { Router, RouterLink } from '@angular/router';
 import { CartStore } from '../../core/cart/cart.store';
 import { ConfirmDialog } from '../../shared/ui/confirm-dialog/confirm-dialog';
 import { currencyDisplayLabel } from '../../shared/utils/currency';
+import { ProductImageComponent } from '../../shared/ui/product-image/product-image';
 
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [CommonModule, RouterLink, ConfirmDialog],
+  imports: [CommonModule, RouterLink, ConfirmDialog, ProductImageComponent],
   templateUrl: './cart.html',
   styleUrl: './cart.scss',
 })

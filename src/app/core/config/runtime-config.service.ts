@@ -6,6 +6,8 @@ export interface AppConfig {
   mediaProductBaseUrl: string;
   siteUrl: string;
   turnstileSiteKey: string;
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
 }
 
 type RuntimeConfigInput = Partial<Record<keyof AppConfig, unknown>>;
@@ -25,10 +27,21 @@ const DEVELOPMENT_CONFIG: AppConfig = {
   mediaProductBaseUrl: '/media/product',
   siteUrl: 'http://localhost:4200',
   turnstileSiteKey: '',
+  maintenanceMode: false,
+  maintenanceMessage: '',
 };
+
+export const DEFAULT_MAINTENANCE_MESSAGE =
+  'Trenutno radimo na poboljšanju naše online prodavnice. Vraćamo se uskoro.';
 
 function text(value: unknown): string {
   return String(value ?? '').trim();
+}
+
+export function parseRuntimeBoolean(value: unknown): boolean {
+  if (value === true) return true;
+  if (value === false || value === null || value === undefined) return false;
+  return ['true', '1', 'yes', 'on'].includes(text(value).toLowerCase());
 }
 
 function normalizeBaseUrl(name: keyof AppConfig, value: unknown, allowRelative: boolean): string {
@@ -61,6 +74,8 @@ export function createAppConfig(input: RuntimeConfigInput, allowRelative = false
     ),
     siteUrl: normalizeBaseUrl('siteUrl', input.siteUrl, allowRelative),
     turnstileSiteKey: text(input.turnstileSiteKey),
+    maintenanceMode: parseRuntimeBoolean(input.maintenanceMode),
+    maintenanceMessage: text(input.maintenanceMessage) || DEFAULT_MAINTENANCE_MESSAGE,
   });
 }
 
@@ -73,6 +88,8 @@ function processConfig(globals: RuntimeGlobals): RuntimeConfigInput | null {
     env['MEDIA_PRODUCT_BASE_URL'],
     env['SITE_URL'],
     env['TURNSTILE_SITE_KEY'],
+    env['MAINTENANCE_MODE'],
+    env['MAINTENANCE_MESSAGE'],
   ].some((value) => text(value).length > 0);
   if (!hasRuntimeValue) return null;
 
@@ -81,6 +98,8 @@ function processConfig(globals: RuntimeGlobals): RuntimeConfigInput | null {
     mediaProductBaseUrl: env['MEDIA_PRODUCT_BASE_URL'],
     siteUrl: env['SITE_URL'],
     turnstileSiteKey: env['TURNSTILE_SITE_KEY'],
+    maintenanceMode: env['MAINTENANCE_MODE'],
+    maintenanceMessage: env['MAINTENANCE_MESSAGE'],
   };
 }
 
@@ -135,7 +154,7 @@ export function runtimeMediaUrl(pathOrUrl: unknown): string {
 
   // The API sometimes publishes placeholder filenames as if they were real media.
   // Never request those remote files: callers can continue through their candidates
-  // and ultimately use the local SVG fallback.
+  // and ultimately render the centralized frontend fallback state.
   let mediaPath = value;
   try {
     mediaPath = new URL(value, 'https://runtime.invalid').pathname;
@@ -179,6 +198,8 @@ export class RuntimeConfigService {
   readonly mediaProductBaseUrl = this.value.mediaProductBaseUrl;
   readonly siteUrl = this.value.siteUrl;
   readonly turnstileSiteKey = this.value.turnstileSiteKey;
+  readonly maintenanceMode = this.value.maintenanceMode;
+  readonly maintenanceMessage = this.value.maintenanceMessage;
 
   apiUrl(path: string): string {
     return runtimeApiUrl(path);

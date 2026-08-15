@@ -3,8 +3,6 @@ import { Variant } from '../../../core/api/catalog.models';
 import { normalizeCurrencyCode } from '../../utils/currency';
 import { ProductCard } from './product-card';
 
-const IMAGE_FALLBACK = 'assets/images/products/no-image.svg';
-
 function normalize(value: unknown): string {
   return String(value ?? '').trim();
 }
@@ -46,7 +44,7 @@ function imageUrlFromVariant(v: Variant): string {
     if (resolved) return resolved;
   }
 
-  return IMAGE_FALLBACK;
+  return '';
 }
 
 export function mapVariantToProductCard(v: Variant, options?: { priority?: boolean }): ProductCard {

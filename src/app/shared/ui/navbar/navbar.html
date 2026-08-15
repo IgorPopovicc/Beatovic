@@ -1,9 +1,10 @@
 <header class="nav-wrap" [class.nav-hidden]="_hidden()">
   <div class="nav-inner">
     <button
+      #menuTrigger
       class="menu-btn"
       type="button"
-      aria-label="Toggle menu"
+      aria-label="Otvori glavni meni"
       [attr.aria-expanded]="mobileOpen"
       aria-controls="side-menu"
       (click)="toggleMenu()"
@@ -90,12 +91,13 @@
                       @if (getBadge(v)) {
                         <span class="sr-badge">{{ getBadge(v) }}</span>
                       }
-                      <img
+                      <app-product-image
                         class="sr-img"
-                        [ngSrc]="pickImageUrl(v)"
+                        [src]="pickImageUrl(v)"
+                        [alt]="v.productName || 'Proizvod'"
+                        variant="thumbnail"
                         [width]="72"
                         [height]="72"
-                        [alt]="v.productName"
                       />
                     </div>
 
@@ -189,12 +191,13 @@
                     @if (getBadge(v)) {
                       <span class="sr-badge">{{ getBadge(v) }}</span>
                     }
-                    <img
+                    <app-product-image
                       class="sr-img"
-                      [ngSrc]="pickImageUrl(v)"
+                      [src]="pickImageUrl(v)"
+                      [alt]="v.productName || 'Proizvod'"
+                      variant="thumbnail"
                       [width]="72"
                       [height]="72"
-                      [alt]="v.productName"
                     />
                   </div>
 
@@ -238,32 +241,85 @@
   </div>
 
   @if (mobileOpen) {
-    <div class="backdrop" (click)="closeMenu()"></div>
+    <div class="backdrop" (click)="closeMenu()" aria-hidden="true"></div>
   }
 
-  <nav id="side-menu" class="mobile-menu" [class.open]="mobileOpen">
-    <div class="menu-col main">
+  <aside
+    #drawer
+    id="side-menu"
+    class="mobile-menu"
+    [class.open]="mobileOpen"
+    [attr.aria-hidden]="!mobileOpen"
+    [attr.inert]="mobileOpen ? null : ''"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Glavni meni"
+  >
+    <header class="drawer-header">
+      <img
+        class="drawer-logo"
+        ngSrc="assets/images/logo/planets_text.png"
+        alt="Planeta webshop"
+        width="232"
+        height="35"
+      />
+      <button
+        #drawerClose
+        class="drawer-close"
+        type="button"
+        aria-label="Zatvori glavni meni"
+        (click)="closeMenu()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
+      </button>
+    </header>
+
+    <div class="drawer-panels">
+    <nav
+      class="menu-col main"
+      aria-label="Glavna navigacija"
+      [attr.aria-hidden]="activeParent() !== null"
+      [attr.inert]="activeParent() !== null ? '' : null"
+    >
       <ul class="menu-list">
         @for (item of menu(); track item.label; let i = $index) {
           @if (!item.children) {
-            <li>
-              <a class="menu-item" [routerLink]="item.link" (click)="closeMenu()">
+            <li [class.menu-divider]="item.dividerBefore">
+              <a
+                class="menu-item"
+                [routerLink]="item.link"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: item.link === '/' }"
+                ariaCurrentWhenActive="page"
+                (click)="closeMenu(false)"
+              >
                 <span class="label">{{ item.label }}</span>
               </a>
             </li>
           } @else {
-            <li>
+            <li [class.menu-divider]="item.dividerBefore">
               <button
                 class="menu-item has-children"
                 type="button"
-                (click)="openSub(i)"
+                (click)="openSub(i, $event.currentTarget)"
                 [attr.aria-expanded]="activeParent() === i"
               >
                 <span class="label">{{ item.label }}</span>
-                <span class="chev">›</span>
+                <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m9 5 7 7-7 7" />
+                </svg>
               </button>
             </li>
           }
+        }
+
+        @if (menuLoading()) {
+          <li class="menu-loading" aria-live="polite">
+            <span class="menu-loading-dot" aria-hidden="true"></span>
+            Učitavanje kategorija…
+          </li>
         }
       </ul>
 
@@ -274,21 +330,43 @@
           width="180"
           height="180"
         />
+        <span>PLANETA SPORT</span>
       </div>
-    </div>
+    </nav>
 
-    <div class="menu-col sub" [class.open]="activeParent() !== null">
+    <nav
+      class="menu-col sub"
+      [class.open]="activeParent() !== null"
+      [attr.aria-hidden]="activeParent() === null"
+      [attr.inert]="activeParent() === null ? '' : null"
+      [attr.aria-label]="activeTitle() ? 'Podmeni ' + activeTitle() : 'Podmeni'"
+    >
       <div class="submenu-header">
-        <button class="back-btn" type="button" (click)="closeSub()" aria-label="Back">‹</button>
+        <button
+          #submenuBack
+          class="back-btn"
+          type="button"
+          (click)="closeSub()"
+          aria-label="Nazad na glavni meni"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m15 5-7 7 7 7" />
+          </svg>
+          <span>NAZAD</span>
+        </button>
         <div class="submenu-title">{{ activeTitle() }}</div>
-        <div class="spacer"></div>
       </div>
 
       <ul class="submenu-list">
         @for (child of activeChildren(); track child.key) {
           <li>
             <div class="submenu-row">
-              <a [routerLink]="child.link" (click)="closeMenu()">
+              <a
+                [routerLink]="child.link"
+                routerLinkActive="active"
+                ariaCurrentWhenActive="page"
+                (click)="closeMenu(false)"
+              >
                 <span class="label">{{ child.label }}</span>
               </a>
               @if (child.hasChildren) {
@@ -307,7 +385,12 @@
               <ul class="submenu-nested">
                 @for (descendant of child.descendants; track descendant.link) {
                   <li>
-                    <a [routerLink]="descendant.link" (click)="closeMenu()">
+                    <a
+                      [routerLink]="descendant.link"
+                      routerLinkActive="active"
+                      ariaCurrentWhenActive="page"
+                      (click)="closeMenu(false)"
+                    >
                       {{ descendant.label }}
                     </a>
                   </li>
@@ -327,7 +410,9 @@
           width="180"
           height="180"
         />
+        <span>PLANETA SPORT</span>
       </div>
+    </nav>
     </div>
-  </nav>
+  </aside>
 </header>

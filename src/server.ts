@@ -25,7 +25,15 @@ app.get('/runtime-config.js', (_req, res) => {
 });
 
 app.get('/robots.txt', (_req, res) => {
-  const { siteUrl } = resolveRuntimeConfig();
+  const { siteUrl, maintenanceMode } = resolveRuntimeConfig();
+  if (maintenanceMode) {
+    res
+      .setHeader('X-Robots-Tag', 'noindex, nofollow')
+      .type('text/plain')
+      .send('User-agent: *\nDisallow: /\n');
+    return;
+  }
+
   res.type('text/plain').send(
     `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /cart\nDisallow: /checkout\nDisallow: /order-result\nDisallow: /newsletter/\nDisallow: /order/\nSitemap: ${siteUrl}/sitemap.xml\n`,
   );
@@ -34,6 +42,16 @@ app.get('/robots.txt', (_req, res) => {
 let sitemapCache: { xml: string; expiresAt: number } | null = null;
 
 app.get('/sitemap.xml', async (_req, res) => {
+  if (resolveRuntimeConfig().maintenanceMode) {
+    res
+      .status(503)
+      .setHeader('Retry-After', '3600')
+      .setHeader('X-Robots-Tag', 'noindex, nofollow')
+      .type('text/plain')
+      .send('Sitemap is temporarily unavailable during maintenance.');
+    return;
+  }
+
   if (sitemapCache && sitemapCache.expiresAt > Date.now()) {
     res.type('application/xml').send(sitemapCache.xml);
     return;
@@ -134,11 +152,34 @@ app.use(
  * Handle all other requests by rendering the Angular application.
  */
 app.use((req, res, next) => {
+  const maintenanceResponse =
+    resolveRuntimeConfig().maintenanceMode && !/^\/admin(?:\/|$)/.test(req.path);
+
   angularApp
     .handle(req)
-    .then((response) =>
-      response ? writeResponseToNodeResponse(response, res) : next(),
-    )
+    .then((response) => {
+      if (!response) {
+        next();
+        return;
+      }
+
+      if (!maintenanceResponse) {
+        return writeResponseToNodeResponse(response, res);
+      }
+
+      const headers = new Headers(response.headers);
+      headers.set('Cache-Control', 'no-store');
+      headers.set('Retry-After', '3600');
+      headers.set('X-Robots-Tag', 'noindex, nofollow');
+      return writeResponseToNodeResponse(
+        new Response(response.body, {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers,
+        }),
+        res,
+      );
+    })
     .catch(next);
 });
 

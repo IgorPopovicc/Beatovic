@@ -1,5 +1,7 @@
 import {
   createAppConfig,
+  DEFAULT_MAINTENANCE_MESSAGE,
+  parseRuntimeBoolean,
   runtimeApiUrl,
   runtimeMediaUrl,
 } from './runtime-config.service';
@@ -17,6 +19,33 @@ describe('runtime configuration', () => {
     expect(config.mediaProductBaseUrl).toBe('https://test.example.com/media/product');
     expect(config.siteUrl).toBe('https://test.example.com');
     expect(config.turnstileSiteKey).toBe('test-key');
+    expect(config.maintenanceMode).toBeFalse();
+    expect(config.maintenanceMessage).toBe(DEFAULT_MAINTENANCE_MESSAGE);
+  });
+
+  it('only enables maintenance for explicitly recognized true values', () => {
+    expect(parseRuntimeBoolean(true)).toBeTrue();
+    expect(parseRuntimeBoolean('TRUE')).toBeTrue();
+    expect(parseRuntimeBoolean('1')).toBeTrue();
+    expect(parseRuntimeBoolean('yes')).toBeTrue();
+    expect(parseRuntimeBoolean('on')).toBeTrue();
+    expect(parseRuntimeBoolean('false')).toBeFalse();
+    expect(parseRuntimeBoolean('enabled')).toBeFalse();
+    expect(parseRuntimeBoolean('anything')).toBeFalse();
+  });
+
+  it('uses the configured maintenance message when supplied', () => {
+    const config = createAppConfig({
+      apiBaseUrl: 'https://example.com/api',
+      mediaProductBaseUrl: 'https://example.com/media/product',
+      siteUrl: 'https://example.com',
+      turnstileSiteKey: 'key',
+      maintenanceMode: 'yes',
+      maintenanceMessage: 'Vraćamo se brzo.',
+    });
+
+    expect(config.maintenanceMode).toBeTrue();
+    expect(config.maintenanceMessage).toBe('Vraćamo se brzo.');
   });
 
   it('rejects unsafe URL schemes', () => {

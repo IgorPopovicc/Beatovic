@@ -14,6 +14,8 @@
       mediaProductBaseUrl: `${origin}/media/product`,
       siteUrl: origin,
       turnstileSiteKey: '',
+      maintenanceMode: false,
+      maintenanceMessage: '',
     };
   }
 })();

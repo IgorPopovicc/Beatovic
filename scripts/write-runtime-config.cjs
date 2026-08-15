@@ -37,11 +37,16 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
   process.exit(1);
 }
 
+const parseBoolean = (value) =>
+  ['true', '1', 'yes', 'on'].includes(String(value ?? '').trim().toLowerCase());
+
 const config = {
   apiBaseUrl: normalizeUrl('API_BASE_URL'),
   mediaProductBaseUrl: normalizeUrl('MEDIA_PRODUCT_BASE_URL'),
   siteUrl: normalizeUrl('SITE_URL'),
   turnstileSiteKey: String(process.env.TURNSTILE_SITE_KEY).trim(),
+  maintenanceMode: parseBoolean(process.env.MAINTENANCE_MODE),
+  maintenanceMessage: String(process.env.MAINTENANCE_MESSAGE ?? '').trim(),
 };
 
 const serialized = JSON.stringify(config)

@@ -275,11 +275,13 @@
             <div class="sum-row">
               <div class="sum-left">
                 <div class="thumb">
-                  @if (it.image?.url) {
-                    <img [src]="it.image?.url" [alt]="it.image?.alt || it.name" loading="lazy" />
-                  } @else {
-                    <div class="ph"></div>
-                  }
+                  <app-product-image
+                    [src]="it.image?.url"
+                    [alt]="it.image?.alt || it.name"
+                    [width]="54"
+                    [height]="64"
+                    variant="thumbnail"
+                  />
                 </div>
 
                 <div class="meta">

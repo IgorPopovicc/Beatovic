@@ -9,7 +9,7 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
-import { CommonModule, DecimalPipe, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
+import { CommonModule, DecimalPipe, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -21,11 +21,12 @@ import {
   ProductCard,
   ProductCardComponent,
 } from '../../shared/ui/product-card/product-card';
+import { ProductImageComponent } from '../../shared/ui/product-image/product-image';
 
 @Component({
   selector: 'app-product-details',
   standalone: true,
-  imports: [CommonModule, NgOptimizedImage, DecimalPipe, RouterLink, ProductCardComponent],
+  imports: [CommonModule, DecimalPipe, RouterLink, ProductCardComponent, ProductImageComponent],
   templateUrl: './product-details.html',
   styleUrl: './product-details.scss',
 })

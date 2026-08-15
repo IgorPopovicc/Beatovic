@@ -1,0 +1,40 @@
+<div
+  class="product-image"
+  [class.product-image--thumbnail]="variant === 'thumbnail'"
+  [class.product-image--card]="variant === 'card'"
+  [class.product-image--large]="variant === 'large'"
+>
+  @if (hasImage) {
+    <picture>
+      @if (hasDistinctMobileImage) {
+        <source [srcset]="resolvedMobileSrc" media="(max-width: 768px)" />
+      }
+      <img
+        [src]="resolvedSrc"
+        [alt]="alt"
+        [attr.width]="width"
+        [attr.height]="height"
+        [attr.sizes]="sizes"
+        [attr.loading]="priority ? 'eager' : 'lazy'"
+        [attr.fetchpriority]="priority ? 'high' : null"
+        decoding="async"
+        (error)="onImageError()"
+      />
+    </picture>
+  } @else {
+    <div class="placeholder" role="img" [attr.aria-label]="accessibleFallbackLabel">
+      <span class="orb orb--one" aria-hidden="true"></span>
+      <span class="orb orb--two" aria-hidden="true"></span>
+      <div class="placeholder-content" aria-hidden="true">
+        <span class="brand-mark">P</span>
+        <svg class="image-icon" viewBox="0 0 48 48">
+          <rect x="7" y="9" width="34" height="30" rx="7" />
+          <circle cx="18" cy="20" r="3.5" />
+          <path d="m10 34 9-9 7 7 5-5 8 8" />
+        </svg>
+        <span class="placeholder-title">SLIKA USKORO</span>
+        <span class="placeholder-copy">Planeta izbor</span>
+      </div>
+    </div>
+  }
+</div>

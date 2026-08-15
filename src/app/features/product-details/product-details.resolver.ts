@@ -9,8 +9,6 @@ import { normalizeCurrencyCode } from '../../shared/utils/currency';
 import { Variant } from '../../core/api/catalog.models';
 import { ProductCard } from '../../shared/ui/product-card/product-card';
 
-const PRODUCT_PLACEHOLDER = 'assets/images/products/no-image.svg';
-
 export type ProductDetailsResolved = ProductDetailsModel & {
   sizeQtyMap: Record<string, number>;
   sizeAttrElementIdMap: Record<string, string>;
@@ -48,6 +46,14 @@ function truncate(value: string, max = 190): string {
 
 function resolveMediaUrl(pathOrUrl: string): string {
   return runtimeMediaUrl(pathOrUrl);
+}
+
+function firstResolvedMedia(...candidates: unknown[]): string {
+  for (const candidate of candidates) {
+    const resolved = resolveMediaUrl(normalize(candidate));
+    if (resolved) return resolved;
+  }
+  return '';
 }
 
 function pickBrand(dto: Variant): string {
@@ -102,16 +108,25 @@ function buildGallery(dto: Variant, productName: string): ProductDetailsModel['g
     : images;
 
   const candidates = orderedImages.map((image) => ({
-    web: image.webUrl ?? image.url ?? image.originalUrl,
-    thumbnail: image.thumbnailUrl ?? image.webUrl ?? image.url ?? image.originalUrl,
-    original: image.originalUrl ?? image.url ?? image.webUrl,
+    web: firstResolvedMedia(image.webUrl, image.url, image.originalUrl),
+    thumbnail: firstResolvedMedia(
+      image.thumbnailUrl,
+      image.webUrl,
+      image.url,
+      image.originalUrl,
+    ),
+    original: firstResolvedMedia(image.originalUrl, image.url, image.webUrl),
   }));
 
   candidates.push({
-    web: dto.mainImageWebUrl ?? dto.mainImageUrl ?? dto.mainImageName,
-    thumbnail:
-      dto.mainImageThumbnailUrl ?? dto.mainImageWebUrl ?? dto.mainImageUrl ?? dto.mainImageName,
-    original: dto.mainImageUrl ?? dto.mainImageName ?? dto.mainImageWebUrl,
+    web: firstResolvedMedia(dto.mainImageWebUrl, dto.mainImageUrl, dto.mainImageName),
+    thumbnail: firstResolvedMedia(
+      dto.mainImageThumbnailUrl,
+      dto.mainImageWebUrl,
+      dto.mainImageUrl,
+      dto.mainImageName,
+    ),
+    original: firstResolvedMedia(dto.mainImageUrl, dto.mainImageName, dto.mainImageWebUrl),
   });
 
   const gallery: ProductDetailsModel['gallery'] = [];
@@ -134,10 +149,10 @@ function buildGallery(dto: Variant, productName: string): ProductDetailsModel['g
 
   if (!gallery.length) {
     gallery.push({
-      desktop: PRODUCT_PLACEHOLDER,
-      mobile: PRODUCT_PLACEHOLDER,
-      thumbnail: PRODUCT_PLACEHOLDER,
-      original: PRODUCT_PLACEHOLDER,
+      desktop: '',
+      mobile: '',
+      thumbnail: '',
+      original: '',
       alt: productName,
       w: 1200,
       h: 1200,
@@ -170,15 +185,12 @@ function buildRelatedProducts(dto: Variant): ProductCard[] {
       const sku = normalize(related.sku);
       const finalPrice = Number(related.finalPrice ?? related.price ?? related.originalPrice ?? 0);
       const originalPrice = Number(related.originalPrice ?? finalPrice);
-      const image =
-        resolveMediaUrl(
-          normalize(
-            related.mainImageWebUrl ??
-              related.mainImageUrl ??
-              related.mainImageThumbnailUrl ??
-              related.mainImageName,
-          ),
-        ) || PRODUCT_PLACEHOLDER;
+      const image = firstResolvedMedia(
+        related.mainImageWebUrl,
+        related.mainImageUrl,
+        related.mainImageThumbnailUrl,
+        related.mainImageName,
+      );
 
       return {
         id,

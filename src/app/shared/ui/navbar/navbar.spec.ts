@@ -26,6 +26,8 @@ describe('Navbar', () => {
     catalogApi.getCategoryValues.and.callFake((id) =>
       id === 'pol-id'
         ? of([
+            { id: 'kids-runtime-id', value: 'DECA', displayValue: 'Djeca' },
+            { id: 'babies-runtime-id', value: 'BEBE', displayValue: 'Bebe' },
             { id: 'men-runtime-id', value: 'MUSKARCI', displayValue: 'Muškarci' },
             { id: 'women-runtime-id', value: 'ZENE', displayValue: 'Žene' },
           ])
@@ -47,6 +49,12 @@ describe('Navbar', () => {
               value: 'IGRACKE_I_OSTALO',
               displayValue: 'Igračke',
               hasChildren: true,
+            },
+            {
+              id: 'equipment-runtime-id',
+              value: 'OPREMA',
+              displayValue: 'Oprema',
+              hasChildren: false,
             },
           ]),
     );
@@ -90,6 +98,59 @@ describe('Navbar', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('normalizes arbitrary backend order through stable category values', () => {
+    expect(component.menu().map((item) => item.label)).toEqual([
+      'Početna',
+      'Muškarci',
+      'Žene',
+      'Djeca',
+      'Bebe',
+      'Igračke',
+      'Ostalo',
+      'Brendovi',
+    ]);
+    expect(component.menuLoading()).toBeFalse();
+  });
+
+  it('skips a known no-image candidate when a later real search image exists', () => {
+    const image = component.pickImageUrl({
+      id: 'variant-id',
+      productName: 'Proizvod',
+      mainImageWebUrl: '/media/product/no-image-web.jpg',
+      images: [{ id: 'image-id', webUrl: 'real-image.webp', displayed: true }],
+    });
+
+    expect(image).toContain('/media/product/real-image.webp');
+    expect(image).not.toContain('no-image');
+  });
+
+  it('closes from the backdrop and releases the page scroll lock', async () => {
+    (fixture.nativeElement.querySelector('.menu-btn') as HTMLElement).click();
+    await fixture.whenStable();
+
+    expect(component.mobileOpen).toBeTrue();
+    expect(document.body.style.position).toBe('fixed');
+
+    const backdrop = fixture.nativeElement.querySelector('.backdrop') as HTMLElement;
+    backdrop.click();
+    await fixture.whenStable();
+
+    expect(component.mobileOpen).toBeFalse();
+    expect(document.body.style.position).toBe('');
+  });
+
+  it('closes the drawer after a final navigation link is selected', async () => {
+    (fixture.nativeElement.querySelector('.menu-btn') as HTMLElement).click();
+    await fixture.whenStable();
+
+    const homeLink = fixture.nativeElement.querySelector('.menu-col.main a.menu-item') as HTMLElement;
+    homeLink.click();
+    await fixture.whenStable();
+
+    expect(component.mobileOpen).toBeFalse();
+    expect(component.activeParent()).toBeNull();
   });
 
   it('uses stable category values in clean URLs and lazy-loads runtime child IDs', () => {
@@ -217,7 +278,7 @@ describe('Navbar', () => {
 
     expect(component.menu()).toEqual([
       { label: 'Početna', link: '/' },
-      { label: 'Brendovi', link: '/brands' },
+      { label: 'Brendovi', link: '/brands', dividerBefore: true },
     ]);
   });
 });

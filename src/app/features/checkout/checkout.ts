@@ -18,6 +18,7 @@ import { currencyDisplayLabel } from '../../shared/utils/currency';
 import { TurnstileWidgetComponent } from '../../shared/ui/turnstile-widget/turnstile-widget';
 import { TurnstileTokenService } from '../../core/security/turnstile-token.service';
 import { isTurnstileVerificationError } from '../../core/security/turnstile.interceptor';
+import { ProductImageComponent } from '../../shared/ui/product-image/product-image';
 
 const PHONE_REGEX = /^\+?[0-9][0-9\s/-]{5,19}$/;
 const POSTAL_CODE_REGEX = /^\d{5}$/;
@@ -32,7 +33,13 @@ type AppliedCouponState = {
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, TurnstileWidgetComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterLink,
+    TurnstileWidgetComponent,
+    ProductImageComponent,
+  ],
   templateUrl: './checkout.html',
   styleUrl: './checkout.scss',
 })
