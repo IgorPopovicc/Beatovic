@@ -254,6 +254,12 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
 
+  input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
   input[readonly] {
     background: rgba(0, 0, 0, 0.03);
   }
@@ -280,6 +286,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  max-width: 100%;
   min-height: 30px;
   padding: 3px 8px;
   border-radius: 999px;
@@ -287,9 +294,11 @@
   background: rgba(0, 0, 0, 0.04);
 
   .code {
+    min-width: 0;
     font-size: 12px;
     font-weight: 900;
     letter-spacing: 0.02em;
+    overflow-wrap: anywhere;
   }
 
   .meta {
@@ -437,9 +446,11 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: 12px;
 
   .val {
     font-weight: 900;
+    text-align: right;
   }
 }
 

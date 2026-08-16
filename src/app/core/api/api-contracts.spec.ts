@@ -6,7 +6,7 @@ import { AdminCouponsApi } from '../admin-api/admin-coupons-api';
 import { AdminProductsApi } from '../admin-api/admin-products-api';
 import { AuthService } from '../auth/auth.service';
 import { CatalogApiService } from './catalog-api.sevice';
-import { CouponsApiService } from './coupons-api.service';
+import { OrdersApiService } from './orders-api.service';
 import { AdminNewsletterApi } from '../admin-api/admin-newsletter-api';
 
 describe('current OpenAPI contracts', () => {
@@ -29,16 +29,33 @@ describe('current OpenAPI contracts', () => {
 
   afterEach(() => http.verify());
 
-  it('uses the current active-coupon endpoint for admin and checkout clients', () => {
+  it('keeps the active-coupon endpoint scoped to the admin client', () => {
     TestBed.inject(AdminCouponsApi).getActiveCoupons().subscribe();
     const adminRequest = http.expectOne('/api/coupons/admin/active');
     expect(adminRequest.request.method).toBe('GET');
     adminRequest.flush([]);
+  });
 
-    TestBed.inject(CouponsApiService).lookupCouponByCode('SAVE10').subscribe();
-    const checkoutRequest = http.expectOne('/api/coupons/admin/active');
-    expect(checkoutRequest.request.method).toBe('GET');
-    checkoutRequest.flush([]);
+  it('uses the public order quote endpoint with the exact Swagger payload', () => {
+    const payload = {
+      email: 'kupac@example.com',
+      couponCode: 'SAVE10',
+      orderItems: [{ sizeVariantAttributeId: 'size-attribute-id', quantity: 2 }],
+    };
+
+    TestBed.inject(OrdersApiService).createOrderQuote(payload).subscribe();
+
+    const request = http.expectOne('/api/orders/quote');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(payload);
+    request.flush({
+      subtotal: 100,
+      discountAmount: 10,
+      totalPrice: 90,
+      couponCode: 'SAVE10',
+      couponType: 'PERCENTAGE',
+      couponValue: 10,
+    });
   });
 
   it('uses the current coupon deactivation endpoint', () => {

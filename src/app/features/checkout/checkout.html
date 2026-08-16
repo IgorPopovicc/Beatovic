@@ -158,19 +158,27 @@
 
           <div class="row2">
             <div class="field">
-              <label>Kupon</label>
+              <label for="checkout-coupon-code">Kupon</label>
               <div class="field-control coupon-control">
                 <input
+                  id="checkout-coupon-code"
                   type="text"
                   formControlName="couponCode"
                   placeholder="npr. 10KMPOPUST"
-                  [readonly]="hasAppliedCoupon()"
+                  autocomplete="off"
+                  aria-describedby="checkout-coupon-message"
+                  [attr.aria-invalid]="
+                    hasFieldError('couponCode') || helperMessageKind('couponCode') === 'error'
+                  "
+                  [readonly]="couponApplying()"
+                  (keydown.enter)="$event.preventDefault(); applyCoupon()"
                 />
                 <button
                   type="button"
                   class="btn coupon-apply"
                   (click)="applyCoupon()"
-                  [disabled]="couponApplying() || submitting() || hasAppliedCoupon()"
+                  [disabled]="couponApplying() || submitting() || count() === 0"
+                  [attr.aria-busy]="couponApplying()"
                 >
                   @if (couponApplying()) {
                     <span class="spinner dark" aria-hidden="true"></span>
@@ -185,7 +193,9 @@
                 <div class="coupon-chip-row">
                   <span class="coupon-chip">
                     <span class="code">{{ coupon.code }}</span>
-                    <span class="meta">{{ discountLabel() }}</span>
+                    @if (discountLabel()) {
+                      <span class="meta">{{ discountLabel() }}</span>
+                    }
                     <button
                       type="button"
                       class="coupon-chip-remove"
@@ -199,7 +209,9 @@
               }
 
               <div
+                id="checkout-coupon-message"
                 class="field-message"
+                aria-live="polite"
                 [class.error]="
                   hasFieldError('couponCode') || helperMessageKind('couponCode') === 'error'
                 "
@@ -307,9 +319,10 @@
 
         <div class="totals">
           <div class="trow">
-            <div class="muted">Međuzbir</div>
+            <div class="muted">{{ hasAppliedCoupon() ? 'Redovna cijena' : 'Međuzbir' }}</div>
             <div class="val">
-              {{ subtotal().amount | number: '1.2-2' }} {{ currencyLabel(subtotal().currency) }}
+              {{ originalTotal().amount | number: '1.2-2' }}
+              {{ currencyLabel(originalTotal().currency) }}
             </div>
           </div>
 
@@ -323,7 +336,7 @@
           }
 
           <div class="trow big">
-            <div>Ukupno</div>
+            <div>{{ hasAppliedCoupon() ? 'Ukupno sa popustom' : 'Ukupno' }}</div>
             <div class="val">
               {{ total().amount | number: '1.2-2' }} {{ currencyLabel(total().currency) }}
             </div>

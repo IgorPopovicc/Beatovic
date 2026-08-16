@@ -44,26 +44,6 @@ export interface AdminOrder {
   itemsChanged?: boolean | null;
 }
 
-export interface UnregisteredOrderRequest {
-  description?: string;
-  couponCode?: string;
-  userDetails: {
-    email: string;
-    fullName: string;
-    phoneNumber: string;
-    address: string;
-    municipality: string;
-    postalCode: string;
-    privacyPolicyAccepted: boolean;
-  };
-  orderItems: Array<{
-    sizeVariantAttributeId: string;
-    quantity: number;
-  }>;
-}
-
-export type UnregisteredOrderResponse = AdminOrder;
-
 export interface OrdersByEmailRequest {
   email: string;
 }

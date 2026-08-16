@@ -7,8 +7,6 @@ import { catchError, map } from 'rxjs/operators';
 import {
   AdminOrder,
   OrdersByEmailRequest,
-  UnregisteredOrderRequest,
-  UnregisteredOrderResponse,
 } from './admin-orders.models';
 
 export interface UpdateOrderItemRequest {
@@ -97,23 +95,6 @@ export class AdminOrdersApi {
           return throwError(() => err);
         }),
       );
-  }
-
-  createUnregisteredOrder(
-    payload: UnregisteredOrderRequest,
-  ): Observable<UnregisteredOrderResponse> {
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-    });
-
-    const url = runtimeApiUrl(`/orders/unregistered`);
-
-    return this.http.post<UnregisteredOrderResponse>(url, payload, { headers }).pipe(
-      catchError((err) => {
-        console.error('[AdminOrdersApi] createUnregisteredOrder failed:', err);
-        return throwError(() => err);
-      }),
-    );
   }
 
   completeOrder(orderId: string): Observable<unknown> {

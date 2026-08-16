@@ -28,7 +28,13 @@ export function protectedTurnstileContext(
   if (path.endsWith('/auth/admin-panel/login')) return 'admin-login';
   if (path.endsWith('/newsletter/subscribe')) return 'newsletter';
   if (path.endsWith('/contact/add')) return 'contact';
-  if (path.endsWith('/orders/unregistered') || path.endsWith('/orders')) return 'checkout';
+  if (
+    path.endsWith('/orders/quote') ||
+    path.endsWith('/orders/unregistered') ||
+    path.endsWith('/orders')
+  ) {
+    return 'checkout';
+  }
   return null;
 }
 

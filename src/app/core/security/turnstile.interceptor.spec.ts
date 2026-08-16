@@ -20,11 +20,12 @@ describe('Turnstile request matching', () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
   });
 
-  it('matches only the five protected POST routes', () => {
+  it('matches all protected POST routes, including order quote', () => {
     const base = runtimeApiUrl('');
     expect(protectedTurnstileContext('POST', `${base}/newsletter/subscribe`)).toBe('newsletter');
     expect(protectedTurnstileContext('POST', `${base}/contact/add`)).toBe('contact');
     expect(protectedTurnstileContext('POST', `${base}/orders`)).toBe('checkout');
+    expect(protectedTurnstileContext('POST', `${base}/orders/quote`)).toBe('checkout');
     expect(protectedTurnstileContext('POST', `${base}/orders/unregistered`)).toBe('checkout');
     expect(
       protectedTurnstileContext(
@@ -44,8 +45,8 @@ describe('Turnstile request matching', () => {
 
   it('adds the token header only to a matched request and preserves existing headers', () => {
     const tokens = TestBed.inject(TurnstileTokenService);
-    tokens.setToken('newsletter', 'verified-token');
-    const request = new HttpRequest('POST', runtimeApiUrl(`/newsletter/subscribe`), {}, {
+    tokens.setToken('checkout', 'verified-token');
+    const request = new HttpRequest('POST', runtimeApiUrl(`/orders/quote`), {}, {
       headers: new HttpHeaders({ 'X-Existing': 'kept' }),
     });
     let forwarded!: HttpRequest<unknown>;
