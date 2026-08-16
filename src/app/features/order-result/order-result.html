@@ -3,25 +3,33 @@
     @if (status() === 'success') {
       <div class="badge ok">Narudžba</div>
       <div class="icon ok" aria-hidden="true">✅</div>
-      <h1>Uspješno ste poručili</h1>
+      <h1>Narudžba je uspješno kreirana</h1>
       @if (orderNumber()) {
         <div class="detail" role="status">
           <div class="dtitle">Broj narudžbe</div>
-          <div class="dmsg">Porudžbenica {{ orderNumber() }}</div>
+          <div class="dmsg">{{ orderNumber() }}</div>
         </div>
       }
-      <p class="muted">
-        Narudžba je uspješno kreirana. Poslali smo link za potvrdu narudžbe na e-mail adresu
-        @if (email()) {
-          <strong>{{ email() }}</strong>
-        }
-        . Link vrijedi 60 minuta. Tek nakon potvrde putem linka narudžba može biti dalje obrađena i
-        odobrena.
-      </p>
+
+      <div class="confirmation-notice" role="status" aria-live="polite">
+        <p>
+          @if (email()) {
+            Na email adresu <strong>{{ email() }}</strong> poslali smo poruku sa linkom za potvrdu
+            narudžbe.
+          } @else {
+            Na vašu email adresu poslali smo poruku sa linkom za potvrdu narudžbe.
+          }
+        </p>
+        <p class="deadline">Molimo vas da narudžbu potvrdite u roku od 60 minuta.</p>
+        <p>
+          Ako poruku ne vidite u primarnom sandučetu, provjerite i fasciklu
+          <strong>Neželjena pošta (Spam)</strong>.
+        </p>
+      </div>
 
       <div class="actions">
         <a class="btn primary" routerLink="/">Nazad na početnu</a>
-        <a class="btn ghost" routerLink="/brands">Nastavi kupovinu</a>
+        <a class="btn ghost" routerLink="/brands">Nastavite kupovinu</a>
       </div>
     } @else {
       <div class="badge err">Narudžba</div>
@@ -37,7 +45,7 @@
       }
 
       <div class="actions">
-        <a class="btn primary" routerLink="/checkout">Pokušaj ponovo</a>
+        <a class="btn primary" routerLink="/checkout">Pokušajte ponovo</a>
         <a class="btn ghost" routerLink="/cart">Nazad na korpu</a>
       </div>
     }

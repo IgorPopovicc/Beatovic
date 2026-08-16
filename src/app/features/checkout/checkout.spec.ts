@@ -145,7 +145,7 @@ describe('CheckoutComponent', () => {
     component.applyCoupon();
 
     expect(ordersApi.createOrderQuote).not.toHaveBeenCalled();
-    expect(component.couponFeedback()?.text).toContain('Unesi kod kupona');
+    expect(component.couponFeedback()?.text).toContain('Unesite kod kupona');
   });
 
   it('requires the checkout email and Turnstile token before requesting a quote', () => {
@@ -154,7 +154,7 @@ describe('CheckoutComponent', () => {
 
     component.applyCoupon();
     expect(ordersApi.createOrderQuote).not.toHaveBeenCalled();
-    expect(component.couponFeedback()?.text).toContain('e-mail');
+    expect(component.couponFeedback()?.text).toContain('email adresu');
 
     component.form.controls.email.setValue('kupac@example.com');
     component.applyCoupon();
@@ -216,7 +216,7 @@ describe('CheckoutComponent', () => {
 
     expect(component.appliedCoupon()).toBeNull();
     expect(component.quoteNeedsReapply()).toBeTrue();
-    expect(component.couponFeedback()?.text).toContain('E-mail je izmijenjen');
+    expect(component.couponFeedback()?.text).toContain('Email je izmijenjen');
   });
 
   it('shows a safe message for network and server errors', () => {

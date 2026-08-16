@@ -150,7 +150,7 @@ export class AdminDashboard {
     },
     {
       title: 'Kreiraj kupon',
-      hint: 'Kodovi i ograničenja korištenja',
+      hint: 'Kodovi i ograničenja korišćenja',
       link: '/admin/coupons',
     },
     {
@@ -321,7 +321,7 @@ export class AdminDashboard {
     cards.push({
       title: 'Kontakt poruke (30 dana)',
       value: this.contactsError() ? '-' : this.formatInt(this.contacts().length),
-      hint: this.contactsError() ?? 'Broj poruka u zadnjih 30 dana',
+      hint: this.contactsError() ?? 'Broj poruka u posljednjih 30 dana',
       tone: 'default',
     });
     cards.push({

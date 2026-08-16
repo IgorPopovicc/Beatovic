@@ -2,12 +2,12 @@
   <div class="head">
     <div class="head-left">
       <h1 class="title">Kontakt poruke</h1>
-      <p class="sub">Pregled poruka poslanih kroz kontakt formu.</p>
+      <p class="sub">Pregled poruka poslatih putem kontakt forme.</p>
     </div>
 
     <div class="head-right">
       <button class="btn ghost" type="button" (click)="resetToLast30Days()" [disabled]="loading()">
-        Zadnjih 30 dana
+        Posljednjih 30 dana
       </button>
     </div>
   </div>
@@ -38,7 +38,7 @@
 
   <div class="meta">
     @if (showDateRangeError()) {
-      <div class="error">Start datum mora biti manji ili jednak end datumu.</div>
+      <div class="error">Početni datum mora biti prije završnog datuma ili jednak njemu.</div>
     }
 
     @if (error()) {
@@ -50,7 +50,7 @@
         Rezultati: <strong>{{ messages().length }}</strong>
       </div>
     } @else {
-      <div class="hint">Nema poruka za odabrane filtere.</div>
+      <div class="hint">Nema poruka za izabrane filtere.</div>
     }
   </div>
 
@@ -111,7 +111,7 @@
       <header class="preview-head">
         <div>
           <h2>Kontakt poruka</h2>
-          <p>Detaljan pregled zaprimljene poruke.</p>
+          <p>Detaljan pregled primljene poruke.</p>
         </div>
 
         <button type="button" class="preview-close" (click)="closeMessagePreview()" aria-label="Zatvori">
@@ -126,7 +126,7 @@
         </div>
 
         <div class="meta-line">
-          <span>E-mail</span>
+          <span>Email</span>
           <strong>{{ nonEmpty(selected.email) }}</strong>
         </div>
 

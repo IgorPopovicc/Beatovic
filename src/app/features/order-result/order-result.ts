@@ -32,7 +32,7 @@ export class OrderResultComponent implements OnInit {
     if (this.status() === 'success') {
       this.seo.setPage({
         title: 'Narudžba uspješna | Planeta',
-        description: 'Vaša narudžba je uspješno primljena.',
+        description: 'Narudžba je kreirana i čeka potvrdu putem emaila.',
         path: '/order-result',
         noindex: true,
       });

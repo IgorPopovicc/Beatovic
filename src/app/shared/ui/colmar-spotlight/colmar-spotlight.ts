@@ -14,7 +14,7 @@ export class ColmarSpotlight {
     headline: 'Premium stil za grad i planinu',
     description:
       'Tehnički detalji, čiste linije i italijanski dizajn za dane koji počinju u gradu, a završavaju izvan njega.',
-    ctaLabel: 'Istraži Colmar kolekciju',
+    ctaLabel: 'Istražite Colmar kolekciju',
     ctaLink: ['/products'],
     ctaQueryParams: { search: 'colmar' },
     campaignImage: 'assets/images/home/colmar-performance-campaign.jpg',

@@ -146,28 +146,28 @@
               class="price-input"
               type="number"
               [value]="minPrice() ?? ''"
-              placeholder="Min"
+              placeholder="Od"
               #minP
             />
             <input
               class="price-input"
               type="number"
               [value]="maxPrice() ?? ''"
-              placeholder="Max"
+              placeholder="Do"
               #maxP
             />
           </div>
 
           <div class="price-actions">
             <button type="button" class="btn" (click)="applyPrice(minP.value, maxP.value)">
-              Primijeni
+              Primijenite
             </button>
             <button
               type="button"
               class="btn ghost"
               (click)="clearPrice(); minP.value = ''; maxP.value = ''"
             >
-              Reset
+              Poništite
             </button>
           </div>
 
@@ -179,13 +179,13 @@
 
         <div class="filter-block">
           <button type="button" class="btn full" (click)="resetFilters(false)">
-            Očisti filtere
+            Očistite filtere
           </button>
         </div>
 
         <div class="filter-block mobile-only">
           <button type="button" class="btn full" (click)="closeFilters()">
-            Primijeni i zatvori
+            Primijenite i zatvorite
           </button>
         </div>
       </div>
@@ -222,7 +222,7 @@
         <div class="state error" role="alert">
           <div class="state-title">Katalog trenutno nije dostupan</div>
           <div class="state-text">{{ error() }}</div>
-          <button class="btn ghost" type="button" (click)="retryLoad()">Pokušaj ponovo</button>
+          <button class="btn ghost" type="button" (click)="retryLoad()">Pokušajte ponovo</button>
         </div>
       } @else {
         <div class="products-grid">
@@ -239,13 +239,13 @@
                 } @else {
                   <div class="empty-title">Nema proizvoda</div>
                   <div class="empty-text">
-                    Trenutno nema proizvoda za izabrane filtere. Pokušaj ukloniti neke filtere ili
-                    promijeniš sortiranje.
+                    Trenutno nema proizvoda za izabrane filtere. Pokušajte ukloniti neke filtere ili
+                    promijeniti način sortiranja.
                   </div>
                 }
 
                 <button type="button" class="btn ghost empty-cta" (click)="resetFilters(false)">
-                  Očisti filtere
+                  Očistite filtere
                 </button>
               </div>
             </div>

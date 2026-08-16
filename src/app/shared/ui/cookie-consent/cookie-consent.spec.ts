@@ -48,7 +48,7 @@ describe('CookieConsentComponent', () => {
 
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('[role="dialog"]')).not.toBeNull();
-    expect(element.textContent).toContain('korpa u lokalnoj pohrani preglednika');
+    expect(element.textContent).toContain('korpa u lokalno sačuvanim podacima preglednika');
     expect(element.textContent).toContain('Cloudflare Turnstile');
   });
 

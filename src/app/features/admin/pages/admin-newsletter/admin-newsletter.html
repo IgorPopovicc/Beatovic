@@ -10,7 +10,7 @@
         class="input"
         type="text"
         [formControl]="search"
-        placeholder="Pretraga email-a (npr. gmail)"
+        placeholder="Pretraga email adrese (npr. gmail)"
       />
       <button class="btn" type="submit" [disabled]="loading()">{{ loading() ? '...' : 'Pretraži' }}</button>
       <button class="btn ghost" type="button" (click)="clearSearch()" [disabled]="loading()">
@@ -29,7 +29,7 @@
         Rezultati: <strong>{{ pageData().totalElements }}</strong>
       </div>
     } @else {
-      <div class="hint">Nema aktivnih pretplatnika za odabrane filtere.</div>
+      <div class="hint">Nema aktivnih pretplatnika za izabrane filtere.</div>
     }
   </div>
 

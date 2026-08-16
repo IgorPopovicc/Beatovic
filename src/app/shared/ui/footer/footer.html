@@ -36,7 +36,7 @@
     <div class="footer-section job">
       <h4>Rad s nama</h4>
       <p>
-        Ako ste zainteresirani za saradnju ili želite postati dio našeg tima, slobodno nam se
+        Ako ste zainteresovani za saradnju ili želite postati dio našeg tima, slobodno nam se
         javite.
       </p>
       <button
@@ -103,18 +103,18 @@
         <div class="form-grid">
           <label class="field">
             <span>Ime i prezime</span>
-            <input type="text" formControlName="name" placeholder="npr. Amar Hadžić" />
+            <input type="text" formControlName="name" placeholder="npr. Petar Petrović" />
             <span class="field-msg" [class.error]="hasFieldError('name')">{{
               fieldError('name')
             }}</span>
           </label>
 
           <label class="field">
-            <span>E-mail *</span>
+            <span>Email *</span>
             <input
               type="email"
               formControlName="email"
-              placeholder="vas@email.com"
+              placeholder="petar@example.com"
               maxlength="40"
             />
             <span class="field-msg" [class.error]="hasFieldError('email')">{{
@@ -182,7 +182,7 @@
             class="btn primary"
             [disabled]="submitting() || !turnstile.hasToken('contact')"
           >
-            {{ submitting() ? 'Slanje...' : 'Pošalji poruku' }}
+            {{ submitting() ? 'Slanje...' : 'Pošaljite poruku' }}
           </button>
         </div>
       </form>

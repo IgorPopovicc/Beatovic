@@ -9,7 +9,7 @@
     <header class="head">
       <div class="title-wrap">
         <h2 class="title">Dodaj kupon</h2>
-        <p class="sub">Unesite kod, tip popusta i limit korištenja.</p>
+        <p class="sub">Unesite kod, tip popusta i ograničenje korišćenja.</p>
       </div>
 
       <button class="icon-btn" type="button" (click)="close()" aria-label="Zatvori">✕</button>
@@ -62,7 +62,7 @@
         </div>
 
         <div class="field">
-          <label class="label">Način korištenja</label>
+          <label class="label">Način korišćenja</label>
           <select class="input" formControlName="usageType">
             <option value="GLOBAL_LIMIT">GLOBAL_LIMIT (globalni limit)</option>
             <option value="LIMIT_PER_USER">LIMIT_PER_USER (jednom po korisniku)</option>
@@ -70,10 +70,10 @@
         </div>
 
         <div class="field">
-          <label class="label">Maksimalan broj korištenja</label>
+          <label class="label">Maksimalan broj korišćenja</label>
           <input class="input" type="number" formControlName="maxUsageCount" min="1" step="1" />
           @if (form.controls.maxUsageCount.touched && maxUsageInvalid()) {
-            <div class="field-err">Maksimalan broj korištenja mora biti cijeli broj veći od 0.</div>
+            <div class="field-err">Maksimalan broj korišćenja mora biti cijeli broj veći od 0.</div>
           }
         </div>
       </div>

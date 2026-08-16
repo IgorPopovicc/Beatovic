@@ -92,13 +92,13 @@
 
         <!-- START -->
         <div class="field">
-          <label class="label">Start</label>
+          <label class="label">Početak</label>
           <input class="input" type="datetime-local" formControlName="startDateLocal" />
         </div>
 
         <!-- END -->
         <div class="field">
-          <label class="label">End</label>
+          <label class="label">Kraj</label>
           <input class="input" type="datetime-local" formControlName="endDateLocal" />
         </div>
 
@@ -119,7 +119,7 @@
 
       <div class="meta">
         @if (showRangeError()) {
-          <div class="error">Start datum mora biti manji od end datuma.</div>
+          <div class="error">Početni datum mora biti prije završnog datuma.</div>
         }
 
         @if (error()) {

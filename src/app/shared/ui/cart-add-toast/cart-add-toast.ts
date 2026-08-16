@@ -25,7 +25,7 @@ export class CartAddToastComponent implements OnDestroy {
   readonly visible = signal(false);
   readonly kind = signal<'success' | 'error' | 'info'>('success');
   readonly action = signal<'cart' | 'none'>('none');
-  readonly title = signal('Proizvod je dodan u korpu');
+  readonly title = signal('Proizvod je dodat u korpu');
   readonly subtitle = signal<string | null>(null);
   readonly icon = computed(() => {
     switch (this.kind()) {
@@ -68,7 +68,7 @@ export class CartAddToastComponent implements OnDestroy {
   private openCartToast(productName: string, size: string | null): void {
     this.kind.set('success');
     this.action.set('cart');
-    this.title.set('Proizvod je dodan u korpu');
+    this.title.set('Proizvod je dodat u korpu');
     this.subtitle.set(this.buildSubtitle(productName, size));
     this.showToast();
   }
@@ -95,7 +95,7 @@ export class CartAddToastComponent implements OnDestroy {
 
   private buildSubtitle(name: string, size: string | null): string {
     const trimmedName = String(name ?? '').trim();
-    const safeName = trimmedName || 'Odabrani proizvod';
+    const safeName = trimmedName || 'Izabrani proizvod';
     if (size) return `${safeName}, veličina ${size}`;
     return safeName;
   }

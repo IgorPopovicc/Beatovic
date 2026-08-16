@@ -110,7 +110,7 @@ export class Footer implements OnDestroy {
 
     if (!hasVisibleText(email) || !hasVisibleText(message)) {
       this.form.markAllAsTouched();
-      this.submitError.set('Unesite e-mail i poruku.');
+      this.submitError.set('Unesite email adresu i poruku.');
       return;
     }
 
@@ -157,10 +157,10 @@ export class Footer implements OnDestroy {
         if (control.errors?.['maxlength']) return 'Ime može imati najviše 30 karaktera.';
         return 'Unesite ispravno ime.';
       case 'email':
-        if (control.errors?.['required']) return 'E-mail je obavezan.';
-        if (control.errors?.['email']) return 'Unesite ispravan e-mail.';
-        if (control.errors?.['maxlength']) return 'E-mail može imati najviše 40 karaktera.';
-        return 'Unesite ispravan e-mail.';
+        if (control.errors?.['required']) return 'Email je obavezan.';
+        if (control.errors?.['email']) return 'Unesite ispravnu email adresu.';
+        if (control.errors?.['maxlength']) return 'Email može imati najviše 40 karaktera.';
+        return 'Unesite ispravnu email adresu.';
       case 'phoneNumber':
         if (control.errors?.['pattern']) return 'Telefon mora biti u formatu +387 61 123 456.';
         return 'Unesite ispravan broj telefona.';
@@ -207,13 +207,13 @@ export class Footer implements OnDestroy {
       ).toLowerCase();
 
       if (backendEmailError.includes('between 0 and 40') || backendEmailError.includes('40')) {
-        return 'E-mail može imati najviše 40 karaktera.';
+        return 'Email može imati najviše 40 karaktera.';
       }
 
       return 'Provjerite unesene podatke i pokušajte ponovo.';
     }
 
-    return 'Poruka trenutno nije poslana. Pokušajte ponovo kasnije.';
+    return 'Poruka trenutno nije poslata. Pokušajte ponovo kasnije.';
   }
 
   private lockBodyScroll(): void {

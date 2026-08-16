@@ -90,7 +90,7 @@ export class AdminContact {
     this.error.set(null);
 
     if (this.showDateRangeError()) {
-      this.error.set('Start datum mora biti manji ili jednak end datumu.');
+      this.error.set('Početni datum mora biti prije završnog datuma ili jednak njemu.');
       return;
     }
 

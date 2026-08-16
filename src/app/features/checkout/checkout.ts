@@ -173,7 +173,7 @@ export class CheckoutComponent implements OnDestroy {
       .subscribe((value) => {
         const applied = this.appliedCoupon();
         if (applied && this.normalizeEmail(value) !== applied.snapshot.email) {
-          this.invalidateAppliedQuote('E-mail je izmijenjen. Ponovo primijenite kupon.');
+          this.invalidateAppliedQuote('Email je izmijenjen. Ponovo primijenite kupon.');
         }
       });
 
@@ -202,26 +202,26 @@ export class CheckoutComponent implements OnDestroy {
 
     switch (controlName) {
       case 'fullName':
-        if (control.errors?.['required']) return 'Ime i prezime je obavezno.';
-        return 'Unesi ispravno ime i prezime.';
+        if (control.errors?.['required']) return 'Ime i prezime su obavezni.';
+        return 'Unesite ispravno ime i prezime.';
       case 'email':
-        if (control.errors?.['required']) return 'E-mail je obavezan.';
-        return 'Unesi ispravan e-mail.';
+        if (control.errors?.['required']) return 'Email je obavezan.';
+        return 'Unesite ispravnu email adresu.';
       case 'phoneNumber':
         if (control.errors?.['required']) return 'Telefon je obavezan.';
-        return 'Unesi ispravan broj telefona.';
+        return 'Unesite ispravan broj telefona.';
       case 'address':
         if (control.errors?.['required']) return 'Adresa je obavezna.';
-        return 'Unesi ispravnu adresu.';
+        return 'Unesite ispravnu adresu.';
       case 'municipality':
         if (control.errors?.['required']) return 'Grad je obavezan.';
         if (control.errors?.['minlength'] || control.errors?.['maxlength']) {
-          return 'Unesi ispravan naziv grada.';
+          return 'Unesite ispravan naziv grada.';
         }
-        return 'Unesi ispravan grad.';
+        return 'Unesite ispravan grad.';
       case 'postalCode':
         if (control.errors?.['required']) return 'Poštanski broj je obavezan.';
-        return 'Unesi ispravan poštanski broj (5 cifara).';
+        return 'Unesite ispravan poštanski broj (5 cifara).';
       case 'privacyPolicyAccepted':
         return 'Morate prihvatiti politiku privatnosti.';
       case 'couponCode':
@@ -265,7 +265,7 @@ export class CheckoutComponent implements OnDestroy {
     if (this.count() <= 0) {
       this.couponFeedback.set({
         kind: 'error',
-        text: 'Korpa je prazna. Dodaj proizvode prije primjene kupona.',
+        text: 'Korpa je prazna. Dodajte proizvode prije primjene kupona.',
       });
       return;
     }
@@ -273,13 +273,13 @@ export class CheckoutComponent implements OnDestroy {
     if (this.form.controls.couponCode.invalid) {
       this.couponFeedback.set({
         kind: 'error',
-        text: this.fieldMessage('couponCode') || 'Unesi ispravan kod kupona.',
+        text: this.fieldMessage('couponCode') || 'Unesite ispravan kod kupona.',
       });
       return;
     }
 
     if (!couponCode) {
-      this.couponFeedback.set({ kind: 'error', text: 'Unesi kod kupona prije primjene.' });
+      this.couponFeedback.set({ kind: 'error', text: 'Unesite kod kupona prije primjene.' });
       return;
     }
 
@@ -287,7 +287,7 @@ export class CheckoutComponent implements OnDestroy {
     if (!email || this.form.controls.email.invalid) {
       this.couponFeedback.set({
         kind: 'error',
-        text: 'Unesi ispravan e-mail prije primjene kupona.',
+        text: 'Unesite ispravnu email adresu prije primjene kupona.',
       });
       return;
     }
@@ -345,7 +345,7 @@ export class CheckoutComponent implements OnDestroy {
           if (!applied) {
             this.couponFeedback.set({
               kind: 'error',
-              text: 'Backend je vratio nepotpun obračun. Pokušajte ponovo.',
+              text: 'Obračun trenutno nije dostupan. Pokušajte ponovo.',
             });
             return;
           }
@@ -391,7 +391,7 @@ export class CheckoutComponent implements OnDestroy {
     this.errorMsg.set(null);
 
     if (this.count() <= 0) {
-      this.errorMsg.set('Korpa je prazna. Dodaj proizvode prije naplate.');
+      this.errorMsg.set('Korpa je prazna. Dodajte proizvode prije naplate.');
       return;
     }
 
@@ -407,7 +407,7 @@ export class CheckoutComponent implements OnDestroy {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.errorMsg.set('Molimo popuni sva obavezna polja.');
+      this.errorMsg.set('Molimo vas da popunite sva obavezna polja.');
       return;
     }
 
@@ -421,7 +421,7 @@ export class CheckoutComponent implements OnDestroy {
 
     const municipality = String(v.municipality ?? '').trim();
     if (!municipality) {
-      this.errorMsg.set('Molimo unesi grad dostave.');
+      this.errorMsg.set('Molimo vas da unesete grad dostave.');
       return;
     }
 
@@ -432,7 +432,9 @@ export class CheckoutComponent implements OnDestroy {
 
     // Hard validation so you never send product/variant ids by mistake
     if (!this.areOrderItemsValid(orderItems)) {
-      this.errorMsg.set('Neispravan ID veličine u korpi. (Očekuje se attributes[].id za VELICINA)');
+      this.errorMsg.set(
+        'Podaci o izabranoj veličini nisu ispravni. Vratite se u korpu i pokušajte ponovo.',
+      );
       return;
     }
 

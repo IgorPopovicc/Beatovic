@@ -59,14 +59,14 @@ export class OrderEmailVerificationPageComponent implements OnInit {
         tone: 'info',
         icon: 'i',
         title: 'Provjeravamo potvrdu narudžbe',
-        message: 'Sačekajte trenutak dok obradimo vašu potvrdu iz email poruke.',
+        message: 'Sačekajte trenutak dok obradimo potvrdu iz vaše email poruke.',
         details: null,
         primaryText: 'Početna',
         primaryLink: '/',
         secondaryText: 'Katalog',
         secondaryLink: '/catalog/muskarci/obuca',
         seoTitle: 'Potvrda narudžbe | Planeta',
-        seoDescription: 'Provjera email potvrde narudžbe.',
+        seoDescription: 'Provjera potvrde narudžbe putem emaila.',
       };
     }
 
@@ -76,14 +76,14 @@ export class OrderEmailVerificationPageComponent implements OnInit {
         icon: '✓',
         title: 'Narudžba je uspješno potvrđena',
         message:
-          'Hvala vam. Vaša narudžba je potvrđena i prelazi u dalju obradu. O narednim koracima ćemo vas obavijestiti email porukom.',
+          'Hvala vam. Vaša narudžba je potvrđena i prelazi u dalju obradu. O narednim koracima obavijestićemo vas email porukom.',
         details,
         primaryText: 'Nazad na početnu',
         primaryLink: '/',
-        secondaryText: 'Nastavi kupovinu',
+        secondaryText: 'Nastavite kupovinu',
         secondaryLink: '/catalog/muskarci/obuca',
         seoTitle: 'Narudžba potvrđena | Planeta',
-        seoDescription: 'Email potvrda narudžbe je uspješno završena.',
+        seoDescription: 'Potvrda narudžbe putem emaila je uspješno završena.',
       };
     }
 
@@ -93,16 +93,16 @@ export class OrderEmailVerificationPageComponent implements OnInit {
         icon: '!',
         title: 'Rok za potvrdu je istekao',
         message:
-          'Ovu narudžbu više nije moguće potvrditi jer je istekao vremenski rok za potvrdu putem email-a.',
+          'Ovu narudžbu više nije moguće potvrditi jer je istekao rok za potvrdu putem emaila.',
         details:
           details ??
           'Ako i dalje želite iste proizvode, potrebno je napraviti novu narudžbu kroz webshop.',
-        primaryText: 'Napravi novu narudžbu',
+        primaryText: 'Napravite novu narudžbu',
         primaryLink: '/catalog/muskarci/obuca',
         secondaryText: 'Nazad na početnu',
         secondaryLink: '/',
         seoTitle: 'Potvrda narudžbe je istekla | Planeta',
-        seoDescription: 'Rok za potvrdu narudžbe putem email-a je istekao.',
+        seoDescription: 'Rok za potvrdu narudžbe putem emaila je istekao.',
       };
     }
 
@@ -111,11 +111,11 @@ export class OrderEmailVerificationPageComponent implements OnInit {
       icon: '!',
       title: 'Link za potvrdu nije važeći',
       message:
-        'Link koji ste otvorili nije validan ili je već iskorišten. Otvorite najnoviji email za narudžbu i pokušajte ponovo.',
+        'Link koji ste otvorili nije važeći ili je već iskorišten. Otvorite najnoviju email poruku za narudžbu i pokušajte ponovo.',
       details,
       primaryText: 'Nazad na početnu',
       primaryLink: '/',
-      secondaryText: 'Otvori katalog',
+      secondaryText: 'Otvorite katalog',
       secondaryLink: '/catalog/muskarci/obuca',
       seoTitle: 'Potvrda narudžbe nije uspjela | Planeta',
       seoDescription: 'Link za potvrdu narudžbe nije važeći.',

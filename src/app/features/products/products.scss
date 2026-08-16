@@ -71,12 +71,6 @@
   border: 1px solid #eee;
   border-radius: 12px;
   padding: 14px;
-
-  position: sticky;
-  top: 110px;
-  max-height: calc(100vh - 130px);
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .filters-head {
@@ -498,12 +492,15 @@
     left: 0;
     bottom: 0;
     width: min(380px, 92vw);
+    height: calc(100vh - 98px);
+    height: calc(100dvh - 98px);
     max-height: none;
     border-radius: 0 16px 16px 0;
     transform: translateX(-110%);
     transition: transform 0.22s ease;
     z-index: 1200;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     padding: 0;

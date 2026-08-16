@@ -52,7 +52,7 @@ export class HomeNewsletter {
     const email = String(raw.email ?? '').trim();
     if (!hasVisibleText(email)) {
       this.form.markAllAsTouched();
-      this.submitError.set('Unesite e-mail adresu.');
+      this.submitError.set('Unesite email adresu.');
       return;
     }
 
@@ -76,8 +76,8 @@ export class HomeNewsletter {
           this.form.markAsPristine();
           this.form.markAsUntouched();
           this.notices.success(
-            'Poslali smo vam email sa linkom za potvrdu.',
-            'Molimo provjerite inbox (i spam folder).',
+            'Poslali smo vam email sa linkom za potvrdu prijave.',
+            'Ako poruku ne vidite u primarnom sandučetu, provjerite i fasciklu Neželjena pošta (Spam).',
           );
         },
         error: (err: unknown) => {
@@ -92,10 +92,10 @@ export class HomeNewsletter {
 
     switch (controlName) {
       case 'email':
-        if (control.errors?.['required']) return 'E-mail je obavezan.';
-        if (control.errors?.['email']) return 'Unesite ispravan e-mail.';
-        if (control.errors?.['maxlength']) return 'E-mail može imati najviše 120 karaktera.';
-        return 'Unesite ispravan e-mail.';
+        if (control.errors?.['required']) return 'Email je obavezan.';
+        if (control.errors?.['email']) return 'Unesite ispravnu email adresu.';
+        if (control.errors?.['maxlength']) return 'Email može imati najviše 120 karaktera.';
+        return 'Unesite ispravnu email adresu.';
       case 'privacyPolicyAccepted':
         return 'Morate prihvatiti politiku privatnosti.';
       default:
@@ -117,7 +117,7 @@ export class HomeNewsletter {
     }
 
     if (status === 409) {
-      return 'Ova e-mail adresa je već prijavljena na newsletter.';
+      return 'Ova email adresa je već prijavljena na newsletter.';
     }
 
     return 'Newsletter prijava trenutno nije dostupna. Pokušajte ponovo kasnije.';

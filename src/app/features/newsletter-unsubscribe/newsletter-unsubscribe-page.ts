@@ -54,7 +54,7 @@ export class NewsletterUnsubscribePageComponent implements OnInit {
         primaryLink: '/',
         secondaryText: 'Katalog',
         secondaryLink: '/catalog/muskarci/obuca',
-        seoTitle: 'Odjava sa newsletter-a | Planeta',
+        seoTitle: 'Odjava sa newsletter liste | Planeta',
         seoDescription: 'Obrada zahtjeva za odjavu sa newsletter liste.',
       };
     }
@@ -65,11 +65,11 @@ export class NewsletterUnsubscribePageComponent implements OnInit {
         icon: '✓',
         title: 'Uspješno ste odjavljeni',
         message:
-          'Vaša e-mail adresa je uklonjena sa newsletter liste i više nećete primati promotivne poruke.',
+          'Vaša email adresa je uklonjena sa newsletter liste i više nećete primati promotivne poruke.',
         details,
         primaryText: 'Nazad na početnu',
         primaryLink: '/',
-        secondaryText: 'Nastavi kupovinu',
+        secondaryText: 'Nastavite kupovinu',
         secondaryLink: '/catalog/muskarci/obuca',
         seoTitle: 'Odjava uspješna | Planeta',
         seoDescription: 'Uspješno ste odjavljeni sa newsletter liste.',
@@ -81,14 +81,14 @@ export class NewsletterUnsubscribePageComponent implements OnInit {
       icon: '!',
       title: 'Odjava trenutno nije dostupna',
       message:
-        'Link za odjavu nije važeći ili je istekao. Ako želite, pokušajte ponovo iz najnovijeg email-a.',
+        'Link za odjavu nije važeći ili je istekao. Ako želite, pokušajte ponovo iz najnovije email poruke.',
       details,
       primaryText: 'Nazad na početnu',
       primaryLink: '/',
-      secondaryText: 'Otvori katalog',
+      secondaryText: 'Otvorite katalog',
       secondaryLink: '/catalog/muskarci/obuca',
       seoTitle: 'Odjava nije uspjela | Planeta',
-      seoDescription: 'Link za odjavu sa newsletter-a nije važeći ili je istekao.',
+      seoDescription: 'Link za odjavu sa newsletter liste nije važeći ili je istekao.',
     };
   });
 

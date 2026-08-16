@@ -10,8 +10,8 @@
 
         <h1 class="nf-title">Proizvod nije dostupan</h1>
         <p class="nf-text">
-          Izgleda da ovaj proizvod više ne postoji ili je trenutno uklonjen iz ponude. Možeš se
-          vratiti nazad ili nastaviti kupovinu kroz katalog.
+          Izgleda da ovaj proizvod više ne postoji ili je trenutno uklonjen iz ponude. Možete se
+          vratiti na prethodnu stranicu ili nastaviti kupovinu kroz katalog.
         </p>
 
         <div class="nf-actions">
@@ -56,14 +56,14 @@
             }
           </div>
 
-          <div class="thumbs" aria-label="Thumbnails">
+          <div class="thumbs" aria-label="Minijature slika">
             @for (img of gallery(); track img.desktop; let i = $index) {
               <button
                 type="button"
                 class="thumb"
                 [class.active]="activeIndex() === i"
                 (click)="setActive(i)"
-                aria-label="Odaberi sliku {{ i + 1 }}"
+                aria-label="Izaberite sliku {{ i + 1 }}"
               >
                 <app-product-image
                   [src]="img.thumbnail || img.mobile"
@@ -116,7 +116,7 @@
               <div class="sizes">
                 <div class="sizes-head">
                   <div class="sizes-title">Veličina</div>
-                  <div class="sizes-hint">Odaberi veličinu</div>
+                  <div class="sizes-hint">Izaberite veličinu</div>
                 </div>
 
                 <div class="sizes-grid">
@@ -141,7 +141,7 @@
 
                 @if (selectedSizeOutOfStock()) {
                   <div class="size-status" role="status" aria-live="polite">
-                    Odabrana veličina trenutno nije na stanju.
+                    Izabrana veličina trenutno nije na stanju.
                   </div>
                 }
               </div>
@@ -154,7 +154,7 @@
                 (click)="addToCart()"
                 [disabled]="!canAddToCart()"
               >
-                Dodaj u korpu
+                Dodajte u korpu
               </button>
 
               <button

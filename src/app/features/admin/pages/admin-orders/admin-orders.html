@@ -7,12 +7,12 @@
 
     <div class="filters">
       <div class="f">
-        <label class="lbl">Start</label>
+        <label class="lbl">Od</label>
         <input class="input" type="datetime-local" [formControl]="startDate" />
       </div>
 
       <div class="f">
-        <label class="lbl">End</label>
+        <label class="lbl">Do</label>
         <input class="input" type="datetime-local" [formControl]="endDate" />
       </div>
 
@@ -82,7 +82,7 @@
           (click)="onSearchByEmail()"
           [disabled]="!canSearchByEmail()"
         >
-          {{ loading() ? 'Učitavanje...' : 'Pretraži po email-u' }}
+          {{ loading() ? 'Učitavanje...' : 'Pretraži po email adresi' }}
         </button>
       </div>
 
@@ -102,7 +102,7 @@
 
   <div class="meta">
     @if (showRangeError()) {
-      <div class="error">Start datum mora biti manji od end datuma.</div>
+      <div class="error">Početni datum mora biti prije završnog datuma.</div>
     } @else {
       @if (orders().length > 0) {
         <div class="count">
@@ -134,7 +134,7 @@
             <div class="main">
               <div class="name">{{ customerDisplayName(o) }}</div>
               <div class="id">
-                Porudžbenica: <span>{{ o.orderNumber || 'broj nije dostupan' }}</span>
+                Broj narudžbe: <span>{{ o.orderNumber || 'broj nije dostupan' }}</span>
               </div>
               <div class="desc" title="{{ o.description }}">{{ o.description }}</div>
             </div>
@@ -193,7 +193,7 @@
                 <div class="dcol full warning">
                   <div class="dtitle">Potrebna ponovna potvrda</div>
                   <div class="dline">
-                    Ova narudžba je izmijenjena i kupac mora ponovo potvrditi narudžbu putem email-a.
+                    Ova narudžba je izmijenjena i kupac je mora ponovo potvrditi putem emaila.
                   </div>
                   <button
                     type="button"
@@ -225,7 +225,7 @@
                   <span>Adresa:</span> <strong>{{ customerDisplayValue(o.userDetails?.address) }}</strong>
                 </div>
                 <div class="dline">
-                  <span>Općina:</span> <strong>{{ customerDisplayValue(o.userDetails?.municipality) }}</strong>
+                  <span>Opština:</span> <strong>{{ customerDisplayValue(o.userDetails?.municipality) }}</strong>
                 </div>
                 <div class="dline">
                   <span>Poštanski:</span> <strong>{{ customerDisplayValue(o.userDetails?.postalCode) }}</strong>

@@ -288,12 +288,12 @@ export class AdminOrders implements OnInit, OnDestroy {
     this.error.set(null);
 
     if (!start || !end) {
-      this.error.set('Izaberite start i end datum.');
+      this.error.set('Izaberite početni i završni datum.');
       return;
     }
 
     if (!(start < end)) {
-      this.error.set('Start datum mora biti manji od end datuma.');
+      this.error.set('Početni datum mora biti prije završnog datuma.');
       return;
     }
 
@@ -418,7 +418,7 @@ export class AdminOrders implements OnInit, OnDestroy {
           const msg =
             err?.status === 401 || err?.status === 403
               ? 'Nemate dozvolu (provjeri admin token / role).'
-              : 'Greška pri učitavanju narudžbi po email-u. Pokušajte ponovo.';
+              : 'Greška pri učitavanju narudžbi po email adresi. Pokušajte ponovo.';
           this.error.set(msg);
 
           return of([]);
@@ -468,7 +468,7 @@ export class AdminOrders implements OnInit, OnDestroy {
       .resendConfirmation(order.orderId)
       .pipe(
         tap(() => {
-          this.showNotice('success', 'Email za ponovnu potvrdu je uspješno poslan kupcu.');
+          this.showNotice('success', 'Email za ponovnu potvrdu uspješno je poslat kupcu.');
           this.refreshOrders();
         }),
         catchError((err) => {
@@ -650,7 +650,7 @@ export class AdminOrders implements OnInit, OnDestroy {
 
   orderDisplayReference(order: AdminOrder): string {
     const orderNumber = this.safeString(order.orderNumber);
-    return orderNumber ? `porudžbenicu ${orderNumber}` : 'porudžbenicu';
+    return orderNumber ? `narudžbu ${orderNumber}` : 'narudžbu';
   }
 
   editedItemQuantity(orderId: string, sizeAttributeVariantId: string, fallback: number): number {
@@ -849,8 +849,8 @@ export class AdminOrders implements OnInit, OnDestroy {
 
     if (status === 409 || status === 422) {
       return action === 'complete'
-        ? 'Narudžbinu trenutno nije moguće odobriti jer njen status više nije validan.'
-        : 'Narudžbinu trenutno nije moguće otkazati jer njen status više nije validan.';
+        ? 'Narudžbu trenutno nije moguće odobriti jer njen status više nije važeći.'
+        : 'Narudžbu trenutno nije moguće otkazati jer njen status više nije važeći.';
     }
 
     return action === 'complete'

@@ -2,10 +2,10 @@
   <div class="newsletter-shell">
     <div class="newsletter-copy">
       <p class="eyebrow">Newsletter</p>
-      <h2 id="home-newsletter-title">Budi prvi koji sazna za nove kolekcije i akcije</h2>
+      <h2 id="home-newsletter-title">Budite prvi koji će saznati za nove kolekcije i akcije</h2>
       <p>
-        Prijavi se na newsletter i, kada je promotivna ponuda aktivna, nakon potvrde primi kod za
-        popust na email.
+        Prijavite se na newsletter i, kada je promotivna ponuda aktivna, nakon potvrde primite kod
+        za popust putem emaila.
       </p>
     </div>
 
@@ -19,7 +19,7 @@
         <input
           type="email"
           formControlName="email"
-          placeholder="vas@email.com"
+          placeholder="petar@example.com"
           autocomplete="email"
           aria-label="Email za newsletter prijavu"
         />
@@ -45,7 +45,7 @@
         class="submit-btn"
         [disabled]="submitting() || !turnstile.hasToken('newsletter')"
       >
-        {{ submitting() ? 'Slanje...' : 'Prijavi se' }}
+        {{ submitting() ? 'Slanje...' : 'Prijavite se' }}
       </button>
     </form>
   </div>

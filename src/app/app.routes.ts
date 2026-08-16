@@ -151,7 +151,7 @@ export const routes: Routes = [
     data: {
       statusPage: {
         badge: 'Newsletter', tone: 'success', icon: '✓', title: 'Prijava je potvrđena',
-        message: 'Vaša e-mail adresa je uspješno potvrđena i prijava na newsletter je aktivna.',
+        message: 'Vaša email adresa je uspješno potvrđena i prijava na newsletter je aktivna.',
         primaryCtaText: 'Nazad na početnu', primaryCtaLink: '/',
       },
       seo: { noindex: true },
@@ -181,7 +181,7 @@ export const routes: Routes = [
     data: {
       statusPage: {
         badge: 'Newsletter', tone: 'success', icon: '✓', title: 'Uspješno ste odjavljeni',
-        message: 'Vaša e-mail adresa više neće primati Planeta newsletter poruke.',
+        message: 'Vaša email adresa više neće primati Planeta newsletter poruke.',
         primaryCtaText: 'Nazad na početnu', primaryCtaLink: '/',
       },
       seo: { noindex: true },
@@ -222,7 +222,7 @@ export const routes: Routes = [
       ),
     data: {
       seo: {
-        title: 'Odjava sa newsletter-a | Planeta',
+        title: 'Odjava sa newsletter liste | Planeta',
         description: 'Status odjave sa newsletter liste.',
         noindex: true,
       },
@@ -236,7 +236,7 @@ export const routes: Routes = [
       ),
     data: {
       seo: {
-        title: 'Odjava sa newsletter-a | Planeta',
+        title: 'Odjava sa newsletter liste | Planeta',
         description: 'Status odjave sa newsletter liste.',
         noindex: true,
       },
@@ -297,7 +297,7 @@ export const routes: Routes = [
       statusPage: {
         badge: 'Narudžba', tone, icon, title, message,
         primaryCtaText: 'Nazad na početnu', primaryCtaLink: '/',
-        secondaryCtaText: 'Nastavi kupovinu', secondaryCtaLink: '/products',
+        secondaryCtaText: 'Nastavite kupovinu', secondaryCtaLink: '/products',
       },
       seo: { noindex: true },
     },
@@ -312,7 +312,7 @@ export const routes: Routes = [
     data: {
       seo: {
         title: 'Potvrda narudžbe | Planeta',
-        description: 'Status potvrde narudžbe putem email-a.',
+        description: 'Status potvrde narudžbe putem emaila.',
         noindex: true,
       },
     },
@@ -326,7 +326,7 @@ export const routes: Routes = [
     data: {
       seo: {
         title: 'Potvrda narudžbe | Planeta',
-        description: 'Status potvrde narudžbe putem email-a.',
+        description: 'Status potvrde narudžbe putem emaila.',
         noindex: true,
       },
     },
@@ -371,7 +371,7 @@ export const routes: Routes = [
           ),
         data: {
           seo: {
-            title: 'Admin Dashboard | Planeta',
+            title: 'Administratorska kontrolna tabla | Planeta',
             description: 'Administratorski pregled sistema.',
             noindex: true,
           },
