@@ -129,11 +129,11 @@
                   </div>
 
                   <div class="main">
-                    <div class="name">{{ v.productName }}</div>
-                    <div class="id">
+                    <div class="name" [attr.title]="v.productName">{{ v.productName }}</div>
+                    <div class="id" [attr.title]="v.productId">
                       ID: <span>{{ v.productId }}</span>
                     </div>
-                    <div class="sku">
+                    <div class="sku" [attr.title]="v.displaySku || v.sku">
                       SKU: <span>{{ v.displaySku || v.sku }}</span>
                     </div>
                   </div>
@@ -186,11 +186,11 @@
                   </div>
 
                   <div class="main">
-                    <div class="name">{{ p.productName }}</div>
-                    <div class="id">
+                    <div class="name" [attr.title]="p.productName">{{ p.productName }}</div>
+                    <div class="id" [attr.title]="p.id">
                       ID: <span>{{ p.id }}</span>
                     </div>
-                    <div class="sku">
+                    <div class="sku" [attr.title]="p.productSku">
                       SKU: <span>{{ p.productSku }}</span>
                     </div>
                   </div>

@@ -42,10 +42,10 @@
               <div class="name">
                 {{ valueLabel(d) }} · <span class="type">{{ typeLabel(d.type) }}</span>
               </div>
-              <div class="id">
+              <div class="id" [attr.title]="d.id">
                 ID: <span>{{ d.id }}</span>
               </div>
-              <div class="desc" title="{{ d.description }}">{{ d.description }}</div>
+              <div class="desc" [attr.title]="d.description">{{ d.description }}</div>
               <div class="period">
                 <span>Početak:</span> <strong>{{ formatDate(d.startDate) }}</strong>
                 <span class="sep">·</span>

@@ -4,6 +4,8 @@
 :host {
   display: block;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* ===== Base card ===== */
@@ -14,6 +16,7 @@
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
   padding: 16px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .admin-products {
@@ -94,6 +97,7 @@
   justify-content: flex-end;
   gap: 8px;
   flex: 0 0 auto;
+  min-width: 0;
 }
 
 /* ===== Header ===== */
@@ -120,6 +124,7 @@
   margin: 4px 0 0;
   color: rgba(17, 17, 17, 0.65);
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 /* ===== Primary button ===== */
@@ -253,6 +258,7 @@
   color: #a10f18;
   font-weight: 900;
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 /* ===== List ===== */
@@ -271,6 +277,7 @@
 .rows {
   display: grid;
   gap: 10px;
+  min-width: 0;
 }
 
 /* Row layout */
@@ -280,7 +287,7 @@
   border-radius: 16px;
   padding: 12px;
   display: grid;
-  grid-template-columns: 72px 1fr 160px 96px;
+  grid-template-columns: 72px minmax(0, 1fr) minmax(110px, 160px) auto;
   gap: 12px;
   align-items: center;
   min-width: 0;
@@ -289,6 +296,7 @@
 .img {
   display: grid;
   place-items: center;
+  min-width: 0;
 }
 
 .thumb {
@@ -318,6 +326,7 @@
   color: #111;
   font-size: 16px;
   margin-bottom: 4px;
+  overflow-wrap: anywhere;
 }
 
 .id,
@@ -325,9 +334,8 @@
   color: rgba(17, 17, 17, 0.65);
   font-weight: 800;
   font-size: 12px;
-  overflow: visible;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .id span,
@@ -354,6 +362,7 @@
   font-weight: 900;
   color: #111;
   margin-top: 2px;
+  overflow-wrap: anywhere;
 }
 
 /* actions */
@@ -361,6 +370,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+  min-width: 0;
 }
 
 .icon-btn {
@@ -412,7 +422,7 @@ app-admin-product-create-modal {
     padding: 14px;
   }
   .row {
-    grid-template-columns: 72px 1fr 140px 96px;
+    grid-template-columns: 72px minmax(0, 1fr) minmax(110px, 140px) auto;
   }
   .tabs-bar {
     gap: 10px;
@@ -455,7 +465,7 @@ app-admin-product-create-modal {
   }
 
   .row {
-    grid-template-columns: 72px 1fr;
+    grid-template-columns: 72px minmax(0, 1fr);
     grid-template-areas:
       'img main'
       'price actions';

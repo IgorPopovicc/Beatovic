@@ -1,5 +1,6 @@
 :host {
   display: block;
+  min-width: 0;
 }
 
 .overlay {
@@ -10,14 +11,22 @@
   place-items: center;
   padding: 16px;
   z-index: 2600;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal {
   width: min(720px, 100%);
+  max-width: 100%;
+  min-width: 0;
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
   background: #fff;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
 }
 
 .head {
@@ -27,6 +36,11 @@
   gap: 12px;
   padding: 16px;
   border-bottom: 1px solid #eee;
+  min-width: 0;
+}
+
+.title-wrap {
+  min-width: 0;
 }
 
 .title {
@@ -40,6 +54,7 @@
   margin: 4px 0 0;
   color: rgba(17, 17, 17, 0.65);
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .icon-btn {
@@ -50,23 +65,29 @@
   border-radius: 12px;
   cursor: pointer;
   font-weight: 900;
+  flex: 0 0 auto;
 }
 
 .form {
   padding: 16px;
   display: grid;
   gap: 14px;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .grid2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
 .field {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .field.full {
@@ -88,6 +109,9 @@
 }
 
 .input {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   height: 44px;
   border-radius: 12px;
   border: 1px solid #e5e5e5;
@@ -106,6 +130,7 @@
   font-size: 12px;
   font-weight: 900;
   color: #a10f18;
+  overflow-wrap: anywhere;
 }
 
 .error {
@@ -116,6 +141,7 @@
   color: #a10f18;
   font-size: 13px;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .actions {
@@ -148,7 +174,7 @@
 
 @media (max-width: 700px) {
   .grid2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .actions {

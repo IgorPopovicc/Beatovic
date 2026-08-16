@@ -17,7 +17,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   max-height: calc(100dvh - 32px);
-  overflow: visible; /* important */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -29,6 +29,11 @@
   gap: 12px;
   padding: 16px;
   border-bottom: 1px solid #eee;
+  min-width: 0;
+}
+
+.title-wrap {
+  min-width: 0;
 }
 
 .title {
@@ -42,6 +47,7 @@
   margin: 4px 0 0;
   color: rgba(17, 17, 17, 0.65);
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .icon-btn {
@@ -52,6 +58,7 @@
   border-radius: 12px;
   cursor: pointer;
   font-weight: 900;
+  flex: 0 0 auto;
 }
 .icon-btn:hover {
   background: rgba(0, 0, 0, 0.1);
@@ -60,12 +67,15 @@
 /* allow content to scroll if needed */
 .form {
   padding: 16px;
-  overflow: visible;
+  overflow-y: auto;
+  min-width: 0;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .grid2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -117,6 +127,7 @@
   font-size: 12px;
   font-weight: 900;
   color: #a10f18;
+  overflow-wrap: anywhere;
 }
 
 .meta {
@@ -133,6 +144,7 @@
   color: #a10f18;
   font-weight: 900;
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .actions {
@@ -261,6 +273,7 @@
 
 .dd-label {
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .dd-mark {
@@ -272,7 +285,7 @@
 /* Responsive */
 @media (max-width: 900px) {
   .grid2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .dd-scroll {
     max-height: min(360px, 50vh);

@@ -1,5 +1,8 @@
 :host {
   display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .card {
@@ -10,6 +13,8 @@
   padding: 16px;
   display: grid;
   gap: 14px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .head {
@@ -17,6 +22,17 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.head-left {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.head-right {
+  min-width: 0;
 }
 
 .title {
@@ -30,17 +46,20 @@
   margin: 4px 0 0;
   color: rgba(17, 17, 17, 0.65);
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .filters {
   display: grid;
   grid-template-columns: 1.3fr 1fr 1fr auto;
   gap: 10px;
+  min-width: 0;
 }
 
 .f {
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .lbl {
@@ -62,6 +81,9 @@
   border: 1px solid #e5e5e5;
   padding: 0 12px;
   font-weight: 800;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .input:focus {
@@ -116,6 +138,7 @@
   color: #a10f18;
   font-size: 13px;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .list {
@@ -123,6 +146,7 @@
   border-radius: 16px;
   background: #fcfcfc;
   padding: 10px;
+  min-width: 0;
 }
 
 .empty {
@@ -143,6 +167,7 @@
   padding: 12px;
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .row-head {
@@ -150,11 +175,15 @@
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .name {
   font-weight: 900;
   color: #111;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .date {
@@ -169,10 +198,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .line strong {
   color: #111;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .body {
@@ -220,8 +253,8 @@
 
 .preview-card {
   width: min(760px, 100%);
-  max-height: min(92vh, 920px);
-  overflow: auto;
+  max-height: min(calc(100dvh - 28px), 920px);
+  overflow-y: auto;
   background: #fff;
   border: 1px solid #e5e5e5;
   border-radius: 18px;
@@ -229,6 +262,7 @@
   padding: 16px;
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .preview-head {
@@ -236,6 +270,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
 
   h2 {
     margin: 0;
@@ -270,6 +305,7 @@
   border-radius: 12px;
   border: 1px solid #ececec;
   background: #fcfcfc;
+  min-width: 0;
 }
 
 .meta-line {
@@ -289,6 +325,8 @@
   strong {
     color: #111;
     font-weight: 800;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -310,7 +348,7 @@
   justify-content: flex-end;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1200px) {
   .filters {
     grid-template-columns: 1fr 1fr;
   }

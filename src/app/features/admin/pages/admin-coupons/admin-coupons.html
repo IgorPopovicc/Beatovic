@@ -37,7 +37,7 @@
         @for (coupon of coupons(); track trackByCouponId($index, coupon)) {
           <article class="row" role="listitem">
             <div class="main">
-              <div class="name">{{ coupon.code }}</div>
+              <div class="name" [attr.title]="coupon.code">{{ coupon.code }}</div>
 
               <div class="meta-line">
                 <span>Popust:</span>
@@ -60,7 +60,7 @@
                 <strong>{{ coupon.remainingUsageCount }}</strong>
               </div>
 
-              <div class="id">
+              <div class="id" [attr.title]="coupon.id">
                 ID: <span>{{ coupon.id }}</span>
               </div>
             </div>

@@ -1,6 +1,8 @@
 :host {
   display: block;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .card {
@@ -10,6 +12,7 @@
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
   padding: 16px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .head {
@@ -31,6 +34,7 @@
 .sub {
   margin: 0;
   color: rgba(17, 17, 17, 0.65);
+  overflow-wrap: anywhere;
 }
 
 .btn-add {
@@ -92,6 +96,7 @@
   color: #a10f18;
   font-weight: 900;
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .list {
@@ -99,7 +104,7 @@
   background: #fcfcfc;
   border: 1px solid #eee;
   border-radius: 16px;
-  overflow: hidden;
+  min-width: 0;
 }
 
 .empty {
@@ -120,7 +125,7 @@
   border-radius: 16px;
   padding: 12px;
   display: grid;
-  grid-template-columns: 1fr 110px;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
   min-width: 0;
@@ -135,6 +140,7 @@
   color: #111;
   font-size: 16px;
   margin-bottom: 4px;
+  overflow-wrap: anywhere;
 }
 
 .name .type {
@@ -146,9 +152,7 @@
   color: rgba(17, 17, 17, 0.65);
   font-weight: 800;
   font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .id span {
@@ -160,9 +164,7 @@
   color: rgba(17, 17, 17, 0.65);
   font-weight: 800;
   font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .period {
@@ -173,6 +175,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .period span {

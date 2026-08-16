@@ -23,7 +23,7 @@
   border-radius: 18px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   max-height: calc(100dvh - 32px);
-  overflow: visible !important;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -37,6 +37,11 @@
   gap: 12px;
   padding: 16px;
   border-bottom: 1px solid #eee;
+  min-width: 0;
+}
+
+.title-wrap {
+  min-width: 0;
 }
 
 .title {
@@ -49,6 +54,7 @@
   margin: 4px 0 0;
   color: rgba(17, 17, 17, 0.65);
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .icon-btn {
@@ -59,6 +65,7 @@
   border-radius: 12px;
   cursor: pointer;
   font-weight: 900;
+  flex: 0 0 auto;
 }
 .icon-btn:hover {
   background: rgba(0, 0, 0, 0.1);
@@ -71,7 +78,9 @@
 .body {
   padding: var(--space-4);
   overflow: auto;
-  max-height: calc(100dvh - 32px - 73px);
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
   -webkit-overflow-scrolling: touch;
   display: grid;
   gap: var(--space-3);
@@ -83,7 +92,7 @@
   background: #fcfcfc;
   padding: var(--space-3);
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.06);
-  overflow: visible !important;
+  min-width: 0;
   display: grid;
   gap: var(--space-3);
 }
@@ -101,7 +110,7 @@
 
 .grid2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -145,6 +154,25 @@
   cursor: not-allowed;
 }
 
+.readonly-value {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 11px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f6f6f6 0%, #f2f2f2 100%);
+  color: rgba(17, 17, 17, 0.72);
+  font-weight: 800;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.readonly-value.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
 .select {
   height: 46px;
   width: 100%;
@@ -176,6 +204,7 @@
   color: #a10f18;
   font-weight: 900;
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .hint {
@@ -183,11 +212,13 @@
   color: rgba(17, 17, 17, 0.65);
   font-weight: 800;
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 .field-err {
   font-size: 12px;
   font-weight: 900;
   color: #a10f18;
+  overflow-wrap: anywhere;
 }
 
 .inline {
@@ -256,6 +287,7 @@
   padding: 10px;
   display: grid;
   gap: 10px;
+  min-width: 0;
 }
 .lbl {
   font-weight: 900;
@@ -269,6 +301,8 @@
   padding: 0 10px;
   font-weight: 900;
   outline: none;
+  width: 100%;
+  min-width: 0;
 }
 .qty:focus {
   border-color: rgba(224, 24, 36, 0.45);
@@ -279,7 +313,7 @@
 .add-size-row {
   margin-top: 12px;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 14px;
   align-items: end;
 }
@@ -289,6 +323,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
 }
 
 .rm-size {
@@ -381,9 +416,8 @@
   font-weight: 900;
   font-size: 11px;
   color: rgba(17, 17, 17, 0.65);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .badge-mini {
   display: inline-flex;
@@ -416,6 +450,8 @@
   cursor: pointer;
   width: fit-content;
   padding: 0 16px;
+  max-width: 100%;
+  text-align: center;
 }
 .file-btn input {
   display: none;
@@ -447,6 +483,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
 }
 .fn {
   font-weight: 900;
@@ -455,6 +492,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 .rm {
   width: 34px;
@@ -489,7 +527,6 @@
 .dd-wrap {
   position: relative;
   min-width: 0;
-  overflow: visible !important;
 }
 
 .dd {
@@ -525,6 +562,7 @@
 }
 .dd-caret {
   opacity: 0.7;
+  flex: 0 0 auto;
 }
 
 .dd-panel {
@@ -573,9 +611,12 @@
 }
 .dd-opt-main {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+
+.dd-opt .dd-label.color .text {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .dd-opt-badge {
   color: #e01824;
@@ -607,6 +648,8 @@
   font-size: 12px;
   color: rgba(17, 17, 17, 0.85);
   line-height: 1.3;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .dd-actions {
@@ -763,7 +806,7 @@
 /* Responsive */
 @media (max-width: 980px) {
   .grid2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .sizes-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

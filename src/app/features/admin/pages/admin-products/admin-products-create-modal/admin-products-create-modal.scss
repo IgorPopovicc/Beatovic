@@ -17,7 +17,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   max-height: calc(100dvh - 32px);
-  overflow: visible;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -31,6 +31,11 @@
   gap: 12px;
   padding: 16px;
   border-bottom: 1px solid #eee;
+  min-width: 0;
+}
+
+.title-wrap {
+  min-width: 0;
 }
 
 .title {
@@ -44,6 +49,7 @@
   margin: 4px 0 0;
   color: rgba(17, 17, 17, 0.65);
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .icon-btn {
@@ -54,6 +60,7 @@
   border-radius: 12px;
   cursor: pointer;
   font-weight: 900;
+  flex: 0 0 auto;
 }
 .icon-btn:hover {
   background: rgba(0, 0, 0, 0.1);
@@ -68,20 +75,21 @@
 /* ✅ form scroll area, but dropdowns are absolute so keep overflow visible in modal */
 .form {
   padding: 16px;
-  overflow: auto;
-  max-height: calc(100dvh - 32px - 73px);
+  overflow-y: auto;
+  min-width: 0;
+  min-height: 0;
   -webkit-overflow-scrolling: touch;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
   gap: 12px;
 }
 
 .grid2 {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin-top: 12px;
 }
@@ -124,6 +132,7 @@
   font-size: 12px;
   font-weight: 900;
   color: #a10f18;
+  overflow-wrap: anywhere;
 }
 
 .error {
@@ -134,6 +143,7 @@
   background: rgba(224, 24, 36, 0.08);
   color: #a10f18;
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .actions {
@@ -226,7 +236,7 @@
 
 .dd-scroll {
   max-height: min(320px, 45vh);
-  overflow: scroll;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 8px;
 }
@@ -262,39 +272,6 @@
   font-weight: 900;
 }
 
-/* ===== FIX: dropdown panel must not be clipped by modal/form ===== */
-
-/* Ako postoji globalni .modal stil (Bootstrap itd) koji stavlja overflow: hidden,
-   ovo ga pregazi unutar našeg overlay-a. */
-.overlay {
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.overlay .modal {
-  position: relative;
-  overflow: visible !important;
-  isolation: isolate; /* stabilniji z-index u raznim browserima */
-}
-
-/* Parent-i dropdown-a ne smiju klipovati apsolutni panel */
-.overlay .modal .form,
-.overlay .modal .grid,
-.overlay .modal .grid2,
-.overlay .modal .dd-wrap {
-  overflow: visible !important;
-}
-
-/* Dropdown panel mora biti iznad svega unutar modala */
-.dd-wrap {
-  position: relative;
-}
-
-.dd-panel {
-  position: absolute;
-  z-index: 9999; /* iznad headera/forme i svega u modalu */
-}
-
 /* ===== Disabled (read-only) input styling ===== */
 .input:disabled {
   background: linear-gradient(180deg, #f6f6f6 0%, #f2f2f2 100%);
@@ -326,10 +303,10 @@
 /* Tablet / mobile layout */
 @media (max-width: 900px) {
   .grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .grid2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .dd-scroll {
     max-height: min(360px, 50vh);

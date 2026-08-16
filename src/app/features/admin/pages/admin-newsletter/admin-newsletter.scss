@@ -1,5 +1,8 @@
 :host {
   display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .card {
@@ -10,6 +13,8 @@
   padding: 16px;
   display: grid;
   gap: 14px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .head {
@@ -17,6 +22,13 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.head-left {
+  flex: 1 1 240px;
+  min-width: 0;
 }
 
 .title {
@@ -30,17 +42,24 @@
   margin: 4px 0 0;
   color: rgba(17, 17, 17, 0.65);
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .search {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex: 1 1 480px;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
 }
 
 .input {
   height: 42px;
   min-width: 320px;
+  max-width: 100%;
+  flex: 1 1 260px;
   border-radius: 9999px;
   border: 1px solid #e5e5e5;
   padding: 0 14px;
@@ -95,6 +114,7 @@
   color: #a10f18;
   font-size: 13px;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .list {
@@ -104,6 +124,7 @@
   padding: 10px;
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .empty {
@@ -122,12 +143,18 @@
   border-radius: 14px;
   background: #fff;
   padding: 12px;
+  min-width: 0;
+}
+
+.main {
+  min-width: 0;
 }
 
 .email {
   font-weight: 900;
   color: #111;
   font-size: 15px;
+  overflow-wrap: anywhere;
 }
 
 .meta-line {
@@ -135,11 +162,14 @@
   font-size: 13px;
   color: rgba(17, 17, 17, 0.7);
   font-weight: 800;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .meta-line span,
 .meta-line strong {
   color: #111;
+  overflow-wrap: anywhere;
 }
 
 .pagination {

@@ -86,17 +86,17 @@
             <div class="grid3">
               <div class="field">
                 <label class="label">Naziv</label>
-                <input class="input" [value]="sp.productName" disabled />
+                <div class="readonly-value">{{ sp.productName }}</div>
               </div>
 
               <div class="field">
                 <label class="label">SKU</label>
-                <input class="input" [value]="sp.productSku" disabled />
+                <div class="readonly-value mono">{{ sp.productSku }}</div>
               </div>
 
               <div class="field">
                 <label class="label">ID</label>
-                <input class="input" [value]="sp.id" disabled />
+                <div class="readonly-value mono">{{ sp.id }}</div>
               </div>
             </div>
           </div>
@@ -337,7 +337,7 @@
                           [class.is-display]="form.controls.displayImageName.value === f.file.name"
                         >
                           <div class="prev-top">
-                            <div class="fn">{{ f.file.name }}</div>
+                            <div class="fn" [title]="f.file.name">{{ f.file.name }}</div>
                             <button
                               type="button"
                               class="rm"

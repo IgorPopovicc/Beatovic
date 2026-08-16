@@ -1,10 +1,15 @@
 :host {
   display: block;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
 }
 
 .dashboard {
+  width: 100%;
+  max-width: 100%;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   min-width: 0;
 }
@@ -26,6 +31,11 @@
   flex-wrap: wrap;
 }
 
+.hero-left {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
 .title {
   margin: 0;
   font-size: 26px;
@@ -38,6 +48,7 @@
   font-size: 14px;
   color: rgba(17, 17, 17, 0.67);
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .stamp {
@@ -45,12 +56,14 @@
   font-size: 12px;
   color: rgba(17, 17, 17, 0.56);
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .hero-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .btn-refresh {
@@ -114,11 +127,11 @@
 }
 
 .kpi-value {
-  font-size: 24px;
+  font-size: clamp(18px, 2vw, 24px);
+  line-height: 1.2;
   font-weight: 900;
   color: #111;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .kpi-hint {
@@ -152,6 +165,8 @@
   font-size: 18px;
   font-weight: 900;
   color: #111;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .head-link,
@@ -171,6 +186,8 @@
   display: inline-flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .state,
@@ -179,6 +196,7 @@
   color: rgba(17, 17, 17, 0.66);
   font-weight: 800;
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .empty.small {
@@ -193,6 +211,7 @@
   color: #a10f18;
   font-size: 13px;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .warning {
@@ -203,6 +222,7 @@
   color: #92400e;
   font-size: 13px;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .stats-grid,
@@ -219,6 +239,7 @@
   padding: 10px;
   display: grid;
   gap: 5px;
+  min-width: 0;
 }
 
 .s span {
@@ -228,8 +249,9 @@
 }
 
 .s strong {
-  font-size: 18px;
+  font-size: clamp(16px, 1.7vw, 18px);
   color: #111;
+  overflow-wrap: anywhere;
 }
 
 .status-list {
@@ -244,6 +266,7 @@
   background: #fafafa;
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .status-top {
@@ -257,6 +280,8 @@
   font-weight: 800;
   color: #111;
   font-size: 13px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .status-count {
@@ -295,6 +320,8 @@
 }
 
 .table-wrap {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   border: 1px solid #ececec;
   border-radius: 14px;
@@ -304,6 +331,7 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 760px;
+  table-layout: fixed;
 }
 
 .orders-table th,
@@ -314,6 +342,7 @@
   font-size: 13px;
   color: #111;
   vertical-align: middle;
+  overflow-wrap: anywhere;
 }
 
 .orders-table th {
@@ -328,6 +357,7 @@
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 .status-pill {
@@ -339,6 +369,8 @@
   padding: 6px 10px;
   font-size: 12px;
   font-weight: 900;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .status-pill.good {
@@ -386,6 +418,7 @@
   border-radius: 14px;
   background: #fafafa;
   padding: 10px;
+  min-width: 0;
 }
 
 .insight-col h3 {
@@ -413,6 +446,7 @@
   border-radius: 10px;
   background: #fff;
   padding: 8px;
+  min-width: 0;
 }
 
 .insight-name {
@@ -420,9 +454,7 @@
   font-size: 12px;
   font-weight: 800;
   color: #111;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .insight-val {
@@ -430,6 +462,7 @@
   font-weight: 900;
   color: rgba(17, 17, 17, 0.8);
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .mini-list {
@@ -451,24 +484,31 @@
   padding: 8px;
   display: grid;
   gap: 2px;
+  min-width: 0;
 }
 
 .primary {
   font-size: 13px;
   font-weight: 900;
   color: #111;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .secondary {
   font-size: 12px;
   font-weight: 700;
   color: rgba(17, 17, 17, 0.65);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .tertiary {
   font-size: 12px;
   font-weight: 700;
   color: rgba(17, 17, 17, 0.75);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .quick-grid {
@@ -485,6 +525,7 @@
   text-decoration: none;
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .quick-card:hover {
@@ -496,17 +537,23 @@
   font-size: 14px;
   font-weight: 900;
   color: #111;
+  overflow-wrap: anywhere;
 }
 
 .quick-hint {
   font-size: 12px;
   font-weight: 700;
   color: rgba(17, 17, 17, 0.68);
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 1200px) {
   .kpi-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid.two {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

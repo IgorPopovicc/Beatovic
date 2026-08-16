@@ -1,13 +1,18 @@
 .admin-layout {
   min-height: calc(100vh - 98px);
+  width: 100%;
+  min-width: 0;
   padding: 120px 16px 60px;
   background: #eae5e5;
 }
 
 .shell {
-  width: min(1440px, 100%);
+  width: 100%;
+  max-width: 1440px;
+  min-width: 0;
   margin: 0 auto;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
 
@@ -27,6 +32,7 @@
 }
 
 .security-warning {
+  min-width: 0;
   padding: 13px 16px;
   border: 1px solid rgba(224, 24, 36, 0.34);
   border-left: 5px solid #e01824;
@@ -36,6 +42,7 @@
   font-size: 13px;
   font-weight: 700;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .left {
@@ -71,12 +78,9 @@
   font-size: 16px;
   font-weight: 900;
   color: #111;
-
-  /* critical: da ne širi header u nedogled */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   max-width: 100%;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .btn-logout {
@@ -105,7 +109,7 @@
 
 .body {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
   gap: 14px;
   align-items: start;
   min-width: 0;
@@ -121,6 +125,7 @@
   display: grid;
   gap: 6px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .nav a {
@@ -151,15 +156,18 @@
 }
 
 .content {
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
 
 /* Tablet: nav gore kao horizontalni scroll */
 @media (max-width: 900px) {
   .body {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .nav {
@@ -202,13 +210,7 @@
   }
 
   .who .value {
-    /* critical: na telefonu nemoj ellipsis u 1 liniji, nego 2 reda */
-    white-space: normal;
-    overflow: hidden;
-    text-overflow: initial;
-    word-break: break-word;
     line-height: 1.15;
-    max-width: 100%;
   }
 
   .btn-logout {

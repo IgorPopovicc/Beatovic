@@ -20,7 +20,7 @@
           <div class="grid2">
             <div class="field">
               <label class="label">SKU</label>
-              <input class="input" [value]="sku()" disabled />
+              <div class="readonly-value mono">{{ sku() }}</div>
             </div>
 
             <div class="field dd-wrap" (click)="$event.stopPropagation()">
@@ -284,7 +284,7 @@
                         <img [src]="img.url" alt="image" />
                       </span>
                       <span class="meta">
-                        <span class="id">{{ img.id }}</span>
+                        <span class="id" [title]="img.id">{{ img.id }}</span>
                         @if (img.displayed) {
                           <span class="badge-mini">display</span>
                         }
@@ -324,7 +324,7 @@
                       [class.is-display]="form.controls.displayImageName.value === f.file.name"
                     >
                       <div class="prev-top">
-                        <div class="fn">{{ f.file.name }}</div>
+                        <div class="fn" [title]="f.file.name">{{ f.file.name }}</div>
                         <button
                           type="button"
                           class="rm"
