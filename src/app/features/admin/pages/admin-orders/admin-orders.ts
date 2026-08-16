@@ -5,7 +5,11 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
 import { catchError, finalize, startWith, tap } from 'rxjs/operators';
-import { AdminOrder, OrderStatus } from '../../../../core/admin-api/admin-orders.models';
+import {
+  AdminOrder,
+  OrderStatus,
+  isOrderEditable,
+} from '../../../../core/admin-api/admin-orders.models';
 import {
   AdminOrdersApi,
   UpdateOrderItemRequest,
@@ -237,6 +241,7 @@ export class AdminOrders implements OnInit, OnDestroy {
     const stateOrder = this.navigationOrder();
     if (stateOrder?.orderId === requestedId) {
       this.orders.set([stateOrder]);
+      this.editedItemQuantities.set({});
       this.expandedOrderId.set(requestedId);
       return;
     }
@@ -266,12 +271,14 @@ export class AdminOrders implements OnInit, OnDestroy {
         next: (orders) => {
           const selected = (orders ?? []).find((order) => order.orderId === orderId) ?? null;
           this.orders.set(selected ? [selected] : []);
+          this.editedItemQuantities.set({});
           this.expandedOrderId.set(selected?.orderId ?? null);
           if (!selected) this.error.set('Narudžba sa izabranim UUID-om nije pronađena.');
         },
         error: (err: unknown) => {
           const status = this.statusFromError(err);
           this.orders.set([]);
+          this.editedItemQuantities.set({});
           this.error.set(
             status === 401 || status === 403
               ? 'Nemate dozvolu za pregled ove narudžbe.'
@@ -453,7 +460,7 @@ export class AdminOrders implements OnInit, OnDestroy {
   }
 
   removeOrderCoupon(order: AdminOrder): void {
-    if (!order.couponCode || this.isRowBusy(order)) return;
+    if (!this.canEditOrder(order) || !order.couponCode || this.isRowBusy(order)) return;
     this.openConfirm('remove-coupon', order);
   }
 
@@ -469,7 +476,7 @@ export class AdminOrders implements OnInit, OnDestroy {
       .pipe(
         tap(() => {
           this.showNotice('success', 'Email za ponovnu potvrdu uspješno je poslat kupcu.');
-          this.refreshOrders();
+          this.refreshOrders(order.orderId);
         }),
         catchError((err) => {
           const status = this.statusFromError(err);
@@ -565,6 +572,12 @@ export class AdminOrders implements OnInit, OnDestroy {
     const order = this.confirmOrder();
     const action = this.confirmAction();
     if (!order || !action || this.confirmBusy()) return;
+    const currentOrder =
+      this.orders().find((candidate) => candidate.orderId === order.orderId) ?? order;
+    if (action === 'remove-coupon' && !this.canEditOrder(currentOrder)) {
+      this.closeConfirm(true);
+      return;
+    }
 
     this.confirmBusy.set(true);
     this.error.set(null);
@@ -580,7 +593,7 @@ export class AdminOrders implements OnInit, OnDestroy {
 
     request$
       .pipe(
-        tap(() => {
+        tap((response) => {
           const successMsg =
             action === 'complete'
               ? 'Narudžba je uspješno odobrena.'
@@ -589,7 +602,12 @@ export class AdminOrders implements OnInit, OnDestroy {
                 : 'Kupon je uspješno uklonjen sa narudžbe.';
 
           this.showNotice('success', successMsg);
-          this.refreshOrders();
+          if (action === 'remove-coupon' && this.isAdminOrder(response)) {
+            this.replaceOrder(response);
+            this.clearEditedQuantitiesForOrder(order.orderId);
+          } else {
+            this.refreshOrders(order.orderId);
+          }
         }),
         catchError((err) => {
           const msg = this.buildMutationErrorMessage(action, err);
@@ -632,6 +650,10 @@ export class AdminOrders implements OnInit, OnDestroy {
     return order.itemsChanged === true;
   }
 
+  canEditOrder(order: AdminOrder): boolean {
+    return isOrderEditable(order.status);
+  }
+
   customerDisplayName(order: AdminOrder): string {
     const fullName = this.safeString(order.userDetails?.fullName);
     if (fullName) return fullName;
@@ -660,21 +682,26 @@ export class AdminOrders implements OnInit, OnDestroy {
     return fallback;
   }
 
-  onItemQuantityInput(orderId: string, sizeAttributeVariantId: string, rawValue: string): void {
+  onItemQuantityInput(
+    order: AdminOrder,
+    sizeAttributeVariantId: string,
+    rawValue: string,
+  ): void {
+    if (!this.canEditOrder(order) || rawValue.trim() === '') return;
     const parsed = Number(rawValue);
     if (!Number.isFinite(parsed)) return;
-    const nextQty = Math.max(0, Math.floor(parsed));
-    const key = this.quantityKey(orderId, sizeAttributeVariantId);
-    this.editedItemQuantities.update((prev) => ({ ...prev, [key]: nextQty }));
+    const key = this.quantityKey(order.orderId, sizeAttributeVariantId);
+    this.editedItemQuantities.update((prev) => ({ ...prev, [key]: parsed }));
   }
 
   hasItemChanges(order: AdminOrder): boolean {
+    if (!this.canEditOrder(order)) return false;
     const edited = this.editedItemQuantities();
     for (const item of order.items ?? []) {
       const key = this.quantityKey(order.orderId, item.sizeAttributeVariantId);
       const updated = edited[key];
       if (typeof updated !== 'number') continue;
-      if (Math.floor(updated) !== Math.floor(Number(item.quantity ?? 0))) return true;
+      if (updated !== Number(item.quantity ?? 0)) return true;
     }
     return false;
   }
@@ -686,7 +713,7 @@ export class AdminOrders implements OnInit, OnDestroy {
   }
 
   saveOrderItems(order: AdminOrder): void {
-    if (this.isRowBusy(order) || !this.hasItemChanges(order)) return;
+    if (!this.canEditOrder(order) || this.isRowBusy(order) || !this.hasItemChanges(order)) return;
 
     const payload: UpdateOrderItemRequest[] = (order.items ?? []).map((item) => ({
       sizeAttributeVariantId: item.sizeAttributeVariantId,
@@ -694,10 +721,10 @@ export class AdminOrders implements OnInit, OnDestroy {
     }));
 
     const invalidQty = payload.some(
-      (item) => !Number.isInteger(item.quantity) || item.quantity <= 0,
+      (item) => !Number.isInteger(item.quantity) || item.quantity < 0,
     );
     if (invalidQty) {
-      const msg = 'Količina mora biti cijeli broj veći od 0.';
+      const msg = 'Količina mora biti cijeli broj 0 ili veći.';
       this.error.set(msg);
       this.showNotice('error', msg);
       return;
@@ -773,10 +800,13 @@ export class AdminOrders implements OnInit, OnDestroy {
     this.confirmOpen.set(true);
   }
 
-  private refreshOrders(): void {
+  private refreshOrders(fallbackOrderId?: string): void {
     const context = this.lastSearchContext();
 
-    if (!context) return;
+    if (!context) {
+      if (fallbackOrderId) this.loadOrderByUuid(fallbackOrderId);
+      return;
+    }
 
     if (context.mode === 'date') {
       this.fetchOrders(context.start, context.end);
@@ -813,6 +843,19 @@ export class AdminOrders implements OnInit, OnDestroy {
       }
       return next;
     });
+  }
+
+  private replaceOrder(updatedOrder: AdminOrder): void {
+    this.orders.update((prev) =>
+      prev.map((current) =>
+        current.orderId === updatedOrder.orderId ? updatedOrder : current,
+      ),
+    );
+  }
+
+  private isAdminOrder(value: unknown): value is AdminOrder {
+    if (!value || typeof value !== 'object') return false;
+    return typeof (value as Partial<AdminOrder>).orderId === 'string';
   }
 
   private showNotice(kind: ActionNotice['kind'], message: string): void {

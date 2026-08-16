@@ -144,6 +144,11 @@
               <div class="id" [attr.title]="o.orderNumber || 'broj nije dostupan'">
                 Broj narudžbe: <span>{{ o.orderNumber || 'broj nije dostupan' }}</span>
               </div>
+              @if (o.pantheonOrderId !== null && o.pantheonOrderId !== undefined) {
+                <div class="id" [attr.title]="o.pantheonOrderId">
+                  Pantheon ID narudžbe: <span>{{ o.pantheonOrderId }}</span>
+                </div>
+              }
               <div class="desc" title="{{ o.description }}">{{ o.description }}</div>
             </div>
 
@@ -243,6 +248,12 @@
               <div class="dcol full">
                 <div class="dtitle">Stavke</div>
 
+                @if (!canEditOrder(o)) {
+                  <div class="dline read-only-note" role="status">
+                    Ovu narudžbu nije moguće mijenjati u trenutnom statusu.
+                  </div>
+                }
+
                 <div class="items">
                   @for (i of o.items; track trackByItemSku($index, i)) {
                     <div class="item">
@@ -255,32 +266,42 @@
                       </div>
 
                       <div class="it-right">
-                        <label class="it-qty">
-                          <span>Količina</span>
-                          <input
-                            type="number"
-                            min="1"
-                            step="1"
-                            [value]="editedItemQuantity(o.orderId, i.sizeAttributeVariantId, i.quantity)"
-                            (input)="onItemQuantityInput(o.orderId, i.sizeAttributeVariantId, $any($event.target).value)"
-                          />
-                        </label>
+                        @if (canEditOrder(o)) {
+                          <label class="it-qty">
+                            <span>Količina</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              [disabled]="isRowBusy(o)"
+                              [value]="editedItemQuantity(o.orderId, i.sizeAttributeVariantId, i.quantity)"
+                              (input)="onItemQuantityInput(o, i.sizeAttributeVariantId, $any($event.target).value)"
+                            />
+                          </label>
+                        } @else {
+                          <div class="it-qty read-only">
+                            <span>Količina</span>
+                            <strong>{{ i.quantity }}</strong>
+                          </div>
+                        }
                         <div class="it-price">{{ formatPrice(i.totalItemPrice) }} KM</div>
                       </div>
                     </div>
                   }
                 </div>
 
-                <div class="item-actions">
-                  <button
-                    type="button"
-                    class="action-btn warn"
-                    (click)="saveOrderItems(o)"
-                    [disabled]="!hasItemChanges(o) || isRowBusy(o)"
-                  >
-                    {{ isUpdateItemsBusy(o) ? 'Čuvanje...' : 'Sačuvaj izmjene stavki' }}
-                  </button>
-                </div>
+                @if (canEditOrder(o)) {
+                  <div class="item-actions">
+                    <button
+                      type="button"
+                      class="action-btn warn"
+                      (click)="saveOrderItems(o)"
+                      [disabled]="!hasItemChanges(o) || isRowBusy(o)"
+                    >
+                      {{ isUpdateItemsBusy(o) ? 'Čuvanje...' : 'Sačuvaj izmjene stavki' }}
+                    </button>
+                  </div>
+                }
               </div>
 
               @if (o.couponCode) {
@@ -293,14 +314,16 @@
                     <span class="sep">·</span>
                     <span>Vrijednost:</span> <strong>{{ o.couponValue }}</strong>
                   </div>
-                  <button
-                    type="button"
-                    class="action-btn danger"
-                    (click)="removeOrderCoupon(o)"
-                    [disabled]="isRowBusy(o)"
-                  >
-                    {{ isActionBusy(o, 'remove-coupon') ? 'Uklanjanje...' : 'Ukloni kupon' }}
-                  </button>
+                  @if (canEditOrder(o)) {
+                    <button
+                      type="button"
+                      class="action-btn danger"
+                      (click)="removeOrderCoupon(o)"
+                      [disabled]="isRowBusy(o)"
+                    >
+                      {{ isActionBusy(o, 'remove-coupon') ? 'Uklanjanje...' : 'Ukloni kupon' }}
+                    </button>
+                  }
                 </div>
               }
             </div>

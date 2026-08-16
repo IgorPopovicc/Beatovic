@@ -7,6 +7,17 @@ export type OrderStatus =
   | 'CANCELED'
   | 'EXPIRED';
 
+export const NON_EDITABLE_ORDER_STATUSES: ReadonlySet<OrderStatus> = new Set([
+  'COMPLETED',
+  'CANCELED',
+  'EXPIRED',
+  'PENDING',
+]);
+
+export function isOrderEditable(status: OrderStatus | null | undefined): boolean {
+  return status != null && !NON_EDITABLE_ORDER_STATUSES.has(status);
+}
+
 export type CouponType = 'PERCENTAGE' | 'FIXED';
 
 export interface AdminOrderUserDetails {

@@ -178,19 +178,15 @@ export class AdminOrdersApi {
     );
   }
 
-  removeOrderCoupon(orderId: string): Observable<void> {
+  removeOrderCoupon(orderId: string): Observable<AdminOrder> {
     const token = this.auth.accessToken();
     if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
 
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
     const safeOrderId = encodeURIComponent(orderId);
     return this.http
-      .delete(runtimeApiUrl(`/orders/admin/${safeOrderId}/coupon`), {
-        headers,
-        responseType: 'text',
-      })
+      .delete<AdminOrder>(runtimeApiUrl(`/orders/admin/${safeOrderId}/coupon`), { headers })
       .pipe(
-        map(() => void 0),
         catchError((err) => {
           console.error('[AdminOrdersApi] removeOrderCoupon failed:', err);
           return throwError(() => err);

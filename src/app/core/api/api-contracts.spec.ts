@@ -8,6 +8,24 @@ import { AuthService } from '../auth/auth.service';
 import { CatalogApiService } from './catalog-api.sevice';
 import { OrdersApiService } from './orders-api.service';
 import { AdminNewsletterApi } from '../admin-api/admin-newsletter-api';
+import { AdminOrdersApi } from '../admin-api/admin-prders-api';
+import { AdminOrder } from '../admin-api/admin-orders.models';
+
+function adminOrderResponse(): AdminOrder {
+  return {
+    orderId: 'order-id',
+    orderNumber: 'ORD-2026-000123',
+    pantheonOrderId: null,
+    status: 'EMAIL_VERIFIED',
+    totalPrice: 100,
+    description: 'Testna narudžba',
+    couponCode: null,
+    couponValue: null,
+    couponType: null,
+    userDetails: null,
+    items: [],
+  };
+}
 
 describe('current OpenAPI contracts', () => {
   let http: HttpTestingController;
@@ -64,6 +82,30 @@ describe('current OpenAPI contracts', () => {
     const request = http.expectOne('/api/coupons/admin/coupon-id');
     expect(request.request.method).toBe('DELETE');
     request.flush('', { status: 204, statusText: 'No Content' });
+  });
+
+  it('preserves zero in the exact admin order-items update payload', () => {
+    const payload = [{ sizeAttributeVariantId: 'size-attribute-id', quantity: 0 }];
+    TestBed.inject(AdminOrdersApi).updateOrderItems('order-id', payload).subscribe();
+
+    const request = http.expectOne('/api/orders/admin/order-id/update-items');
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual(payload);
+    request.flush(adminOrderResponse());
+  });
+
+  it('parses coupon removal as the updated order returned by Swagger', () => {
+    let response: AdminOrder | undefined;
+    TestBed.inject(AdminOrdersApi)
+      .removeOrderCoupon('order-id')
+      .subscribe((order) => (response = order));
+
+    const request = http.expectOne('/api/orders/admin/order-id/coupon');
+    expect(request.request.method).toBe('DELETE');
+    expect(request.request.responseType).toBe('json');
+    const updatedOrder = adminOrderResponse();
+    request.flush(updatedOrder);
+    expect(response).toEqual(updatedOrder);
   });
 
   it('defaults admin product search to a page size of 10', () => {

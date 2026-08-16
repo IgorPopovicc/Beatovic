@@ -23,4 +23,14 @@ describe('AdminLayout', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('keeps the authorization warning without any IP text or placeholder', () => {
+    const warning = (fixture.nativeElement as HTMLElement).querySelector('.security-warning');
+    const text = warning?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+
+    expect(text).toBe(
+      'Upozorenje: Ova sekcija namijenjena je isključivo ovlašćenim administratorskim korisnicima.',
+    );
+    expect(text.toLowerCase()).not.toContain('ip');
+  });
 });
