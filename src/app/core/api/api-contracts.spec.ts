@@ -187,4 +187,14 @@ describe('current OpenAPI contracts', () => {
     expect(body.getAll('images')).toEqual([image]);
     request.flush({ id: 'variant-id' });
   });
+
+  it('uses the exact admin bulk-priority endpoint and payload', () => {
+    const payload = { items: [{ sku: 'MODEL-001', priority: 'HIGH' as const }] };
+    TestBed.inject(AdminProductsApi).bulkUpdateVariantPriorities(payload).subscribe();
+
+    const request = http.expectOne('/api/products/admin/variants/priority/bulk');
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.body).toEqual(payload);
+    request.flush({ updatedCount: 1, notFoundCount: 0, notFoundSkus: [] });
+  });
 });

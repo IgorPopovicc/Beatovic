@@ -1,0 +1,194 @@
+<section class="priority-manager">
+  <header class="page-head">
+    <div>
+      <h1>Prioriteti proizvoda</h1>
+      <p>Upravljajte redoslijedom modela u preporučenom prikazu prodavnice.</p>
+    </div>
+    <div class="result-count">{{ totalResults() }} modela</div>
+  </header>
+
+  <section class="filters-card" aria-label="Filteri prioriteta">
+    <label class="field search-field">
+      <span>Pretraga</span>
+      <input [formControl]="search" type="search" placeholder="Naziv proizvoda ili SKU" />
+    </label>
+
+    <label class="field">
+      <span>Kategorija</span>
+      <select [value]="selectedCategory()" (change)="setCategory($any($event.target).value)">
+        <option value="">Sve kategorije</option>
+        @for (group of categoryGroups(); track group.id) {
+          <optgroup [label]="group.name">
+            @for (option of group.values; track option.id) {
+              <option [value]="group.id + ':' + option.id">
+                {{ option.label }} ({{ option.count }})
+              </option>
+            }
+          </optgroup>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Sortiranje</span>
+      <select [value]="sortKey()" (change)="setSort($any($event.target).value)">
+        <option value="PRIORITY_DESC">Prioritet: visoki prvo</option>
+        <option value="NAME_ASC">Naziv A–Z</option>
+        <option value="NAME_DESC">Naziv Z–A</option>
+        <option value="PRICE_ASC">Cijena rastuće</option>
+        <option value="PRICE_DESC">Cijena opadajuće</option>
+      </select>
+    </label>
+
+    <fieldset class="priority-filter">
+      <legend>Prioritet</legend>
+      <div class="priority-checks">
+        @for (priority of priorities; track priority) {
+          <label>
+            <input
+              type="checkbox"
+              [checked]="isPrioritySelected(priority)"
+              (change)="togglePriority(priority, $any($event.target).checked)"
+            />
+            <span>{{ priorityLabel(priority) }}</span>
+          </label>
+        }
+      </div>
+    </fieldset>
+  </section>
+
+  @if (selectedCount() > 0) {
+    <section class="bulk-bar" aria-label="Grupne akcije">
+      <strong>Izabrano: {{ selectedCount() }}</strong>
+      <div class="bulk-actions">
+        <button type="button" (click)="applyBulkPriority('HIGH')" [disabled]="bulkBusy()">
+          Postavi HIGH
+        </button>
+        <button type="button" (click)="applyBulkPriority('MEDIUM')" [disabled]="bulkBusy()">
+          Postavi MEDIUM
+        </button>
+        <button type="button" (click)="applyBulkPriority('LOW')" [disabled]="bulkBusy()">
+          Postavi LOW
+        </button>
+        <button type="button" (click)="applyBulkPriority('NONE')" [disabled]="bulkBusy()">
+          Ukloni prioritet
+        </button>
+        <button type="button" class="ghost" (click)="clearSelection()" [disabled]="bulkBusy()">
+          Očisti selekciju
+        </button>
+      </div>
+      @if (bulkBusy()) {
+        <span class="busy-label" role="status">Ažuriranje...</span>
+      }
+    </section>
+  }
+
+  <section class="table-card">
+    @if (loading()) {
+      <div class="state" role="status">Učitavanje modela...</div>
+    } @else if (error()) {
+      <div class="state error-state" role="alert">
+        <span>{{ error() }}</span>
+        <button type="button" (click)="retry()">Pokušajte ponovo</button>
+      </div>
+    } @else if (variants().length === 0) {
+      <div class="state">Nema modela za izabrane filtere.</div>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="selection-cell">
+                <input
+                  type="checkbox"
+                  aria-label="Izaberi sve modele na ovoj stranici"
+                  [checked]="allCurrentPageSelected()"
+                  (change)="toggleCurrentPage($any($event.target).checked)"
+                />
+              </th>
+              <th>Slika</th>
+              <th>SKU</th>
+              <th>Naziv proizvoda</th>
+              <th class="price-cell">Cijena</th>
+              <th>Prioritet</th>
+              <th>Brza promjena</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (variant of variants(); track variant.id) {
+              <tr [class.selected]="isSelected(variant)">
+                <td class="selection-cell">
+                  <input
+                    type="checkbox"
+                    [attr.aria-label]="'Izaberi ' + variant.productName"
+                    [checked]="isSelected(variant)"
+                    [disabled]="!variant.sku"
+                    (change)="toggleVariant(variant, $any($event.target).checked)"
+                  />
+                </td>
+                <td>
+                  @if (imageUrl(variant); as image) {
+                    <img class="thumbnail" [src]="image" alt="" width="56" height="56" />
+                  } @else {
+                    <span class="thumbnail placeholder" aria-hidden="true">IMG</span>
+                  }
+                </td>
+                <td class="sku">{{ variant.displaySku || variant.sku || '—' }}</td>
+                <td class="product-name">{{ variant.productName }}</td>
+                <td class="price-cell">{{ formatPrice(variant.finalPrice) }} KM</td>
+                <td>
+                  <span class="priority-badge" [attr.data-priority]="priorityOf(variant)">
+                    {{ priorityLabel(priorityOf(variant)) }}
+                  </span>
+                </td>
+                <td>
+                  <select
+                    class="quick-select"
+                    [value]="priorityOf(variant)"
+                    [disabled]="!variant.sku || !!quickBusySku() || bulkBusy()"
+                    [attr.aria-label]="'Promijeni prioritet za ' + variant.productName"
+                    (change)="setQuickPriority(variant, $any($event.target).value)"
+                  >
+                    @for (priority of priorities; track priority) {
+                      <option [value]="priority">{{ priorityLabel(priority) }}</option>
+                    }
+                  </select>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <nav class="pagination" aria-label="Stranice prioriteta">
+        <button type="button" (click)="goToPage(page() - 1)" [disabled]="page() === 0">
+          Prethodna
+        </button>
+        <span>Stranica {{ page() + 1 }} od {{ totalPages() }}</span>
+        <button
+          type="button"
+          (click)="goToPage(page() + 1)"
+          [disabled]="page() + 1 >= totalPages()"
+        >
+          Sljedeća
+        </button>
+      </nav>
+    }
+  </section>
+</section>
+
+<div class="notice-stack" aria-live="polite" aria-atomic="false">
+  @for (notice of notices(); track notice.id) {
+    <div
+      class="notice"
+      [attr.data-kind]="notice.kind"
+      [attr.role]="notice.kind === 'error' ? 'alert' : 'status'"
+    >
+      <span class="notice-icon" aria-hidden="true">
+        {{ notice.kind === 'success' ? '✓' : '!' }}
+      </span>
+      <span>{{ notice.message }}</span>
+      <button type="button" (click)="closeNotice(notice.id)" aria-label="Zatvori poruku">✕</button>
+    </div>
+  }
+</div>

@@ -19,8 +19,8 @@ import { SeoService } from '../../core/seo/seo.service';
 import { colorSwatchLabel, parseColorSwatch } from '../../shared/utils/color-swatch';
 import { CategoryVisibilityService } from '../../core/api/category-visibility.service';
 
-type SortKey = 'novo' | 'cijena_rastuce' | 'cijena_opadajuce';
-type SortBy = 'NAME' | 'PRICE';
+type SortKey = 'preporucujemo' | 'naziv_az' | 'naziv_za' | 'cijena_rastuce' | 'cijena_opadajuce';
+type SortBy = 'PRIORITY' | 'NAME' | 'PRICE';
 type SortOrder = 'ASC' | 'DESC';
 
 type FilterOption = {
@@ -266,7 +266,7 @@ export class Products implements OnInit, OnDestroy {
 
   sortKey = computed<SortKey>(() => {
     const state = this.requestState();
-    if (!state) return 'novo';
+    if (!state) return 'preporucujemo';
     return this.backendSortToUi(state.sortBy, state.sortOrder);
   });
 
@@ -594,7 +594,7 @@ export class Products implements OnInit, OnDestroy {
   }
 
   setSort(key: string): void {
-    const sortKey = (key as SortKey) ?? 'novo';
+    const sortKey = key as SortKey;
     const sort = this.uiSortToBackend(sortKey);
     this.patchRequestState((prev) => ({ ...prev, ...sort, page: 0 }));
   }
@@ -801,8 +801,8 @@ export class Products implements OnInit, OnDestroy {
       hasActiveStock: null,
       page: 0,
       pageSize: DEFAULT_PAGE_SIZE,
-      sortBy: 'NAME',
-      sortOrder: 'ASC',
+      sortBy: 'PRIORITY',
+      sortOrder: 'DESC',
     };
   }
 
@@ -916,15 +916,19 @@ export class Products implements OnInit, OnDestroy {
   }
 
   private uiSortToBackend(key: SortKey): { sortBy: SortBy; sortOrder: SortOrder } {
+    if (key === 'naziv_az') return { sortBy: 'NAME', sortOrder: 'ASC' };
+    if (key === 'naziv_za') return { sortBy: 'NAME', sortOrder: 'DESC' };
     if (key === 'cijena_rastuce') return { sortBy: 'PRICE', sortOrder: 'ASC' };
     if (key === 'cijena_opadajuce') return { sortBy: 'PRICE', sortOrder: 'DESC' };
-    return { sortBy: 'NAME', sortOrder: 'ASC' };
+    return { sortBy: 'PRIORITY', sortOrder: 'DESC' };
   }
 
   private backendSortToUi(sortBy: SortBy, sortOrder: SortOrder): SortKey {
     if (sortBy === 'PRICE' && sortOrder === 'ASC') return 'cijena_rastuce';
     if (sortBy === 'PRICE' && sortOrder === 'DESC') return 'cijena_opadajuce';
-    return 'novo';
+    if (sortBy === 'NAME' && sortOrder === 'ASC') return 'naziv_az';
+    if (sortBy === 'NAME' && sortOrder === 'DESC') return 'naziv_za';
+    return 'preporucujemo';
   }
 
   private mapVariantToProductCard(v: Variant): ProductCard {

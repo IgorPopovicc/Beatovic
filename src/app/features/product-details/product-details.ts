@@ -45,6 +45,7 @@ export class ProductDetails implements OnDestroy {
 
   readonly activeIndex = signal(0);
   readonly selectedSize = signal<string | null>(null);
+  readonly productDetailsOpen = signal(false);
 
   // sizeValue -> qty (from dto.attributes where attributeName == VELICINA)
   private readonly sizeQtyMap = signal<Record<string, number>>({});
@@ -151,6 +152,7 @@ export class ProductDetails implements OnDestroy {
     this.loading.set(false);
     this.activeIndex.set(0);
     this.selectedSize.set(null);
+    this.productDetailsOpen.set(false);
     this.sizeQtyMap.set({});
     this.sizeAttrElementIdMap.set({});
     this.relatedProducts.set([]);
@@ -180,10 +182,15 @@ export class ProductDetails implements OnDestroy {
       inStock: resolved.inStock,
       sizes: resolved.sizes,
       shortDescription: resolved.shortDescription,
+      productDescription: resolved.productDescription,
       gallery: resolved.gallery,
       gender: resolved.gender,
       category: resolved.category,
     });
+  }
+
+  toggleProductDetails(): void {
+    this.productDetailsOpen.update((open) => !open);
   }
 
   setActive(index: number): void {

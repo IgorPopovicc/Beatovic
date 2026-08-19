@@ -30,6 +30,10 @@
 
         <a routerLink="/admin/products" routerLinkActive="active"> Proizvodi </a>
 
+        @if (isAdmin()) {
+          <a routerLink="/admin/priorities" routerLinkActive="active"> Prioriteti </a>
+        }
+
         <a routerLink="/admin/orders" routerLinkActive="active"> Narudžbine </a>
 
         <a routerLink="/admin/discounts" routerLinkActive="active"> Popusti </a>

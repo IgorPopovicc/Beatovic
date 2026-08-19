@@ -14,6 +14,7 @@ export interface ProductDetailsModel {
   sku?: string;
   displaySku?: string;
   shortDescription?: string;
+  productDescription?: string;
   inStock?: boolean;
   sizes?: (number | string)[];
   gallery: ProductImage[];

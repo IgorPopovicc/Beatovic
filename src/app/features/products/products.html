@@ -8,9 +8,11 @@
     <div class="sort">
       <label class="sort-label">Sortiraj prema</label>
       <select class="sort-select" [value]="sortKey()" (change)="setSort($any($event.target).value)">
-        <option value="novo">Novo</option>
-        <option value="cijena_rastuce">Cijena: rastuće</option>
-        <option value="cijena_opadajuce">Cijena: opadajuće</option>
+        <option value="preporucujemo">Preporučujemo</option>
+        <option value="naziv_az">Naziv A–Z</option>
+        <option value="naziv_za">Naziv Z–A</option>
+        <option value="cijena_rastuce">Cena rastuće</option>
+        <option value="cijena_opadajuce">Cena opadajuće</option>
       </select>
     </div>
   </div>
@@ -209,9 +211,11 @@
             [value]="sortKey()"
             (change)="setSort($any($event.target).value)"
           >
-            <option value="novo">Novo</option>
-            <option value="cijena_rastuce">Cijena: rastuće</option>
-            <option value="cijena_opadajuce">Cijena: opadajuće</option>
+            <option value="preporucujemo">Preporučujemo</option>
+            <option value="naziv_az">Naziv A–Z</option>
+            <option value="naziv_za">Naziv Z–A</option>
+            <option value="cijena_rastuce">Cena rastuće</option>
+            <option value="cijena_opadajuce">Cena opadajuće</option>
           </select>
         </div>
       </div>

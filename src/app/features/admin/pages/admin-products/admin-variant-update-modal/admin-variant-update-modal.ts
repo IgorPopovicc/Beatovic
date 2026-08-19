@@ -29,6 +29,10 @@ import {
 
 import { runtimeMediaUrl } from '../../../../../core/config/runtime-config.service';
 import { colorSwatchLabel, parseColorSwatch } from '../../../../../shared/utils/color-swatch';
+import {
+  ProductVariantPriority,
+  isProductVariantPriority,
+} from '../../../../../shared/data/product-variant-priority';
 
 type FileItem = { _id: string; file: File };
 
@@ -105,11 +109,13 @@ export class AdminVariantUpdateModal {
   readonly selectedColorValueId = signal<string>('');
   readonly selectedSizes = signal<Record<string, SizeMeta>>({});
   readonly selectedAddSizeValueId = signal<string>('');
+  private readonly initialPriority = signal<ProductVariantPriority>('NONE');
 
   readonly form = this.fb.group({
     price: this.fb.nonNullable.control<number>(0, [Validators.required, Validators.min(0)]),
     isNew: this.fb.nonNullable.control<boolean>(false),
     isOutlet: this.fb.nonNullable.control<boolean>(false),
+    priority: this.fb.nonNullable.control<ProductVariantPriority>('NONE'),
     displayImageName: this.fb.nonNullable.control<string>(''),
   });
 
@@ -241,10 +247,16 @@ export class AdminVariantUpdateModal {
         this.files.set([]);
         this.fileError.set(null);
 
+        const priority = isProductVariantPriority(details.displayRank)
+          ? details.displayRank
+          : 'NONE';
+        this.initialPriority.set(priority);
+
         this.form.reset({
           price: this.resolveEditableBasePrice(details),
           isNew: !!details.new,
           isOutlet: !!details.outlet,
+          priority,
           displayImageName: '',
         });
 
@@ -637,6 +649,10 @@ export class AdminVariantUpdateModal {
       isNew: !!v.isNew,
       isOutlet: !!v.isOutlet,
     };
+
+    if (v.priority !== this.initialPriority()) {
+      dto.priority = v.priority;
+    }
 
     if (attributeDiff.attributesToAdd.length > 0) {
       dto.attributesToAdd = attributeDiff.attributesToAdd;

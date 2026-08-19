@@ -34,6 +34,7 @@ import {
 } from '../../../../../core/admin-api/admin-products.models';
 import { AdminAttributesApi } from '../../../../../core/admin-api/admin-attributes-api';
 import { colorSwatchLabel, parseColorSwatch } from '../../../../../shared/utils/color-swatch';
+import { ProductVariantPriority } from '../../../../../shared/data/product-variant-priority';
 
 type DropdownKey = 'color';
 
@@ -104,6 +105,7 @@ export class AdminVariantCreateModal {
     price: this.fb.nonNullable.control<number>(0, [Validators.required, Validators.min(0)]),
     isNew: this.fb.nonNullable.control<boolean>(true),
     isOutlet: this.fb.nonNullable.control<boolean>(false),
+    priority: this.fb.nonNullable.control<ProductVariantPriority>('NONE'),
 
     colorValueId: this.fb.control<string | null>(null, [Validators.required]),
     displayImageName: this.fb.nonNullable.control<string>(''),
@@ -238,6 +240,7 @@ export class AdminVariantCreateModal {
       price: 0,
       isNew: true,
       isOutlet: false,
+      priority: 'NONE',
       colorValueId: null,
       displayImageName: '',
     });
@@ -400,6 +403,7 @@ export class AdminVariantCreateModal {
       price: Number(v.price),
       isNew: !!v.isNew,
       isOutlet: !!v.isOutlet,
+      priority: v.priority,
       attributes,
       displayImageName: (v.displayImageName ?? '').trim() || undefined,
     };
@@ -441,6 +445,7 @@ export class AdminVariantCreateModal {
             price: 0,
             isNew: true,
             isOutlet: false,
+            priority: 'NONE',
             colorValueId: null,
             displayImageName: '',
           });

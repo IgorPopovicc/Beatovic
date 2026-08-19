@@ -12,6 +12,7 @@ export const NON_EDITABLE_ORDER_STATUSES: ReadonlySet<OrderStatus> = new Set([
   'CANCELED',
   'EXPIRED',
   'PENDING',
+  'WAITING_FOR_CUSTOMER_RECONFIRMATION',
 ]);
 
 export function isOrderEditable(status: OrderStatus | null | undefined): boolean {

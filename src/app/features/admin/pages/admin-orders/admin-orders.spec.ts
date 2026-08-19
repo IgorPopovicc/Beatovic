@@ -70,7 +70,7 @@ describe('AdminOrders', () => {
     expect(isOrderEditable('EXPIRED')).toBeFalse();
     expect(isOrderEditable('PENDING')).toBeFalse();
     expect(isOrderEditable('EMAIL_VERIFIED')).toBeTrue();
-    expect(isOrderEditable('WAITING_FOR_CUSTOMER_RECONFIRMATION')).toBeTrue();
+    expect(isOrderEditable('WAITING_FOR_CUSTOMER_RECONFIRMATION')).toBeFalse();
     expect(isOrderEditable('CUSTOMER_RECONFIRMED')).toBeTrue();
   });
 
@@ -124,7 +124,13 @@ describe('AdminOrders', () => {
     const api = TestBed.inject(AdminOrdersApi);
     const updateSpy = spyOn(api, 'updateOrderItems');
 
-    for (const status of ['COMPLETED', 'CANCELED', 'EXPIRED', 'PENDING'] as const) {
+    for (const status of [
+      'COMPLETED',
+      'CANCELED',
+      'EXPIRED',
+      'PENDING',
+      'WAITING_FOR_CUSTOMER_RECONFIRMATION',
+    ] as const) {
       const order = buildOrder(status);
       component.editedItemQuantities.set({ [`${order.orderId}:size-attribute-id`]: 0 });
 

@@ -52,6 +52,29 @@ describe('Products', () => {
     expect(component).toBeTruthy();
   });
 
+  it('defaults storefront search to recommended priority sorting', () => {
+    expect(productsApi.search.calls.mostRecent().args[0]).toEqual(
+      jasmine.objectContaining({ sortBy: 'PRIORITY', sortOrder: 'DESC' }),
+    );
+  });
+
+  it('maps all customer-facing sort choices to the backend contract', () => {
+    const cases = [
+      ['preporucujemo', 'PRIORITY', 'DESC'],
+      ['naziv_az', 'NAME', 'ASC'],
+      ['naziv_za', 'NAME', 'DESC'],
+      ['cijena_rastuce', 'PRICE', 'ASC'],
+      ['cijena_opadajuce', 'PRICE', 'DESC'],
+    ] as const;
+
+    for (const [key, sortBy, sortOrder] of cases) {
+      component.setSort(key);
+      expect(productsApi.search.calls.mostRecent().args[0]).toEqual(
+        jasmine.objectContaining({ sortBy, sortOrder }),
+      );
+    }
+  });
+
   it('scrolls to absolute top only after an intentional new catalog page loads', () => {
     viewportScroller.scrollToPosition.calls.reset();
 

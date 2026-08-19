@@ -193,6 +193,39 @@
         </aside>
       </div>
 
+      @if (p.productDescription) {
+        <section class="product-info" aria-labelledby="product-info-title">
+          <button
+            class="product-info-toggle"
+            type="button"
+            [attr.aria-expanded]="productDetailsOpen()"
+            aria-controls="product-info-content"
+            (click)="toggleProductDetails()"
+          >
+            <span id="product-info-title">Detalji proizvoda</span>
+            <svg
+              class="product-info-chevron"
+              [class.open]="productDetailsOpen()"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="m6.7 9.3 5.3 5.3 5.3-5.3 1.4 1.4-6.7 6.7-6.7-6.7 1.4-1.4Z" />
+            </svg>
+          </button>
+
+          <div
+            id="product-info-content"
+            class="product-info-content"
+            [class.open]="productDetailsOpen()"
+            [attr.aria-hidden]="!productDetailsOpen()"
+          >
+            <div class="product-info-content-inner">
+              <p>{{ p.productDescription }}</p>
+            </div>
+          </div>
+        </section>
+      }
+
       @if (relatedProducts().length) {
         <section class="related" aria-labelledby="related-products-title">
           <div class="related-head">

@@ -16,6 +16,10 @@ import {
   ProductVariant,
   CreateProductVariantDTO,
   UpdateProductVariantDTO,
+  AdminVariantPrioritySearchRequest,
+  AdminVariantPrioritySearchResponse,
+  BulkUpdateVariantPriorityRequest,
+  BulkVariantPriorityResult,
 } from './admin-products.models';
 
 @Injectable({ providedIn: 'root' })
@@ -57,6 +61,54 @@ export class AdminProductsApi {
         return throwError(() => err);
       }),
     );
+  }
+
+  searchVariantsForPriority(
+    body: AdminVariantPrioritySearchRequest,
+  ): Observable<AdminVariantPrioritySearchResponse> {
+    const token = this.auth.accessToken();
+    if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    });
+
+    return this.http
+      .post<AdminVariantPrioritySearchResponse>(runtimeApiUrl(`/products/search`), body, {
+        headers,
+      })
+      .pipe(
+        catchError((err) => {
+          console.error('[AdminProductsApi] searchVariantsForPriority failed:', err);
+          return throwError(() => err);
+        }),
+      );
+  }
+
+  bulkUpdateVariantPriorities(
+    body: BulkUpdateVariantPriorityRequest,
+  ): Observable<BulkVariantPriorityResult> {
+    const token = this.auth.accessToken();
+    if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    });
+
+    return this.http
+      .patch<BulkVariantPriorityResult>(
+        runtimeApiUrl(`/products/admin/variants/priority/bulk`),
+        body,
+        { headers },
+      )
+      .pipe(
+        catchError((err) => {
+          console.error('[AdminProductsApi] bulkUpdateVariantPriorities failed:', err);
+          return throwError(() => err);
+        }),
+      );
   }
 
   createProduct(body: CreateProductRequest): Observable<unknown> {

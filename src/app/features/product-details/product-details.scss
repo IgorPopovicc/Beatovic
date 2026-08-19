@@ -8,6 +8,77 @@
   border-top: 1px solid rgba(0, 0, 0, 0.12);
 }
 
+.product-info {
+  margin-top: 28px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.product-info-toggle {
+  width: 100%;
+  min-height: 58px;
+  padding: 16px 18px;
+  border: 0;
+  background: transparent;
+  color: #111;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+  font: inherit;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.product-info-toggle:hover {
+  background: #fafafa;
+}
+
+.product-info-toggle:focus-visible {
+  outline: 2px solid rgba(194, 31, 31, 0.38);
+  outline-offset: -3px;
+}
+
+.product-info-chevron {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  fill: currentColor;
+  transition: transform 180ms ease;
+}
+
+.product-info-chevron.open {
+  transform: rotate(180deg);
+}
+
+.product-info-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 180ms ease;
+}
+
+.product-info-content.open {
+  grid-template-rows: 1fr;
+}
+
+.product-info-content-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.product-info-content p {
+  margin: 0;
+  padding: 0 18px 18px;
+  color: #444;
+  font-weight: 600;
+  line-height: 1.65;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
 .related-head {
   margin-bottom: 16px;
 }

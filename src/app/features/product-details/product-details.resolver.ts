@@ -230,8 +230,9 @@ function toResolvedProduct(dto: Variant, id: string): ProductDetailsResolved {
   const gallery = buildGallery(dto, name);
 
   const rawDescription = normalize(dto?.shortDescription ?? dto?.description);
+  const productDescription = normalize(dto?.productDescription);
   const seoDescription =
-    truncate(rawDescription, 190) ||
+    truncate(rawDescription || productDescription, 190) ||
     `Detalji proizvoda ${name} u Planeta webshopu. Pogledajte cijenu i dostupne veličine.`;
 
   return {
@@ -248,6 +249,7 @@ function toResolvedProduct(dto: Variant, id: string): ProductDetailsResolved {
     inStock,
     sizes,
     shortDescription: rawDescription || undefined,
+    productDescription: productDescription || undefined,
     gallery,
     sizeQtyMap,
     sizeAttrElementIdMap,

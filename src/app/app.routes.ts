@@ -392,6 +392,20 @@ export const routes: Routes = [
         },
       },
       {
+        path: 'priorities',
+        loadComponent: () =>
+          import('./features/admin/pages/admin-priority-manager/admin-priority-manager').then(
+            (m) => m.AdminPriorityManager,
+          ),
+        data: {
+          seo: {
+            title: 'Admin Prioriteti proizvoda | Planeta',
+            description: 'Upravljanje prioritetima modela.',
+            noindex: true,
+          },
+        },
+      },
+      {
         path: 'orders/:orderId',
         loadComponent: () =>
           import('./features/admin/pages/admin-orders/admin-orders').then((m) => m.AdminOrders),

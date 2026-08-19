@@ -1,3 +1,5 @@
+import type { ProductVariantPriority } from '../../shared/data/product-variant-priority';
+
 export interface ApiCategory {
   id: string;
   name: string;
@@ -25,7 +27,7 @@ export interface ProductsSearchRequest {
   hasActiveStock?: boolean | null;
   page?: number;
   pageSize?: number;
-  sortBy?: 'NAME' | 'PRICE';
+  sortBy?: 'PRIORITY' | 'NAME' | 'PRICE';
   sortOrder?: 'ASC' | 'DESC';
 }
 
@@ -101,6 +103,7 @@ export interface Variant {
   brand?: string;
   outlet?: boolean;
   new?: boolean;
+  displayRank?: ProductVariantPriority;
 }
 
 export interface RelatedProductVariant {

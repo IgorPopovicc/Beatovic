@@ -44,6 +44,7 @@ describe('AdminVariantCreateModal', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+    expect(component.form.controls.priority.value).toBe('NONE');
   });
 
   it('uses variants from the current search response without a second request', () => {

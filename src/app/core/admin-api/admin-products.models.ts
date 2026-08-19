@@ -1,3 +1,6 @@
+import type { ProductVariantPriority } from '../../shared/data/product-variant-priority';
+import type { AvailableAttribute, AvailableCategory, Variant } from '../api/catalog.models';
+
 export interface SearchMainRequest {
   searchQuery: string;
   page?: number;
@@ -34,6 +37,7 @@ export interface ProductVariant {
   mainImageThumbnailUrl?: string;
   outlet?: boolean;
   new?: boolean;
+  displayRank?: ProductVariantPriority;
 }
 
 export interface ProductCategory {
@@ -190,6 +194,7 @@ export interface CreateProductVariantDTO {
   price: number;
   isNew?: boolean;
   isOutlet?: boolean;
+  priority?: ProductVariantPriority;
   attributes: CreateProductVariantAttributeDTO[];
   discountIds?: string[];
   displayImageName?: string;
@@ -200,6 +205,7 @@ export interface UpdateProductVariantDTO {
   price: number;
   isNew?: boolean;
   isOutlet?: boolean;
+  priority?: ProductVariantPriority;
   attributesToAdd?: ProductAttribute[];
   attributeVariantIdsToRemove?: string[];
   discountIdsToAdd?: string[];
@@ -215,4 +221,36 @@ export interface DiscountDTO {
   startDate: string;
   endDate: string;
   description: string;
+}
+
+export interface AdminVariantPrioritySearchRequest {
+  searchQuery?: string;
+  categoryFilters?: Record<string, string[]>;
+  priorities?: ProductVariantPriority[];
+  page: number;
+  pageSize: number;
+  sortBy: 'PRIORITY' | 'NAME' | 'PRICE';
+  sortOrder: 'ASC' | 'DESC';
+}
+
+export interface AdminVariantPrioritySearchResponse {
+  variants: Variant[];
+  availableCategories: AvailableCategory[];
+  availableAttributes: AvailableAttribute[];
+  totalResults: number;
+}
+
+export interface BulkVariantPriorityItem {
+  sku: string;
+  priority: ProductVariantPriority;
+}
+
+export interface BulkUpdateVariantPriorityRequest {
+  items: BulkVariantPriorityItem[];
+}
+
+export interface BulkVariantPriorityResult {
+  updatedCount: number;
+  notFoundCount: number;
+  notFoundSkus: string[];
 }

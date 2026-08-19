@@ -13,8 +13,8 @@ export class ProductsApiService {
     const payload: ProductsSearchRequest = {
       page: 0,
       pageSize: 36,
-      sortBy: 'NAME',
-      sortOrder: 'ASC',
+      sortBy: 'PRIORITY',
+      sortOrder: 'DESC',
       ...body,
     };
     return this.http.post<ProductSearchResponse>(`${this.baseUrl}/products/search`, payload);
