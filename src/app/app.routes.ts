@@ -251,7 +251,7 @@ export const routes: Routes = [
     data: {
       seo: {
         title: 'Potvrda nije uspjela | Planeta',
-        description: 'Potvrda narudžbe nije uspjela.',
+        description: 'Potvrda izmjena narudžbe nije uspjela.',
         noindex: true,
       },
     },
@@ -259,33 +259,35 @@ export const routes: Routes = [
   ...[
     {
       path: 'order/confirmation/success', tone: 'success', icon: '✓',
-      title: 'Narudžba je potvrđena',
-      message: 'Hvala. Vaša narudžba je potvrđena i proslijeđena na obradu.',
+      title: 'Izmjene narudžbe su potvrđene',
+      message: 'Hvala. Potvrdili ste izmjene narudžbe i ona je proslijeđena na dalju obradu.',
     },
     {
       path: 'order/confirmation/already-confirmed', tone: 'info', icon: 'i',
-      title: 'Narudžba je već potvrđena',
-      message: 'Ova narudžba je već ranije potvrđena. Nije potrebna dodatna radnja.',
+      title: 'Izmjene su već potvrđene',
+      message: 'Izmjene ove narudžbe već su ranije potvrđene. Nije potrebna dodatna radnja.',
     },
     {
       path: 'order/confirmation/expired', tone: 'warning', icon: '!',
-      title: 'Link je istekao',
-      message: 'Rok od 60 minuta za potvrdu narudžbe je istekao.',
+      title: 'Link za potvrdu izmjena je istekao',
+      message:
+        'Rok za potvrdu izmjena narudžbe je istekao. Kontaktirajte prodavca za dalje informacije.',
     },
     {
       path: 'order/confirmation/already-delivered', tone: 'info', icon: 'i',
-      title: 'Narudžba je već isporučena',
-      message: 'Ova narudžba je već evidentirana kao isporučena.',
+      title: 'Narudžba je već kompletirana',
+      message: 'Izmjene više nije moguće potvrditi jer je narudžba već kompletirana.',
     },
     {
       path: 'order/confirmation/rejected', tone: 'warning', icon: '!',
-      title: 'Narudžba je odbijena',
-      message: 'Potvrda nije prihvaćena i narudžba neće biti proslijeđena na obradu.',
+      title: 'Narudžba je otkazana',
+      message: 'Predložene izmjene nisu prihvaćene, pa je narudžba otkazana.',
     },
     {
       path: 'order/confirmation/error', tone: 'error', icon: '!',
-      title: 'Potvrda nije uspjela',
-      message: 'Došlo je do greške pri potvrdi narudžbe. Pokušajte ponovo ili nas kontaktirajte.',
+      title: 'Potvrda izmjena nije uspjela',
+      message:
+        'Došlo je do greške pri potvrdi izmjena narudžbe. Pokušajte ponovo ili nas kontaktirajte.',
     },
   ].map(({ path, tone, icon, title, message }) => ({
     path,
@@ -311,8 +313,8 @@ export const routes: Routes = [
       ),
     data: {
       seo: {
-        title: 'Potvrda narudžbe | Planeta',
-        description: 'Status potvrde narudžbe putem emaila.',
+        title: 'Potvrda izmjena narudžbe | Planeta',
+        description: 'Status potvrde izmjena narudžbe.',
         noindex: true,
       },
     },
@@ -325,8 +327,8 @@ export const routes: Routes = [
       ),
     data: {
       seo: {
-        title: 'Potvrda narudžbe | Planeta',
-        description: 'Status potvrde narudžbe putem emaila.',
+        title: 'Potvrda izmjena narudžbe | Planeta',
+        description: 'Status potvrde izmjena narudžbe.',
         noindex: true,
       },
     },

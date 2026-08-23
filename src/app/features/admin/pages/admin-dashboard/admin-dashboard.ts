@@ -70,13 +70,13 @@ interface OrderAnalytics {
 }
 
 const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  PENDING: 'Čeka email potvrdu',
+  PENDING: 'Čeka obradu',
   EMAIL_VERIFIED: 'Email potvrđen',
   WAITING_FOR_CUSTOMER_RECONFIRMATION: 'Čeka ponovnu potvrdu kupca',
   CUSTOMER_RECONFIRMED: 'Kupac ponovo potvrdio',
   COMPLETED: 'Završena',
   CANCELED: 'Otkazana',
-  EXPIRED: 'Istekla potvrda',
+  EXPIRED: 'Istekla — nije obrađena u roku',
 };
 
 const ORDER_STATUS_PRIORITY: OrderStatus[] = [

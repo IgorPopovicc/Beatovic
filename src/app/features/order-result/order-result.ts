@@ -31,8 +31,8 @@ export class OrderResultComponent implements OnInit {
   ngOnInit(): void {
     if (this.status() === 'success') {
       this.seo.setPage({
-        title: 'Narudžba uspješna | Planeta',
-        description: 'Narudžba je kreirana i čeka potvrdu putem emaila.',
+        title: 'Narudžba primljena | Planeta',
+        description: 'Narudžba je uspješno primljena i biće obrađena u najkraćem roku.',
         path: '/order-result',
         noindex: true,
       });

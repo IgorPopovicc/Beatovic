@@ -3,7 +3,7 @@
     @if (status() === 'success') {
       <div class="badge ok">Narudžba</div>
       <div class="icon ok" aria-hidden="true">✅</div>
-      <h1>Narudžba je uspješno kreirana</h1>
+      <h1>Vaša narudžba je uspješno primljena</h1>
       @if (orderNumber()) {
         <div class="detail" role="status">
           <div class="dtitle">Broj narudžbe</div>
@@ -13,17 +13,14 @@
 
       <div class="confirmation-notice" role="status" aria-live="polite">
         <p>
-          @if (email()) {
-            Na email adresu <strong>{{ email() }}</strong> poslali smo poruku sa linkom za potvrdu
-            narudžbe.
-          } @else {
-            Na vašu email adresu poslali smo poruku sa linkom za potvrdu narudžbe.
-          }
+          Naš prodavac će vas u najkraćem roku kontaktirati emailom sa daljim informacijama.
         </p>
-        <p class="deadline">Molimo vas da narudžbu potvrdite u roku od 60 minuta.</p>
         <p>
-          Ako poruku ne vidite u primarnom sandučetu, provjerite i fasciklu
-          <strong>Neželjena pošta (Spam)</strong>.
+          @if (email()) {
+            Informativni email je već poslat na adresu <strong>{{ email() }}</strong>.
+          } @else {
+            Informativni email sa pregledom narudžbe poslat je na vašu email adresu.
+          }
         </p>
       </div>
 

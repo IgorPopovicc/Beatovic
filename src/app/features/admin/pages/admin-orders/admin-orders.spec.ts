@@ -68,7 +68,7 @@ describe('AdminOrders', () => {
     expect(isOrderEditable('COMPLETED')).toBeFalse();
     expect(isOrderEditable('CANCELED')).toBeFalse();
     expect(isOrderEditable('EXPIRED')).toBeFalse();
-    expect(isOrderEditable('PENDING')).toBeFalse();
+    expect(isOrderEditable('PENDING')).toBeTrue();
     expect(isOrderEditable('EMAIL_VERIFIED')).toBeTrue();
     expect(isOrderEditable('WAITING_FOR_CUSTOMER_RECONFIRMATION')).toBeFalse();
     expect(isOrderEditable('CUSTOMER_RECONFIRMED')).toBeTrue();
@@ -128,7 +128,6 @@ describe('AdminOrders', () => {
       'COMPLETED',
       'CANCELED',
       'EXPIRED',
-      'PENDING',
       'WAITING_FOR_CUSTOMER_RECONFIRMATION',
     ] as const) {
       const order = buildOrder(status);
@@ -141,6 +140,45 @@ describe('AdminOrders', () => {
     }
 
     expect(updateSpy).not.toHaveBeenCalled();
+  });
+
+  it('enables the full admin workflow for pending orders', () => {
+    const order = { ...buildOrder('PENDING'), itemsChanged: true };
+    const api = TestBed.inject(AdminOrdersApi);
+    const updatedOrder = {
+      ...order,
+      items: [{ ...order.items[0], quantity: 2, totalItemPrice: 200 }],
+      totalPrice: 200,
+    };
+    const updateSpy = spyOn(api, 'updateOrderItems').and.returnValue(of(updatedOrder));
+    const resendSpy = spyOn(api, 'resendConfirmation').and.returnValue(of(void 0));
+    spyOn(api, 'getByDate').and.returnValue(of([updatedOrder]));
+    component.orders.set([order]);
+
+    expect(component.canEditOrder(order)).toBeTrue();
+    expect(component.hasAction(order, 'approve')).toBeTrue();
+    expect(component.hasAction(order, 'cancel')).toBeTrue();
+
+    component.completeOrder(order);
+    expect(component.confirmAction()).toBe('complete');
+    component.closeConfirm();
+
+    component.cancelOrder(order);
+    expect(component.confirmAction()).toBe('cancel');
+    component.closeConfirm();
+
+    component.removeOrderCoupon(order);
+    expect(component.confirmAction()).toBe('remove-coupon');
+    component.closeConfirm();
+
+    component.onItemQuantityInput(order, 'size-attribute-id', '2');
+    component.saveOrderItems(order);
+    expect(updateSpy).toHaveBeenCalledOnceWith(order.orderId, [
+      { sizeAttributeVariantId: 'size-attribute-id', quantity: 2 },
+    ]);
+
+    component.resendOrderConfirmation(order);
+    expect(resendSpy).toHaveBeenCalledOnceWith(order.orderId);
   });
 
   it('uses the updated order returned by coupon removal', () => {

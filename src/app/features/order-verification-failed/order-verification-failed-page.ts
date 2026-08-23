@@ -48,87 +48,87 @@ export class OrderVerificationFailedPageComponent {
         return {
           tone: 'warning',
           icon: '!',
-          title: 'Link za potvrdu je istekao',
+          title: 'Link za potvrdu izmjena je istekao',
           message:
-            'Rok za potvrdu ove narudžbe je istekao. Ako i dalje želite iste proizvode, napravite novu narudžbu.',
+            'Rok za potvrdu izmjena narudžbe je istekao. Kontaktirajte prodavca za dalje informacije.',
           primaryText: 'Nazad na početnu',
           primaryLink: '/',
           secondaryText: 'Otvorite katalog',
           secondaryLink: '/catalog/muskarci/obuca',
-          seoTitle: 'Potvrda narudžbe je istekla | Planeta',
-          seoDescription: 'Rok za potvrdu narudžbe je istekao.',
+          seoTitle: 'Potvrda izmjena je istekla | Planeta',
+          seoDescription: 'Rok za potvrdu izmjena narudžbe je istekao.',
         };
 
       case 'already-verified':
         return {
           tone: 'warning',
           icon: '!',
-          title: 'Narudžba je već potvrđena',
-          message: 'Ovaj link je već iskorišten. Narudžba je prethodno potvrđena.',
+          title: 'Izmjene su već potvrđene',
+          message: 'Ovaj link je već iskorišten. Izmjene narudžbe prethodno su potvrđene.',
           primaryText: 'Nazad na početnu',
           primaryLink: '/',
           secondaryText: 'Otvorite katalog',
           secondaryLink: '/catalog/muskarci/obuca',
-          seoTitle: 'Narudžba je već potvrđena | Planeta',
-          seoDescription: 'Narudžba je već potvrđena i link više nije potrebno koristiti.',
+          seoTitle: 'Izmjene su već potvrđene | Planeta',
+          seoDescription: 'Izmjene narudžbe su već potvrđene i link više nije potrebno koristiti.',
         };
 
       case 'already-delivered':
         return {
           tone: 'warning',
           icon: '!',
-          title: 'Narudžba je već isporučena',
-          message: 'Ova radnja više nije dostupna jer je narudžba već isporučena.',
+          title: 'Narudžba je već kompletirana',
+          message: 'Izmjene više nije moguće potvrditi jer je narudžba već kompletirana.',
           primaryText: 'Nazad na početnu',
           primaryLink: '/',
           secondaryText: 'Otvorite katalog',
           secondaryLink: '/catalog/muskarci/obuca',
-          seoTitle: 'Narudžba je već isporučena | Planeta',
-          seoDescription: 'Potvrda nije dostupna za već isporučenu narudžbu.',
+          seoTitle: 'Narudžba je već kompletirana | Planeta',
+          seoDescription: 'Potvrda izmjena nije dostupna za već kompletiranu narudžbu.',
         };
 
       case 'rejected':
         return {
           tone: 'error',
           icon: '!',
-          title: 'Narudžba je odbijena',
-          message: 'Ova narudžba je odbijena ili otkazana i više je nije moguće potvrditi.',
+          title: 'Narudžba je otkazana',
+          message: 'Predložene izmjene nisu prihvaćene, pa je narudžba otkazana.',
           primaryText: 'Nazad na početnu',
           primaryLink: '/',
           secondaryText: 'Napravite novu narudžbu',
           secondaryLink: '/catalog/muskarci/obuca',
-          seoTitle: 'Narudžba je odbijena | Planeta',
-          seoDescription: 'Odbijenu narudžbu nije moguće potvrditi.',
+          seoTitle: 'Narudžba je otkazana | Planeta',
+          seoDescription: 'Izmjene otkazane narudžbe nije moguće potvrditi.',
         };
 
       case 'missing-token':
         return {
           tone: 'error',
           icon: '!',
-          title: 'Nedostaje token za potvrdu',
+          title: 'Nedostaje token za potvrdu izmjena',
           message:
-            'Link koji ste otvorili nije kompletan. Otvorite najnoviju email poruku sa potvrdom narudžbe.',
+            'Link koji ste otvorili nije kompletan. Otvorite najnoviju email poruku sa izmjenama narudžbe.',
           primaryText: 'Nazad na početnu',
           primaryLink: '/',
           secondaryText: 'Otvorite katalog',
           secondaryLink: '/catalog/muskarci/obuca',
           seoTitle: 'Potvrda nije uspjela | Planeta',
-          seoDescription: 'Nedostaje token za potvrdu narudžbe.',
+          seoDescription: 'Nedostaje token za potvrdu izmjena narudžbe.',
         };
 
       case 'invalid-token':
         return {
           tone: 'error',
           icon: '!',
-          title: 'Link za potvrdu nije važeći',
+          title: 'Link za potvrdu izmjena nije važeći',
           message:
-            'Link koji ste otvorili nije važeći. Koristite najnoviju email poruku sa potvrdom narudžbe.',
+            'Link koji ste otvorili nije važeći. Koristite najnoviju email poruku sa izmjenama narudžbe.',
           primaryText: 'Nazad na početnu',
           primaryLink: '/',
           secondaryText: 'Otvorite katalog',
           secondaryLink: '/catalog/muskarci/obuca',
           seoTitle: 'Potvrda nije uspjela | Planeta',
-          seoDescription: 'Link za potvrdu narudžbe nije važeći.',
+          seoDescription: 'Link za potvrdu izmjena narudžbe nije važeći.',
         };
 
       case 'backend-error':
@@ -138,15 +138,15 @@ export class OrderVerificationFailedPageComponent {
         return {
           tone: 'error',
           icon: '!',
-          title: 'Potvrda narudžbe nije uspjela',
+          title: 'Potvrda izmjena nije uspjela',
           message:
-            'Trenutno ne možemo završiti potvrdu narudžbe. Pokušajte ponovo kasnije ili kontaktirajte podršku.',
+            'Trenutno ne možemo završiti potvrdu izmjena narudžbe. Pokušajte ponovo kasnije ili kontaktirajte podršku.',
           primaryText: 'Nazad na početnu',
           primaryLink: '/',
           secondaryText: 'Otvorite katalog',
           secondaryLink: '/catalog/muskarci/obuca',
           seoTitle: 'Potvrda nije uspjela | Planeta',
-          seoDescription: 'Potvrda narudžbe trenutno nije dostupna.',
+          seoDescription: 'Potvrda izmjena narudžbe trenutno nije dostupna.',
         };
     }
   });

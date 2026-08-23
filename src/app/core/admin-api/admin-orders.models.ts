@@ -11,7 +11,6 @@ export const NON_EDITABLE_ORDER_STATUSES: ReadonlySet<OrderStatus> = new Set([
   'COMPLETED',
   'CANCELED',
   'EXPIRED',
-  'PENDING',
   'WAITING_FOR_CUSTOMER_RECONFIRMATION',
 ]);
 

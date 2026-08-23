@@ -58,15 +58,15 @@ export class OrderEmailVerificationPageComponent implements OnInit {
       return {
         tone: 'info',
         icon: 'i',
-        title: 'Provjeravamo potvrdu narudžbe',
-        message: 'Sačekajte trenutak dok obradimo potvrdu iz vaše email poruke.',
+        title: 'Provjeravamo potvrdu izmjena narudžbe',
+        message: 'Sačekajte trenutak dok obradimo potvrdu izmjena iz vaše email poruke.',
         details: null,
         primaryText: 'Početna',
         primaryLink: '/',
         secondaryText: 'Katalog',
         secondaryLink: '/catalog/muskarci/obuca',
-        seoTitle: 'Potvrda narudžbe | Planeta',
-        seoDescription: 'Provjera potvrde narudžbe putem emaila.',
+        seoTitle: 'Potvrda izmjena narudžbe | Planeta',
+        seoDescription: 'Provjera potvrde izmjena narudžbe.',
       };
     }
 
@@ -74,16 +74,16 @@ export class OrderEmailVerificationPageComponent implements OnInit {
       return {
         tone: 'success',
         icon: '✓',
-        title: 'Narudžba je uspješno potvrđena',
+        title: 'Izmjene narudžbe su uspješno potvrđene',
         message:
-          'Hvala vam. Vaša narudžba je potvrđena i prelazi u dalju obradu. O narednim koracima obavijestićemo vas email porukom.',
+          'Hvala vam. Potvrdili ste izmjene narudžbe i ona prelazi u dalju obradu. O narednim koracima obavijestićemo vas email porukom.',
         details,
         primaryText: 'Nazad na početnu',
         primaryLink: '/',
         secondaryText: 'Nastavite kupovinu',
         secondaryLink: '/catalog/muskarci/obuca',
-        seoTitle: 'Narudžba potvrđena | Planeta',
-        seoDescription: 'Potvrda narudžbe putem emaila je uspješno završena.',
+        seoTitle: 'Izmjene narudžbe potvrđene | Planeta',
+        seoDescription: 'Potvrda izmjena narudžbe je uspješno završena.',
       };
     }
 
@@ -91,34 +91,34 @@ export class OrderEmailVerificationPageComponent implements OnInit {
       return {
         tone: 'warning',
         icon: '!',
-        title: 'Rok za potvrdu je istekao',
+        title: 'Rok za potvrdu izmjena je istekao',
         message:
-          'Ovu narudžbu više nije moguće potvrditi jer je istekao rok za potvrdu putem emaila.',
+          'Izmjene narudžbe više nije moguće potvrditi ovim linkom jer je rok istekao.',
         details:
           details ??
-          'Ako i dalje želite iste proizvode, potrebno je napraviti novu narudžbu kroz webshop.',
-        primaryText: 'Napravite novu narudžbu',
-        primaryLink: '/catalog/muskarci/obuca',
-        secondaryText: 'Nazad na početnu',
-        secondaryLink: '/',
-        seoTitle: 'Potvrda narudžbe je istekla | Planeta',
-        seoDescription: 'Rok za potvrdu narudžbe putem emaila je istekao.',
+          'Kontaktirajte prodavca ako su vam potrebne dodatne informacije o narudžbi.',
+        primaryText: 'Nazad na početnu',
+        primaryLink: '/',
+        secondaryText: 'Otvorite katalog',
+        secondaryLink: '/catalog/muskarci/obuca',
+        seoTitle: 'Potvrda izmjena je istekla | Planeta',
+        seoDescription: 'Rok za potvrdu izmjena narudžbe je istekao.',
       };
     }
 
     return {
       tone: 'error',
       icon: '!',
-      title: 'Link za potvrdu nije važeći',
+      title: 'Link za potvrdu izmjena nije važeći',
       message:
-        'Link koji ste otvorili nije važeći ili je već iskorišten. Otvorite najnoviju email poruku za narudžbu i pokušajte ponovo.',
+        'Link koji ste otvorili nije važeći ili je već iskorišten. Otvorite najnoviju email poruku sa izmjenama narudžbe i pokušajte ponovo.',
       details,
       primaryText: 'Nazad na početnu',
       primaryLink: '/',
       secondaryText: 'Otvorite katalog',
       secondaryLink: '/catalog/muskarci/obuca',
-      seoTitle: 'Potvrda narudžbe nije uspjela | Planeta',
-      seoDescription: 'Link za potvrdu narudžbe nije važeći.',
+      seoTitle: 'Potvrda izmjena nije uspjela | Planeta',
+      seoDescription: 'Link za potvrdu izmjena narudžbe nije važeći.',
     };
   });
 
@@ -463,43 +463,43 @@ export class OrderEmailVerificationPageComponent implements OnInit {
     if (reason === 'expired-token') {
       this.state.set('expired');
       this.details.set(
-        'Link za potvrdu je istekao. Ako i dalje želite iste proizvode, napravite novu narudžbu.',
+        'Link za potvrdu izmjena je istekao. Kontaktirajte prodavca za dalje informacije.',
       );
       return;
     }
 
     if (reason === 'already-verified') {
       this.state.set('invalid');
-      this.details.set('Narudžba je već potvrđena i ovaj link više nije aktivan.');
+      this.details.set('Izmjene narudžbe su već potvrđene i ovaj link više nije aktivan.');
       return;
     }
 
     if (reason === 'already-delivered') {
       this.state.set('invalid');
-      this.details.set('Narudžba je već isporučena i potvrdu nije moguće ponoviti.');
+      this.details.set('Narudžba je već kompletirana i izmjene nije moguće ponovo potvrditi.');
       return;
     }
 
     if (reason === 'rejected') {
       this.state.set('invalid');
-      this.details.set('Narudžba je odbijena ili otkazana i više se ne može potvrditi.');
+      this.details.set('Izmjene nisu prihvaćene, pa je narudžba otkazana.');
       return;
     }
 
     if (reason === 'missing-token') {
       this.state.set('invalid');
-      this.details.set('Nedostaje token za potvrdu narudžbe.');
+      this.details.set('Nedostaje token za potvrdu izmjena narudžbe.');
       return;
     }
 
     if (reason === 'backend-error') {
       this.state.set('invalid');
-      this.details.set('Potvrda narudžbe trenutno nije dostupna. Pokušajte ponovo kasnije.');
+      this.details.set('Potvrda izmjena trenutno nije dostupna. Pokušajte ponovo kasnije.');
       return;
     }
 
     this.state.set('invalid');
-    this.details.set('Link za potvrdu nije važeći ili je već iskorišten.');
+    this.details.set('Link za potvrdu izmjena nije važeći ili je već iskorišten.');
   }
 
   private redirectToFailure(reason: VerificationFailedReason): void {

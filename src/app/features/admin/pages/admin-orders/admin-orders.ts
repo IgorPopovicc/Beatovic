@@ -64,9 +64,9 @@ const ANONYMIZED_USER_LABEL = 'Anonimizovan korisnik';
 
 const ORDER_STATUS_UI: Record<OrderStatus, OrderStatusUiConfig> = {
   PENDING: {
-    label: 'Čeka email potvrdu',
+    label: 'Čeka obradu',
     tone: 'pending',
-    actions: ['details'],
+    actions: ['approve', 'cancel', 'details'],
   },
   EMAIL_VERIFIED: {
     label: 'Email potvrđen',
@@ -84,7 +84,7 @@ const ORDER_STATUS_UI: Record<OrderStatus, OrderStatusUiConfig> = {
     actions: ['approve', 'cancel', 'details'],
   },
   EXPIRED: {
-    label: 'Istekla potvrda',
+    label: 'Istekla — nije obrađena u roku',
     tone: 'expired',
     actions: ['details'],
   },
