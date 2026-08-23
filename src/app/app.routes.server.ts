@@ -46,6 +46,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'confirm-order/:token', renderMode: RenderMode.Server },
   { path: 'admin', renderMode: RenderMode.Server },
   { path: 'admin/**', renderMode: RenderMode.Server },
+  { path: 'test/comming-soon', renderMode: RenderMode.Server },
   { path: '404', renderMode: RenderMode.Server, status: 404 },
   { path: '**', renderMode: RenderMode.Server, status: 404 },
 ];

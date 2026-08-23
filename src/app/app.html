@@ -1,4 +1,6 @@
-@if (showMaintenance()) {
+@if (showStandaloneComingSoon()) {
+  <router-outlet />
+} @else if (showMaintenance()) {
   <app-maintenance />
 } @else {
   <app-navbar></app-navbar>

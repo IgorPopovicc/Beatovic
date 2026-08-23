@@ -4,8 +4,8 @@
   } @else if (error()) {
     <div class="state" role="alert">{{ error() }}</div>
   } @else if (brands().length) {
-    <div class="logos__marquee">
-      <div class="marquee__logos">
+    @if (layout() === 'grid') {
+      <nav class="logos__grid" aria-label="Izaberite brend">
         @for (brand of brands(); track brand.id) {
           <a
             class="brand-link"
@@ -15,13 +15,27 @@
             {{ brand.name }}
           </a>
         }
+      </nav>
+    } @else {
+      <div class="logos__marquee">
+        <div class="marquee__logos">
+          @for (brand of brands(); track brand.id) {
+            <a
+              class="brand-link"
+              routerLink="/catalog/muskarci/obuca"
+              [queryParams]="{ q: brand.name }"
+            >
+              {{ brand.name }}
+            </a>
+          }
+        </div>
+        <div class="marquee__logos" aria-hidden="true">
+          @for (brand of brands(); track brand.id) {
+            <span class="brand-link">{{ brand.name }}</span>
+          }
+        </div>
       </div>
-      <div class="marquee__logos" aria-hidden="true">
-        @for (brand of brands(); track brand.id) {
-          <span class="brand-link">{{ brand.name }}</span>
-        }
-      </div>
-    </div>
+    }
   } @else {
     <div class="state">Trenutno nema dostupnih brendova.</div>
   }

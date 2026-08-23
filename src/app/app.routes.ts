@@ -488,6 +488,18 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'test/comming-soon',
+    loadComponent: () =>
+      import('./features/coming-soon/coming-soon').then((m) => m.ComingSoonComponent),
+    data: {
+      seo: {
+        title: 'Uskoro live | PlanetSport',
+        description: 'Nova PlanetSport online prodavnica je skoro tu.',
+        noindex: true,
+      },
+    },
+  },
+  {
     path: '404',
     loadComponent: () => import('./features/not-found/not-found').then((m) => m.NotFoundComponent),
     data: {

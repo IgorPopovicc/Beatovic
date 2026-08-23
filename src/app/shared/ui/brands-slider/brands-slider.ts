@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, input, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { CatalogApiService } from '../../../core/api/catalog-api.sevice';
@@ -16,6 +16,7 @@ export class BrandsSlider implements OnInit {
   readonly brands = signal<Array<{ id: string; name: string }>>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly layout = input<'marquee' | 'grid'>('marquee');
 
   ngOnInit(): void {
     this.catalogApi

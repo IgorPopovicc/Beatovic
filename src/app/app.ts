@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { Component, computed, effect, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -29,6 +30,7 @@ import { MaintenanceComponent } from './features/maintenance/maintenance';
 export class App {
   private readonly backendStatus = inject(BackendStatusService);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
   private readonly routeSeo = inject(RouteSeoService);
   private readonly seo = inject(SeoService);
   private readonly config = inject(RuntimeConfigService);
@@ -37,12 +39,15 @@ export class App {
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
       map((event) => event.urlAfterRedirects),
-      startWith(this.router.url),
+      startWith(this.initialUrl()),
     ),
-    { initialValue: this.router.url },
+    { initialValue: this.initialUrl() },
   );
 
   protected readonly showBackendFallback = computed(() => this.backendStatus.unavailable());
+  protected readonly showStandaloneComingSoon = computed(() =>
+    this.isComingSoonUrl(this.currentUrl()),
+  );
   protected readonly showMaintenance = computed(
     () => this.config.maintenanceMode && !this.isAdminUrl(this.currentUrl()),
   );
@@ -84,5 +89,19 @@ export class App {
   private isAdminUrl(url: string): boolean {
     const path = String(url ?? '').split('?')[0].split('#')[0];
     return /^\/admin(?:\/|$)/.test(path);
+  }
+
+  private isComingSoonUrl(url: string): boolean {
+    const path = String(url ?? '')
+      .split('?')[0]
+      .split('#')[0]
+      .replace(/\/+$/, '');
+    return path === '/test/comming-soon';
+  }
+
+  private initialUrl(): string {
+    const location = this.document.location;
+    if (!location) return this.router.url;
+    return `${location.pathname}${location.search}${location.hash}`;
   }
 }
