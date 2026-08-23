@@ -1,7 +1,7 @@
 import { CommonModule, ViewportScroller } from '@angular/common';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription, combineLatest, forkJoin, of } from 'rxjs';
+import { ActivatedRoute, ParamMap, Params, Router, RouterLink } from '@angular/router';
+import { EMPTY, Subscription, combineLatest, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { ProductsApiService } from '../../core/api/products-api.service';
@@ -78,6 +78,24 @@ type ProductsRequestState = {
 };
 
 const DEFAULT_PAGE_SIZE = 24;
+const MAX_VISIBLE_PAGES = 5;
+
+export function visiblePageRange(
+  currentPage: number,
+  totalPages: number,
+  maxVisible = MAX_VISIBLE_PAGES,
+): number[] {
+  const safeTotal = Math.max(0, Math.floor(totalPages));
+  const visibleCount = Math.min(Math.max(1, Math.floor(maxVisible)), safeTotal);
+  if (visibleCount === 0) return [];
+
+  const safeCurrent = Math.max(1, Math.min(Math.floor(currentPage), safeTotal));
+  const pagesBefore = Math.floor(visibleCount / 2);
+  const latestStart = safeTotal - visibleCount + 1;
+  const start = Math.max(1, Math.min(safeCurrent - pagesBefore, latestStart));
+
+  return Array.from({ length: visibleCount }, (_, index) => start + index);
+}
 
 @Component({
   selector: 'app-products',
@@ -98,6 +116,8 @@ export class Products implements OnInit, OnDestroy {
   private routeSub?: Subscription;
   private searchSub?: Subscription;
   private scrollAfterPageLoad = false;
+  private currentQueryParams: ParamMap | null = null;
+  private readonly pendingInternalQueryStates = new Set<string>();
 
   filtersOpen = signal(false);
   loading = signal(true);
@@ -289,10 +309,18 @@ export class Products implements OnInit, OnDestroy {
     return Math.max(1, Math.ceil(total / size));
   });
 
+  visiblePages = computed(() => visiblePageRange(this.page(), this.totalPages()));
+
   ngOnInit(): void {
     this.routeSub = combineLatest([this.route.paramMap, this.route.queryParamMap])
       .pipe(
         switchMap(([params, queryParams]) => {
+          this.currentQueryParams = queryParams;
+          const queryStateKey = this.queryStateKeyFromParamMap(queryParams);
+          if (this.pendingInternalQueryStates.delete(queryStateKey)) {
+            return EMPTY;
+          }
+
           // Cancel the previous route's product request before resolving the new runtime IDs.
           // This prevents a slower response from repainting stale gender/category facets.
           this.searchSub?.unsubscribe();
@@ -566,7 +594,9 @@ export class Products implements OnInit, OnDestroy {
         this.error.set(null);
         this.response.set(null);
         this.currentContext.set(resolution.context);
-        this.requestState.set(this.createDefaultRequestState(resolution.context));
+        this.requestState.set(
+          this.createRequestStateFromQuery(resolution.context, this.currentQueryParams),
+        );
         if (resolution.context.searchMode) {
           this.applySearchSeo(resolution.context.searchQuery);
         } else {
@@ -706,15 +736,15 @@ export class Products implements OnInit, OnDestroy {
     const state = this.requestState();
     if (!context || !state) return;
 
-    this.requestState.set({
+    const next = {
       ...this.createDefaultRequestState(context),
       pageSize: state.pageSize,
       sortBy: state.sortBy,
       sortOrder: state.sortOrder,
-    });
+    };
 
     if (!keepSidebarState) this.closeFilters();
-    this.runSearch();
+    this.commitRequestState(state, next);
   }
 
   goPage(p: number): void {
@@ -733,8 +763,18 @@ export class Products implements OnInit, OnDestroy {
     const prev = this.requestState();
     if (!prev) return;
     const next = mutator(prev);
+    this.commitRequestState(prev, next);
+  }
+
+  private commitRequestState(
+    previous: ProductsRequestState,
+    next: ProductsRequestState,
+  ): void {
+    if (this.requestStateKey(previous) === this.requestStateKey(next)) return;
+
     this.requestState.set(next);
     this.runSearch();
+    this.syncRequestStateToUrl(next);
   }
 
   private runSearch(): void {
@@ -751,6 +791,12 @@ export class Products implements OnInit, OnDestroy {
       next: (res) => {
         this.response.set(res ?? null);
         this.loading.set(false);
+
+        if (this.totalCount() > 0 && this.page() > this.totalPages()) {
+          this.goPage(this.totalPages());
+          return;
+        }
+
         this.applyCollectionStructuredData();
         if (this.scrollAfterPageLoad) {
           this.scrollAfterPageLoad = false;
@@ -804,6 +850,200 @@ export class Products implements OnInit, OnDestroy {
       sortBy: 'PRIORITY',
       sortOrder: 'DESC',
     };
+  }
+
+  private createRequestStateFromQuery(
+    context: RouteContext,
+    queryParams: ParamMap | null,
+  ): ProductsRequestState {
+    const defaults = this.createDefaultRequestState(context);
+    if (!queryParams) return defaults;
+
+    const requestedPage = this.positiveInteger(queryParams.get('page')) ?? 1;
+    const requestedSort = this.validSortKey(queryParams.get('sort'));
+    const sort = requestedSort
+      ? this.uiSortToBackend(requestedSort)
+      : { sortBy: defaults.sortBy, sortOrder: defaults.sortOrder };
+    const minPrice = this.nonNegativeNumber(queryParams.get('minPrice'));
+    const maxPrice = this.nonNegativeNumber(queryParams.get('maxPrice'));
+    const hasValidPriceRange = minPrice === null || maxPrice === null || minPrice <= maxPrice;
+    const restoredCategoryFilters = this.decodeFilterMap(queryParams.get('cf'));
+    for (const groupId of Object.keys(defaults.categoryFilters)) {
+      delete restoredCategoryFilters[groupId];
+    }
+
+    return {
+      ...defaults,
+      ...sort,
+      categoryFilters: {
+        ...defaults.categoryFilters,
+        ...restoredCategoryFilters,
+      },
+      attributeFilters: this.decodeFilterMap(queryParams.get('af')),
+      minPrice: hasValidPriceRange ? minPrice : null,
+      maxPrice: hasValidPriceRange ? maxPrice : null,
+      hasActiveDiscount: this.queryParamToBool(queryParams.get('sale')) ? true : null,
+      hasActiveStock: this.queryParamToBool(queryParams.get('stock')) ? true : null,
+      page: requestedPage - 1,
+    };
+  }
+
+  private syncRequestStateToUrl(state: ProductsRequestState): void {
+    const context = this.currentContext();
+    if (!context) return;
+
+    const queryParams = this.queryParamsForState(state, context);
+    const queryStateKey = this.queryStateKeyFromParams(queryParams);
+    this.pendingInternalQueryStates.add(queryStateKey);
+
+    try {
+      void this.router
+        .navigate([], {
+          relativeTo: this.route,
+          queryParams,
+          queryParamsHandling: 'merge',
+        })
+        .then((navigated) => {
+          if (!navigated) this.pendingInternalQueryStates.delete(queryStateKey);
+        })
+        .catch(() => this.pendingInternalQueryStates.delete(queryStateKey));
+    } catch {
+      this.pendingInternalQueryStates.delete(queryStateKey);
+    }
+  }
+
+  private queryParamsForState(state: ProductsRequestState, context: RouteContext): Params {
+    const userCategoryFilters = Object.fromEntries(
+      Object.entries(state.categoryFilters).filter(
+        ([groupId, valueIds]) =>
+          !this.sameStringArray(valueIds, context.categoryFilters[groupId] ?? []),
+      ),
+    );
+    const sortKey = this.backendSortToUi(state.sortBy, state.sortOrder);
+
+    return {
+      search: state.searchQuery || null,
+      q: null,
+      page: state.page > 0 ? state.page + 1 : null,
+      sort: sortKey === 'preporucujemo' ? null : sortKey,
+      stock: state.hasActiveStock === true ? 1 : null,
+      sale: state.hasActiveDiscount === true ? 1 : null,
+      minPrice: state.minPrice,
+      maxPrice: state.maxPrice,
+      cf: this.encodeFilterMap(userCategoryFilters),
+      af: this.encodeFilterMap(state.attributeFilters),
+    };
+  }
+
+  private encodeFilterMap(filters: Record<string, string[]>): string | null {
+    const entries = Object.entries(filters)
+      .map(([groupId, valueIds]) => [
+        groupId,
+        Array.from(new Set(valueIds.map((value) => String(value).trim()).filter(Boolean))).sort(),
+      ] as const)
+      .filter(([groupId, valueIds]) => !!groupId.trim() && valueIds.length > 0)
+      .sort(([left], [right]) => left.localeCompare(right));
+
+    return entries.length > 0 ? JSON.stringify(Object.fromEntries(entries)) : null;
+  }
+
+  private decodeFilterMap(value: string | null): Record<string, string[]> {
+    if (!value || value.length > 8000) return {};
+
+    try {
+      const parsed: unknown = JSON.parse(value);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+
+      const filters: Record<string, string[]> = {};
+      for (const [rawGroupId, rawValueIds] of Object.entries(parsed).slice(0, 30)) {
+        const groupId = rawGroupId.trim();
+        if (!groupId || groupId.length > 160 || !Array.isArray(rawValueIds)) continue;
+
+        const valueIds = Array.from(
+          new Set(
+            rawValueIds
+              .slice(0, 60)
+              .map((item) => (typeof item === 'string' ? item.trim() : ''))
+              .filter((item) => item.length > 0 && item.length <= 160),
+          ),
+        );
+        if (valueIds.length > 0) filters[groupId] = valueIds;
+      }
+      return filters;
+    } catch {
+      return {};
+    }
+  }
+
+  private requestStateKey(state: ProductsRequestState): string {
+    return JSON.stringify({
+      ...state,
+      initialCategoryFilters: this.encodeFilterMap(state.initialCategoryFilters),
+      categoryFilters: this.encodeFilterMap(state.categoryFilters),
+      attributeFilters: this.encodeFilterMap(state.attributeFilters),
+    });
+  }
+
+  private queryStateKeyFromParamMap(queryParams: ParamMap): string {
+    const value = (key: string): string => String(queryParams.get(key) ?? '');
+    return JSON.stringify([
+      String(queryParams.get('search') ?? queryParams.get('q') ?? '').trim(),
+      value('page'),
+      value('sort'),
+      value('stock'),
+      value('sale'),
+      value('minPrice'),
+      value('maxPrice'),
+      value('cf'),
+      value('af'),
+    ]);
+  }
+
+  private queryStateKeyFromParams(queryParams: Params): string {
+    const value = (key: string): string => String(queryParams[key] ?? '');
+    return JSON.stringify([
+      value('search'),
+      value('page'),
+      value('sort'),
+      value('stock'),
+      value('sale'),
+      value('minPrice'),
+      value('maxPrice'),
+      value('cf'),
+      value('af'),
+    ]);
+  }
+
+  private sameStringArray(left: string[], right: string[]): boolean {
+    if (left.length !== right.length) return false;
+    const normalizedLeft = [...left].sort();
+    const normalizedRight = [...right].sort();
+    return normalizedLeft.every((value, index) => value === normalizedRight[index]);
+  }
+
+  private positiveInteger(value: string | null): number | null {
+    if (!value || !/^\d+$/.test(value)) return null;
+    const parsed = Number(value);
+    return Number.isSafeInteger(parsed) && parsed >= 1 ? parsed : null;
+  }
+
+  private nonNegativeNumber(value: string | null): number | null {
+    if (value === null || value.trim() === '') return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+  }
+
+  private validSortKey(value: string | null): SortKey | null {
+    if (
+      value === 'preporucujemo' ||
+      value === 'naziv_az' ||
+      value === 'naziv_za' ||
+      value === 'cijena_rastuce' ||
+      value === 'cijena_opadajuce'
+    ) {
+      return value;
+    }
+    return null;
   }
 
   private handleRouteError(resolution: Exclude<RouteResolution, { ok: true }>): void {

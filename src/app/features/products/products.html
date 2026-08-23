@@ -256,27 +256,48 @@
           }
         </div>
 
-        <div class="pagination" *ngIf="totalCount() > 0">
+        <nav class="pagination" *ngIf="totalCount() > 0" aria-label="Stranice proizvoda">
           <button
-            class="page-btn"
+            class="page-btn page-arrow"
             type="button"
             (click)="goPage(page() - 1)"
             [disabled]="page() === 1"
+            aria-label="Prethodna stranica"
           >
-            Prethodna
+            <span aria-hidden="true">‹</span>
           </button>
 
-          <div class="page-info">Strana {{ page() }} / {{ totalPages() }}</div>
+          @for (pageNumber of visiblePages(); track pageNumber) {
+            <button
+              class="page-btn page-number"
+              type="button"
+              [class.active]="pageNumber === page()"
+              [attr.aria-current]="pageNumber === page() ? 'page' : null"
+              [attr.aria-label]="
+                pageNumber === page()
+                  ? 'Trenutna stranica, ' + pageNumber
+                  : 'Idi na stranicu ' + pageNumber
+              "
+              (click)="goPage(pageNumber)"
+            >
+              {{ pageNumber }}
+            </button>
+          }
 
           <button
-            class="page-btn"
+            class="page-btn page-arrow"
             type="button"
             (click)="goPage(page() + 1)"
             [disabled]="page() === totalPages()"
+            aria-label="Sljedeća stranica"
           >
-            Sljedeća
+            <span aria-hidden="true">›</span>
           </button>
-        </div>
+
+          <span class="sr-only" aria-live="polite">
+            Stranica {{ page() }} od {{ totalPages() }}
+          </span>
+        </nav>
       }
     </main>
   </div>
