@@ -1,9 +1,12 @@
 import { CommonModule } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import {
   Component,
   DestroyRef,
   EventEmitter,
   HostListener,
+  OnDestroy,
+  OnInit,
   Output,
   computed,
   inject,
@@ -23,6 +26,7 @@ import {
   tap,
   catchError,
   forkJoin,
+  Subject,
 } from 'rxjs';
 
 import { AdminProductsApi } from '../../../../../core/admin-api/admin-products-api';
@@ -35,6 +39,7 @@ import {
 import { AdminAttributesApi } from '../../../../../core/admin-api/admin-attributes-api';
 import { colorSwatchLabel, parseColorSwatch } from '../../../../../shared/utils/color-swatch';
 import { ProductVariantPriority } from '../../../../../shared/data/product-variant-priority';
+import { runtimeMediaUrl } from '../../../../../core/config/runtime-config.service';
 
 type DropdownKey = 'color';
 
@@ -48,11 +53,14 @@ type ProductVariantSummary = NonNullable<Product['variants']>[number];
   templateUrl: './admin-variant-create-modal.html',
   styleUrl: './admin-variant-create-modal.scss',
 })
-export class AdminVariantCreateModal {
+export class AdminVariantCreateModal implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly productsApi = inject(AdminProductsApi);
   private readonly attrApi = inject(AdminAttributesApi);
+  private readonly document = inject(DOCUMENT);
+  private readonly selectedProductRequests = new Subject<Product>();
+  private bodyOverflowBeforeOpen = '';
 
   @Output() closed = new EventEmitter<void>();
   @Output() created = new EventEmitter<void>();
@@ -66,6 +74,9 @@ export class AdminVariantCreateModal {
   readonly selectedProduct = signal<Product | null>(null);
 
   readonly variants = signal<ProductVariantSummary[]>([]);
+  readonly variantsLoading = signal(false);
+  readonly variantsLoaded = signal(false);
+  readonly variantsError = signal<string | null>(null);
 
   readonly createFormOpen = signal(false);
 
@@ -125,13 +136,21 @@ export class AdminVariantCreateModal {
     const target = this.normalizeSkuForCompare(this.skuInputSig());
     if (!target) return false;
 
-    return this.variants().some((variant) => this.normalizeSkuForCompare(variant.sku) === target);
+    const productPrefix = this.normalizeSkuForCompare(this.selectedProduct()?.productSku);
+    const fullTarget = productPrefix ? `${productPrefix}-${target}` : target;
+
+    return this.variants().some((variant) => {
+      const sku = this.normalizeSkuForCompare(variant.sku);
+      const displaySku = this.normalizeSkuForCompare(variant.displaySku);
+      return sku === target || sku === fullTarget || displaySku === target || displaySku === fullTarget;
+    });
   });
 
   readonly invalid = computed(
     () =>
       this.submitting() ||
       !this.selectedProduct()?.id ||
+      !this.variantsLoaded() ||
       this.formStatusSig() === 'INVALID' ||
       this.duplicateSku() ||
       this.sizesInvalid() ||
@@ -149,8 +168,15 @@ export class AdminVariantCreateModal {
   });
 
   ngOnInit(): void {
+    this.bodyOverflowBeforeOpen = this.document.body.style.overflow;
+    this.document.body.style.overflow = 'hidden';
     this.bindProductSearch();
+    this.bindSelectedProductLoading();
     this.loadAttributes();
+  }
+
+  ngOnDestroy(): void {
+    this.document.body.style.overflow = this.bodyOverflowBeforeOpen;
   }
 
   private bindProductSearch(): void {
@@ -227,8 +253,42 @@ export class AdminVariantCreateModal {
       });
   }
 
+  private bindSelectedProductLoading(): void {
+    this.selectedProductRequests
+      .pipe(
+        switchMap((product) => {
+          this.selectedProduct.set(product);
+          this.variants.set([]);
+          this.variantsLoaded.set(false);
+          this.variantsError.set(null);
+          this.variantsLoading.set(true);
+
+          return this.productsApi.getProduct(product.id).pipe(
+            tap((details) => {
+              this.selectedProduct.set(details);
+              this.variants.set(details.variants ?? []);
+              this.variantsLoaded.set(true);
+            }),
+            catchError((err) => {
+              const msg =
+                err?.status === 401 || err?.status === 403
+                  ? 'Nemate dozvolu za učitavanje modela.'
+                  : err?.status === 404
+                    ? 'Izabrani proizvod više nije dostupan.'
+                    : 'Greška pri učitavanju postojećih modela. Pokušajte ponovo.';
+              this.variants.set([]);
+              this.variantsError.set(msg);
+              return of(null);
+            }),
+            finalize(() => this.variantsLoading.set(false)),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe();
+  }
+
   selectProduct(p: Product): void {
-    this.selectedProduct.set(p);
     this.createFormOpen.set(false);
     this.submitError.set(null);
 
@@ -245,7 +305,12 @@ export class AdminVariantCreateModal {
       displayImageName: '',
     });
 
-    this.variants.set(p.variants ?? []);
+    this.selectedProductRequests.next(p);
+  }
+
+  retryVariants(): void {
+    const product = this.selectedProduct();
+    if (product) this.selectedProductRequests.next(product);
   }
 
   openCreateForm(): void {
@@ -340,13 +405,22 @@ export class AdminVariantCreateModal {
     }
 
     this.files.set(out);
+    const selectedDisplayImage = this.form.controls.displayImageName.value;
+    if (!selectedDisplayImage || !out.some((item) => item.file.name === selectedDisplayImage)) {
+      this.form.controls.displayImageName.setValue(out[0]?.file.name ?? '');
+    }
     this.fileError.set(rejected > 0 ? 'Neke slike nisu dodate (dozvoljeno: webp/jpg/jpeg).' : null);
 
     input.value = '';
   }
 
   removeFile(id: string): void {
-    this.files.set(this.files().filter((x) => x._id !== id));
+    const removed = this.files().find((item) => item._id === id);
+    const remaining = this.files().filter((item) => item._id !== id);
+    this.files.set(remaining);
+    if (removed?.file.name === this.form.controls.displayImageName.value) {
+      this.form.controls.displayImageName.setValue(remaining[0]?.file.name ?? '');
+    }
   }
 
   submit(): void {
@@ -419,23 +493,7 @@ export class AdminVariantCreateModal {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (createdVariant) => {
-          const updated: ProductVariantSummary[] = [
-            {
-              id: createdVariant.id,
-              sku: createdVariant.sku,
-              displaySku: createdVariant.displaySku,
-              colorVariantAttributeValue: createdVariant.attributes?.find(
-                (attribute) => this.normalizeKey(attribute.attributeName) === 'BOJA',
-              )?.value,
-              mainImageName: createdVariant.mainImageName,
-              mainImageWebUrl: createdVariant.mainImageWebUrl,
-              mainImageThumbnailUrl: createdVariant.mainImageThumbnailUrl,
-            },
-            ...this.variants(),
-          ];
-          this.variants.set(updated);
-
+        next: () => {
           this.createFormOpen.set(false);
 
           this.files.set([]);
@@ -450,6 +508,7 @@ export class AdminVariantCreateModal {
             displayImageName: '',
           });
 
+          this.retryVariants();
           this.created.emit();
         },
         error: (err) => {
@@ -501,6 +560,15 @@ export class AdminVariantCreateModal {
 
   optionLabel(option: AttributeValueDTO): string {
     return String(option.displayValue ?? option.value ?? '').trim();
+  }
+
+  variantImageUrl(variant: ProductVariantSummary): string | null {
+    const raw =
+      variant.mainImageThumbnailUrl ??
+      variant.mainImageWebUrl ??
+      variant.mainImageName ??
+      '';
+    return runtimeMediaUrl(raw) || null;
   }
 
   private sizeOptionRawValue(valueId: string): string {

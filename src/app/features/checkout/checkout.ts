@@ -1,7 +1,15 @@
 // src/app/pages/checkout/checkout.ts
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  OnDestroy,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormBuilder, FormControlStatus, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -12,6 +20,7 @@ import {
   CreateOrderItemDTO,
   CreateOrderQuoteDTO,
   CreateUnregisteredOrderDTO,
+  ApiErrorDTO,
   OrderQuoteCouponType,
   OrderQuoteDTO,
 } from '../../core/api/orders.models';
@@ -21,6 +30,7 @@ import { TurnstileWidgetComponent } from '../../shared/ui/turnstile-widget/turns
 import { TurnstileTokenService } from '../../core/security/turnstile-token.service';
 import { isTurnstileVerificationError } from '../../core/security/turnstile.interceptor';
 import { ProductImageComponent } from '../../shared/ui/product-image/product-image';
+import { CartAvailabilityService } from '../../core/cart/cart-availability.service';
 
 const PHONE_REGEX = /^\+?[0-9][0-9\s/-]{5,19}$/;
 const POSTAL_CODE_REGEX = /^\d{5}$/;
@@ -59,6 +69,7 @@ export class CheckoutComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly cart = inject(CartStore);
   private readonly ordersApi = inject(OrdersApiService);
+  readonly availability = inject(CartAvailabilityService);
   private readonly router = inject(Router);
   readonly turnstile = inject(TurnstileTokenService);
 
@@ -69,6 +80,7 @@ export class CheckoutComponent implements OnDestroy {
   readonly count = this.cart.itemsCount;
 
   readonly submitting = signal(false);
+  readonly validatingBeforeSubmit = signal(false);
   readonly errorMsg = signal<string | null>(null);
   readonly deliveryCountry = 'Bosna i Hercegovina';
   readonly couponApplying = signal(false);
@@ -131,8 +143,10 @@ export class CheckoutComponent implements OnDestroy {
       this.count() > 0 &&
       this.formStatus() === 'VALID' &&
       !this.submitting() &&
+      !this.validatingBeforeSubmit() &&
       !this.couponApplying() &&
       !this.quoteNeedsReapply() &&
+      this.availability.canCheckout() &&
       this.turnstile.hasToken('checkout')
     );
   });
@@ -184,6 +198,8 @@ export class CheckoutComponent implements OnDestroy {
         this.invalidateAppliedQuote('Korpa je izmijenjena. Ponovo primijenite kupon.');
       }
     });
+
+    effect(() => this.availability.scheduleValidation(this.items()));
   }
 
   ngOnDestroy(): void {
@@ -193,6 +209,12 @@ export class CheckoutComponent implements OnDestroy {
 
   goBack() {
     this.router.navigateByUrl('/cart');
+  }
+
+  @HostListener('window:focus')
+  refreshAvailability(): void {
+    if (this.items().length === 0) return;
+    this.availability.validateNow(this.items()).subscribe({ error: () => undefined });
   }
 
   fieldMessage(controlName: keyof typeof this.form.controls): string {
@@ -266,6 +288,16 @@ export class CheckoutComponent implements OnDestroy {
       this.couponFeedback.set({
         kind: 'error',
         text: 'Korpa je prazna. Dodajte proizvode prije primjene kupona.',
+      });
+      return;
+    }
+
+    if (!this.availability.canCheckout()) {
+      this.couponFeedback.set({
+        kind: 'error',
+        text: this.availability.error()
+          ? 'Dostupnost proizvoda trenutno nije moguće provjeriti.'
+          : 'Prvo riješite nedostupne stavke u korpi.',
       });
       return;
     }
@@ -386,7 +418,7 @@ export class CheckoutComponent implements OnDestroy {
   }
 
   submit() {
-    if (this.submitting()) return;
+    if (this.submitting() || this.validatingBeforeSubmit()) return;
 
     this.errorMsg.set(null);
 
@@ -453,6 +485,36 @@ export class CheckoutComponent implements OnDestroy {
       ...(desc ? { description: desc } : {}),
     };
 
+    this.validatingBeforeSubmit.set(true);
+    this.availability
+      .validateNow(this.items())
+      .pipe(
+        finalize(() => this.validatingBeforeSubmit.set(false)),
+      )
+      .subscribe({
+        next: (availability) => {
+          const allItemsValidated =
+            availability.valid &&
+            availability.items.length === orderItems.length &&
+            availability.items.every((item) => item.available);
+          if (!allItemsValidated) {
+            this.errorMsg.set(
+              'Neke stavke više nisu dostupne u traženoj količini. Uredite korpu prije naručivanja.',
+            );
+            return;
+          }
+
+          this.createOrder(payload);
+        },
+        error: () => {
+          this.errorMsg.set(
+            'Trenutno nije moguće provjeriti dostupnost proizvoda. Pokušajte ponovo.',
+          );
+        },
+      });
+  }
+
+  private createOrder(payload: CreateUnregisteredOrderDTO): void {
     this.submitting.set(true);
 
     this.ordersApi
@@ -465,7 +527,6 @@ export class CheckoutComponent implements OnDestroy {
       )
       .subscribe({
         next: (res) => {
-          // CLEAR CART ONLY ON SUCCESS
           this.cart.clear();
 
           this.router.navigate(['/order-result'], {
@@ -478,6 +539,14 @@ export class CheckoutComponent implements OnDestroy {
           });
         },
         error: (err) => {
+          if (this.isInventoryConflict(err)) {
+            this.errorMsg.set(
+              'Zaliha se promijenila tokom naručivanja. Uredite označene stavke i pokušajte ponovo.',
+            );
+            this.availability.validateNow(this.items()).subscribe({ error: () => undefined });
+            return;
+          }
+
           if (isTurnstileVerificationError(err)) {
             this.errorMsg.set('Sigurnosna provjera nije uspjela. Molimo pokušajte ponovo.');
             return;
@@ -502,6 +571,20 @@ export class CheckoutComponent implements OnDestroy {
           });
         },
       });
+  }
+
+  private isInventoryConflict(error: unknown): boolean {
+    const status = this.httpStatus(error);
+    const body = (error as { error?: ApiErrorDTO | string } | null | undefined)?.error;
+    if (body && typeof body === 'object' && body.code === 'INVENTORY_CONFLICT') return true;
+
+    const legacyMessage = typeof body === 'string' ? body.toLowerCase() : '';
+    return (
+      (status === 400 || status === 409) &&
+      ['insufficient stock', 'not enough quantity', 'not available', 'not found or inactive'].some(
+        (signal) => legacyMessage.includes(signal),
+      )
+    );
   }
 
   discountLabel(): string {

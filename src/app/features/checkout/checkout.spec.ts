@@ -7,6 +7,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { OrdersApiService } from '../../core/api/orders-api.service';
 import { CreateUnregisteredOrderDTO, OrderQuoteDTO } from '../../core/api/orders.models';
 import { CartStore } from '../../core/cart/cart.store';
+import { CartAvailabilityService } from '../../core/cart/cart-availability.service';
 import { TurnstileTokenService } from '../../core/security/turnstile-token.service';
 import { CheckoutComponent } from './checkout';
 
@@ -44,6 +45,7 @@ describe('CheckoutComponent', () => {
       maxQty: 10,
     });
     TestBed.flushEffects();
+    TestBed.inject(CartAvailabilityService).validateNow(cart.items()).subscribe();
   };
 
   const prepareQuote = (couponCode = 'SAVE10', email = 'kupac@example.com'): void => {
@@ -55,9 +57,23 @@ describe('CheckoutComponent', () => {
   beforeEach(async () => {
     window.localStorage.removeItem('beatovic_cart_v1');
     ordersApi = jasmine.createSpyObj<OrdersApiService>('OrdersApiService', [
+      'checkCartAvailability',
       'createOrderQuote',
       'createUnregisteredOrder',
     ]);
+    ordersApi.checkCartAvailability.and.callFake((payload) =>
+      of({
+        valid: true,
+        items: payload.items.map((item) => ({
+          sizeVariantAttributeId: item.sizeVariantAttributeId,
+          variantId: 'variant-a',
+          requestedQuantity: item.quantity,
+          availableQuantity: 10,
+          available: true,
+          reason: 'AVAILABLE' as const,
+        })),
+      }),
+    );
 
     await TestBed.configureTestingModule({
       imports: [CheckoutComponent],
@@ -173,6 +189,7 @@ describe('CheckoutComponent', () => {
     component.applyCoupon();
     cart.setQty('size-attribute-a::M', 2);
     TestBed.flushEffects();
+    component.availability.validateNow(cart.items()).subscribe();
 
     expect(component.appliedCoupon()).toBeNull();
     expect(component.quoteNeedsReapply()).toBeTrue();
@@ -310,5 +327,61 @@ describe('CheckoutComponent', () => {
     expect(payload.orderItems).toEqual([
       { sizeVariantAttributeId: 'size-attribute-a', quantity: 2 },
     ]);
+    expect(ordersApi.checkCartAvailability).toHaveBeenCalled();
+  });
+
+  it('keeps the cart and refreshes unavailable rows after a final-order stock conflict', () => {
+    addCartItem('size-attribute-a::M', 2);
+    component.form.patchValue({
+      fullName: 'Amar Hadžić',
+      email: 'kupac@example.com',
+      phoneNumber: '+387 61 123 456',
+      address: 'Testna 1',
+      municipality: 'Sarajevo',
+      postalCode: '71000',
+      privacyPolicyAccepted: true,
+    });
+    turnstile.setToken('checkout', 'order-turnstile-token');
+    ordersApi.createUnregisteredOrder.and.returnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: { code: 'INVENTORY_CONFLICT', message: 'Insufficient stock' },
+          }),
+      ),
+    );
+    ordersApi.checkCartAvailability.and.returnValues(
+      of({
+        valid: true,
+        items: [{
+          sizeVariantAttributeId: 'size-attribute-a',
+          variantId: 'variant-a',
+          requestedQuantity: 2,
+          availableQuantity: 10,
+          available: true,
+          reason: 'AVAILABLE',
+        }],
+      }),
+      of({
+        valid: false,
+        items: [{
+          sizeVariantAttributeId: 'size-attribute-a',
+          variantId: 'variant-a',
+          requestedQuantity: 2,
+          availableQuantity: 1,
+          available: false,
+          reason: 'INSUFFICIENT_QUANTITY',
+        }],
+      }),
+    );
+
+    component.submit();
+
+    expect(cart.itemsCount()).toBe(2);
+    expect(component.errorMsg()).toContain('Zaliha se promijenila');
+    expect(component.availability.messageFor(cart.items()[0])).toBe(
+      'Dostupna količina je sada 1.',
+    );
   });
 });

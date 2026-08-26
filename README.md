@@ -22,7 +22,7 @@ Local `/api` and `/media/product` requests are proxied to a backend on
 application uses a context path or another port:
 
 ```bash
-DEV_API_BASE_URL=http://127.0.0.1:8080/planetabih-webservice/api \
+DEV_API_BASE_URL=http://127.0.0.1:8080/planetsport-webservice/api \
 DEV_MEDIA_PRODUCT_BASE_URL=http://127.0.0.1:8080/media/product \
 npm start
 ```

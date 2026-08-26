@@ -124,6 +124,43 @@
   font-weight: 800;
 }
 
+.stock-state {
+  margin: 14px 16px 0;
+  padding: 11px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.025);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.stock-state.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-color: rgba(224, 24, 36, 0.24);
+  background: rgba(224, 24, 36, 0.07);
+  color: #8e1119;
+}
+
+.stock-state button,
+.stock-state a {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(224, 24, 36, 0.28);
+  border-radius: 999px;
+  background: #fff;
+  color: #8e1119;
+  font: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
 .form {
   padding: 16px;
 }
@@ -399,6 +436,24 @@
   background: rgba(0, 0, 0, 0.02);
 }
 
+.sum-row.unavailable {
+  border-color: rgba(224, 24, 36, 0.3);
+  background: rgba(224, 24, 36, 0.055);
+}
+
+.stock-warning {
+  margin-top: 7px;
+  padding: 7px 8px;
+  border: 1px solid rgba(224, 24, 36, 0.22);
+  border-radius: 9px;
+  background: #fff;
+  color: #8e1119;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
 .sum-left {
   display: grid;
   grid-template-columns: 54px 1fr;
@@ -603,6 +658,41 @@
   }
 
   .coupon-apply {
+    width: 100%;
+  }
+
+  .sum-row {
+    align-items: stretch;
+  }
+
+  .sum-left {
+    min-width: 0;
+  }
+
+  .sum-right .price {
+    white-space: normal;
+    text-align: right;
+  }
+}
+
+@media (max-width: 390px) {
+  .co {
+    padding-inline: 12px;
+  }
+
+  .sum-row {
+    display: grid;
+  }
+
+  .sum-right .price {
+    text-align: left;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .actions .btn {
     width: 100%;
   }
 }

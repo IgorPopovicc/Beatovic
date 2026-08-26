@@ -259,7 +259,6 @@ export class AdminProducts {
   }
 
   onVariantCreated(): void {
-    this.variantCreateOpen.set(false);
     this.refresh();
   }
 

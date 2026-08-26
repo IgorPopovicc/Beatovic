@@ -63,6 +63,21 @@ export class AdminProductsApi {
     );
   }
 
+  getProduct(productId: string): Observable<Product> {
+    const token = this.auth.accessToken();
+    if (!token) return throwError(() => new Error('Nema tokena. Prijavite se kao admin.'));
+
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    return this.http
+      .get<Product>(runtimeApiUrl(`/products/${encodeURIComponent(productId)}`), { headers })
+      .pipe(
+        catchError((err) => {
+          console.error('[AdminProductsApi] getProduct failed:', err);
+          return throwError(() => err);
+        }),
+      );
+  }
+
   searchVariantsForPriority(
     body: AdminVariantPrioritySearchRequest,
   ): Observable<AdminVariantPrioritySearchResponse> {

@@ -1,11 +1,12 @@
 // src/app/pages/cart/cart.ts
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CartStore } from '../../core/cart/cart.store';
 import { ConfirmDialog } from '../../shared/ui/confirm-dialog/confirm-dialog';
 import { currencyDisplayLabel } from '../../shared/utils/currency';
 import { ProductImageComponent } from '../../shared/ui/product-image/product-image';
+import { CartAvailabilityService } from '../../core/cart/cart-availability.service';
 
 @Component({
   selector: 'app-cart',
@@ -16,6 +17,7 @@ import { ProductImageComponent } from '../../shared/ui/product-image/product-ima
 })
 export class CartComponent {
   cart = inject(CartStore);
+  readonly availability = inject(CartAvailabilityService);
   private router = inject(Router);
 
   items = this.cart.items;
@@ -26,17 +28,39 @@ export class CartComponent {
   progress = this.cart.freeShippingProgress;
 
   total = computed(() => this.subtotal());
+  readonly canCheckout = computed(
+    () => this.count() > 0 && this.availability.canCheckout(),
+  );
 
   confirmOpen = signal(false);
   private pendingRemoveId = signal<string | null>(null);
   confirmMessage = signal('Želite li ukloniti ovaj proizvod iz korpe?');
+
+  constructor() {
+    effect(() => this.availability.scheduleValidation(this.items()));
+  }
 
   currencyLabel(currency: unknown): string {
     return currencyDisplayLabel(currency);
   }
 
   goCheckout() {
+    if (!this.canCheckout()) return;
     this.router.navigateByUrl('/checkout');
+  }
+
+  decrease(id: string): void {
+    this.cart.dec(id);
+  }
+
+  increase(id: string): void {
+    this.cart.inc(id);
+  }
+
+  @HostListener('window:focus')
+  refreshAvailability(): void {
+    if (this.items().length === 0) return;
+    this.availability.validateNow(this.items()).subscribe({ error: () => undefined });
   }
 
   askRemove(id: string, name?: string) {

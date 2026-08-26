@@ -16,9 +16,18 @@ describe('AdminVariantCreateModal', () => {
   beforeEach(async () => {
     productsApi = jasmine.createSpyObj<AdminProductsApi>('AdminProductsApi', [
       'searchProduct',
+      'getProduct',
       'createVariantMultipart',
     ]);
     productsApi.searchProduct.and.returnValue(of([]));
+    productsApi.getProduct.and.returnValue(of({
+      id: 'product-id',
+      productName: 'Proizvod',
+      productDescription: 'Opis',
+      productSku: 'PRODUCT-SKU',
+      categories: [],
+      variants: [],
+    }));
 
     const attributesApi = jasmine.createSpyObj<AdminAttributesApi>('AdminAttributesApi', [
       'getAttributes',
@@ -47,7 +56,7 @@ describe('AdminVariantCreateModal', () => {
     expect(component.form.controls.priority.value).toBe('NONE');
   });
 
-  it('uses variants from the current search response without a second request', () => {
+  it('loads existing variants from the selected product UUID', () => {
     const product: Product = {
       id: 'product-id',
       productName: 'Colmar model',
@@ -64,9 +73,25 @@ describe('AdminVariantCreateModal', () => {
       ],
     };
 
+    const productDetails: Product = {
+      ...product,
+      variants: [
+        {
+          id: 'authoritative-variant-id',
+          sku: 'PRODUCT-SKU-MODEL-SKU',
+          displaySku: 'PRODUCT-SKU-MODEL-SKU',
+          colorVariantAttributeValue: 'Crna',
+        },
+      ],
+    };
+    productsApi.getProduct.and.returnValue(of(productDetails));
+
     component.selectProduct(product);
 
-    expect(component.variants()).toEqual(product.variants ?? []);
-    expect(component.selectedProduct()).toBe(product);
+    expect(productsApi.getProduct).toHaveBeenCalledOnceWith('product-id');
+    expect(component.variants()).toEqual(productDetails.variants ?? []);
+    expect(component.selectedProduct()).toEqual(productDetails);
+    expect(component.variantsLoaded()).toBeTrue();
+    expect(component.variantsError()).toBeNull();
   });
 });

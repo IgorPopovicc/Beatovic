@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 
 import { runtimeApiUrl } from '../config/runtime-config.service';
 import {
+  CartAvailabilityRequestDTO,
+  CartAvailabilityResponseDTO,
   CreateOrderQuoteDTO,
   CreateUnregisteredOrderDTO,
   CreateUnregisteredOrderResponse,
@@ -13,6 +15,15 @@ import {
 @Injectable({ providedIn: 'root' })
 export class OrdersApiService {
   private readonly http = inject(HttpClient);
+
+  checkCartAvailability(
+    payload: CartAvailabilityRequestDTO,
+  ): Observable<CartAvailabilityResponseDTO> {
+    return this.http.post<CartAvailabilityResponseDTO>(
+      runtimeApiUrl('/orders/availability'),
+      payload,
+    );
+  }
 
   createOrderQuote(payload: CreateOrderQuoteDTO): Observable<OrderQuoteDTO> {
     return this.http.post<OrderQuoteDTO>(runtimeApiUrl('/orders/quote'), payload);

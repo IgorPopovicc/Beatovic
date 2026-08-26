@@ -47,7 +47,9 @@
 
         @if (canProductSearch()) {
           <div class="results">
-            @if (!hasProductResults()) {
+            @if (productLoading()) {
+              <div class="state" role="status">Učitavanje proizvoda...</div>
+            } @else if (!productError() && !hasProductResults()) {
               <div class="empty">Nema rezultata za “{{ productQuery() }}”.</div>
             } @else {
               <div class="rows" role="list">
@@ -103,25 +105,49 @@
         }
       </section>
 
-      @if (selectedProduct(); as sp2) {
+      @if (selectedProduct()) {
         <section class="cardish">
           <div class="section-title row-between">
             <span>2) Postojeći modeli za proizvod</span>
 
-            <button type="button" class="add-variant-btn" (click)="openCreateForm()">
+            <button
+              type="button"
+              class="add-variant-btn"
+              [disabled]="variantsLoading() || !variantsLoaded()"
+              (click)="openCreateForm()"
+            >
               <span class="plus">+</span>
               <span>Dodaj novi model</span>
             </button>
           </div>
 
-          @if (variants().length === 0) {
+          @if (variantsLoading()) {
+            <div class="state" role="status" aria-live="polite">
+              Učitavanje postojećih modela...
+            </div>
+          } @else if (variantsError()) {
+            <div class="error variant-load-error" role="alert">
+              <span>{{ variantsError() }}</span>
+              <button type="button" class="add-variant-btn" (click)="retryVariants()">
+                Pokušajte ponovo
+              </button>
+            </div>
+          } @else if (variantsLoaded() && variants().length === 0) {
             <div class="empty">Još nema modela za ovaj proizvod.</div>
-          } @else {
+          } @else if (variantsLoaded()) {
             <div class="variant-list" role="list">
               @for (v of variants(); track v.id) {
                 <div class="variant-row" role="listitem">
+                  <div class="variant-image">
+                    @if (variantImageUrl(v); as imageUrl) {
+                      <img [src]="imageUrl" [alt]="v.displaySku || v.sku || 'Model'" loading="lazy" />
+                    } @else {
+                      <span aria-hidden="true">IMG</span>
+                    }
+                  </div>
                   <div class="v-main">
                     <div class="v-name">{{ v.displaySku || v.sku || 'Model bez SKU-a' }}</div>
+                    <div class="v-meta mono">ID: {{ v.id }}</div>
                     @if (v.colorVariantAttributeValue) {
                       <div class="v-meta">Boja: {{ colorLabel(v.colorVariantAttributeValue) }}</div>
                     }

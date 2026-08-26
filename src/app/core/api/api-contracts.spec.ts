@@ -76,6 +76,31 @@ describe('current OpenAPI contracts', () => {
     });
   });
 
+  it('uses one public batch request for cart availability', () => {
+    const payload = {
+      items: [{ sizeVariantAttributeId: 'size-attribute-id', quantity: 2 }],
+    };
+
+    TestBed.inject(OrdersApiService).checkCartAvailability(payload).subscribe();
+
+    const request = http.expectOne('/api/orders/availability');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(payload);
+    request.flush({
+      valid: true,
+      items: [
+        {
+          sizeVariantAttributeId: 'size-attribute-id',
+          variantId: 'variant-id',
+          requestedQuantity: 2,
+          availableQuantity: 5,
+          available: true,
+          reason: 'AVAILABLE',
+        },
+      ],
+    });
+  });
+
   it('uses the current coupon deactivation endpoint', () => {
     TestBed.inject(AdminCouponsApi).deactivateCoupon('coupon-id').subscribe();
 

@@ -55,6 +55,12 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
+.table-body .row.unavailable {
+  border-left: 4px solid #e01824;
+  background: rgba(224, 24, 36, 0.035);
+  padding-left: 12px;
+}
+
 .product {
   display: grid;
   grid-template-columns: 72px 1fr;
@@ -88,6 +94,35 @@
   font-weight: 700;
   line-height: 1.2;
   margin-bottom: 6px;
+}
+
+.stock-warning {
+  margin-top: 9px;
+  max-width: 42ch;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(224, 24, 36, 0.24);
+  border-radius: 10px;
+  background: rgba(224, 24, 36, 0.08);
+  color: #8e1119;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.stock-warning > span:first-child {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e01824;
+  color: #fff;
+  font-size: 12px;
 }
 
 .right {
@@ -189,6 +224,44 @@
   background: #e01824; // match PlanetSport red feel
   border-color: #e01824;
   color: #fff;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.availability-state {
+  margin-bottom: 10px;
+  padding: 11px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.025);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.availability-state.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-color: rgba(224, 24, 36, 0.24);
+  background: rgba(224, 24, 36, 0.07);
+  color: #8e1119;
+}
+
+.availability-state button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(224, 24, 36, 0.28);
+  border-radius: 999px;
+  background: #fff;
+  color: #8e1119;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .btn.ghost {
@@ -417,6 +490,10 @@
   .table-body .row {
     grid-template-columns: 1fr;
     gap: 10px;
+  }
+
+  .table-body .row.unavailable {
+    padding-left: 12px;
   }
 
   .product {
