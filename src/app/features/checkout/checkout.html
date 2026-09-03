@@ -56,7 +56,11 @@
         }
 
         <div class="delivery-note" role="status" aria-live="polite">
-          Dostava je trenutno dostupna samo na teritoriji Bosne i Hercegovine.
+          <span class="material-icons-outlined" aria-hidden="true">local_shipping</span>
+          <span>
+            Dostava je trenutno dostupna samo na teritoriji Bosne i Hercegovine. Tačna cijena
+            dostave zavisi od pošte ili kurirske službe i biće obračunata prema uslovima dostave.
+          </span>
         </div>
 
         <form class="form" [formGroup]="form" (ngSubmit)="submit()">
@@ -364,7 +368,8 @@
             </div>
           </div>
           <p class="shipping-exclusion">
-            Troškovi dostave nisu uključeni u prikazanu ukupnu cijenu narudžbe.
+            Troškovi dostave nisu uključeni u prikazanu ukupnu cijenu narudžbe i biće obračunati u
+            skladu sa uslovima pošte ili kurirske službe.
           </p>
         </div>
 

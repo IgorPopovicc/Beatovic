@@ -166,6 +166,9 @@
 }
 
 .delivery-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   margin: 14px 16px 0;
   padding: 12px 14px;
   border-radius: 12px;
@@ -398,6 +401,12 @@
   margin-top: 10px;
   font-size: 12px;
   line-height: 1.45;
+}
+
+.delivery-note .material-icons-outlined {
+  flex: 0 0 auto;
+  color: #c21f1f;
+  font-size: 20px;
 }
 
 .spinner {

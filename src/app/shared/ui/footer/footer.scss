@@ -66,21 +66,77 @@
 
   .icons {
     display: flex;
+    align-items: center;
     justify-content: center;
     gap: 16px;
     margin-top: 10px;
 
+    .social-icon {
+      position: relative;
+      display: inline-grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      margin: 0;
+      border-radius: 50%;
+    }
+
     .material-icons-outlined {
       font-size: 28px;
-      color: #ee2e24;
       transition:
         color 0.3s,
         transform 0.3s;
     }
 
-    a:hover .material-icons-outlined {
+    .social-icon-active .material-icons-outlined {
+      color: #ee2e24;
+    }
+
+    .social-icon-active:hover .material-icons-outlined {
       color: #010101;
       transform: scale(1.1);
+    }
+
+    .social-icon-disabled {
+      color: #9a9a9a;
+      cursor: not-allowed;
+    }
+
+    .social-icon-disabled .material-icons-outlined {
+      color: currentColor;
+    }
+
+    .social-icon-disabled::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      z-index: 2;
+      padding: 5px 8px;
+      border-radius: 6px;
+      background: #111;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 4px);
+      transition:
+        opacity 0.18s ease,
+        transform 0.18s ease;
+    }
+
+    .social-icon-disabled:hover::after,
+    .social-icon-disabled:focus-visible::after {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .social-icon-disabled:focus-visible {
+      outline: 2px solid rgba(17, 17, 17, 0.28);
+      outline-offset: 2px;
     }
   }
 
