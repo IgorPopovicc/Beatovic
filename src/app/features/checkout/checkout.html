@@ -35,20 +35,19 @@
           <div class="hint">Kupon i napomena su opcioni.</div>
         </div>
 
-        @if (availability.loading()) {
+        @if (quoteService.waitingForVerification()) {
+          <div class="stock-state" role="status">Potvrdite sigurnosnu provjeru za obračun korpe.</div>
+        }
+        @if (quoteService.loading()) {
           <div class="stock-state" role="status" aria-live="polite">
             Provjera dostupnosti proizvoda...
           </div>
-        } @else if (availability.error()) {
+        } @else if (quoteService.error()) {
           <div class="stock-state error" role="alert">
-            <span>{{ availability.error() }}</span>
+            <span>{{ quoteService.error() }}</span>
             <button type="button" (click)="refreshAvailability()">Pokušajte ponovo</button>
           </div>
-        } @else if (availability.valid() === false) {
-          <div class="stock-state error" role="alert">
-            <span>Neke stavke više nisu dostupne u traženoj količini.</span>
-            <a routerLink="/cart">Uredite korpu</a>
-          </div>
+
         }
 
         @if (errorMsg()) {
@@ -209,6 +208,9 @@
                 </button>
               </div>
 
+              @if (quoteNeedsReapply() && !appliedCoupon()) {
+                <button type="button" class="btn ghost" (click)="removeCoupon()">Uklonite kupon</button>
+              }
               @if (appliedCoupon(); as coupon) {
                 <div class="coupon-chip-row">
                   <span class="coupon-chip">
@@ -283,9 +285,6 @@
               @if (submitting()) {
                 <span class="spinner" aria-hidden="true"></span>
                 <span>Slanje...</span>
-              } @else if (validatingBeforeSubmit()) {
-                <span class="spinner" aria-hidden="true"></span>
-                <span>Provjera...</span>
               } @else {
                 <span>Naručite</span>
               }
@@ -305,9 +304,10 @@
           <div class="pill">{{ count() }} stavki</div>
         </div>
 
+        <p class="muted">Cijene pojedinačnih stavki su informativne. Ukupan iznos potvrđuje se obračunom korpe.</p>
         <div class="sum-list">
           @for (it of items(); track it.id) {
-            <div class="sum-row" [class.unavailable]="availability.isUnavailable(it)">
+            <div class="sum-row">
               <div class="sum-left">
                 <div class="thumb">
                   <app-product-image
@@ -325,9 +325,7 @@
                     <div class="muted sm">Veličina: {{ it.size }}</div>
                   }
                   <div class="muted sm">Količina: {{ it.qty }}</div>
-                  @if (availability.messageFor(it); as stockMessage) {
-                    <div class="stock-warning" role="alert">{{ stockMessage }}</div>
-                  }
+
                 </div>
               </div>
 
@@ -343,6 +341,7 @@
 
         <div class="divider"></div>
 
+        @if (quoteService.quote()) {
         <div class="totals">
           <div class="trow">
             <div class="muted">{{ hasAppliedCoupon() ? 'Redovna cijena' : 'Međuzbir' }}</div>
@@ -373,6 +372,7 @@
           </p>
         </div>
 
+        }
         <div class="note">
           <div class="ico" aria-hidden="true">📧</div>
           <div class="txt">

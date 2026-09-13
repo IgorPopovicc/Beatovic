@@ -9,6 +9,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { FormBuilder, FormControlStatus, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -18,7 +19,6 @@ import { finalize, takeUntil } from 'rxjs/operators';
 import { CartStore } from '../../core/cart/cart.store';
 import {
   CreateOrderItemDTO,
-  CreateOrderQuoteDTO,
   CreateUnregisteredOrderDTO,
   ApiErrorDTO,
   OrderQuoteCouponType,
@@ -30,7 +30,7 @@ import { TurnstileWidgetComponent } from '../../shared/ui/turnstile-widget/turns
 import { TurnstileTokenService } from '../../core/security/turnstile-token.service';
 import { isTurnstileVerificationError } from '../../core/security/turnstile.interceptor';
 import { ProductImageComponent } from '../../shared/ui/product-image/product-image';
-import { CartAvailabilityService } from '../../core/cart/cart-availability.service';
+import { CartQuoteService } from '../../core/cart/cart-quote.service';
 
 const PHONE_REGEX = /^\+?[0-9][0-9\s/-]{5,19}$/;
 const POSTAL_CODE_REGEX = /^\d{5}$/;
@@ -62,6 +62,7 @@ type AppliedCouponState = {
     TurnstileWidgetComponent,
     ProductImageComponent,
   ],
+  providers: [CartQuoteService],
   templateUrl: './checkout.html',
   styleUrl: './checkout.scss',
 })
@@ -69,7 +70,7 @@ export class CheckoutComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly cart = inject(CartStore);
   private readonly ordersApi = inject(OrdersApiService);
-  readonly availability = inject(CartAvailabilityService);
+  readonly quoteService = inject(CartQuoteService);
   private readonly router = inject(Router);
   readonly turnstile = inject(TurnstileTokenService);
 
@@ -80,7 +81,6 @@ export class CheckoutComponent implements OnDestroy {
   readonly count = this.cart.itemsCount;
 
   readonly submitting = signal(false);
-  readonly validatingBeforeSubmit = signal(false);
   readonly errorMsg = signal<string | null>(null);
   readonly deliveryCountry = 'Bosna i Hercegovina';
   readonly couponApplying = signal(false);
@@ -119,17 +119,17 @@ export class CheckoutComponent implements OnDestroy {
   readonly originalTotal = computed(() => {
     const base = this.subtotal();
     return {
-      amount: this.appliedCoupon()?.subtotal ?? base.amount,
+      amount: this.quoteService.quote()?.subtotal ?? null,
       currency: base.currency,
     };
   });
 
-  readonly discountAmount = computed(() => this.appliedCoupon()?.discountAmount ?? 0);
+  readonly discountAmount = computed(() => this.quoteService.quote()?.discountAmount ?? 0);
 
   readonly total = computed(() => {
     const base = this.subtotal();
     return {
-      amount: this.appliedCoupon()?.totalPrice ?? base.amount,
+      amount: this.quoteService.quote()?.totalPrice ?? null,
       currency: base.currency,
     };
   });
@@ -143,10 +143,9 @@ export class CheckoutComponent implements OnDestroy {
       this.count() > 0 &&
       this.formStatus() === 'VALID' &&
       !this.submitting() &&
-      !this.validatingBeforeSubmit() &&
       !this.couponApplying() &&
       !this.quoteNeedsReapply() &&
-      this.availability.canCheckout() &&
+      this.quoteMatchesCart() &&
       this.turnstile.hasToken('checkout')
     );
   });
@@ -163,22 +162,12 @@ export class CheckoutComponent implements OnDestroy {
     this.form.controls.couponCode.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe((value) => {
-        const applied = this.appliedCoupon();
-        const currentCode = this.normalizeCouponCode(value);
-
-        if (applied && currentCode !== applied.code) {
-          this.invalidateAppliedQuote('Kod kupona je izmijenjen. Ponovo primijenite kupon.');
-          return;
-        }
-
-        if (!currentCode && !applied) {
-          this.quoteNeedsReapply.set(false);
-          this.couponFeedback.set(null);
-          return;
-        }
-
-        if (!applied && !this.quoteNeedsReapply() && !this.couponApplying()) {
-          this.couponFeedback.set(null);
+        const code = this.normalizeCouponCode(value);
+        if (code === this.appliedCoupon()?.code) return;
+        if (!code) {
+          this.removeCoupon();
+        } else {
+          this.invalidateAppliedQuote('Kod kupona je izmijenjen. Primijenite kupon za novi obračun.');
         }
       });
 
@@ -186,20 +175,21 @@ export class CheckoutComponent implements OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((value) => {
         const applied = this.appliedCoupon();
-        if (applied && this.normalizeEmail(value) !== applied.snapshot.email) {
+        if ((applied && this.normalizeEmail(value) !== applied.snapshot.email) || this.couponApplying()) {
           this.invalidateAppliedQuote('Email je izmijenjen. Ponovo primijenite kupon.');
         }
       });
 
     effect(() => {
-      const orderItemsKey = this.orderItemsKey(this.buildOrderItems());
-      const applied = this.appliedCoupon();
-      if (applied && orderItemsKey !== applied.snapshot.orderItemsKey) {
-        this.invalidateAppliedQuote('Korpa je izmijenjena. Ponovo primijenite kupon.');
-      }
+      const items = this.items();
+      untracked(() => {
+        if (this.normalizeCouponCode(this.form.controls.couponCode.value)) {
+          this.invalidateAppliedQuote('Korpa je izmijenjena. Ponovo primijenite kupon.');
+        } else {
+          this.quoteService.scheduleValidation(items);
+        }
+      });
     });
-
-    effect(() => this.availability.scheduleValidation(this.items()));
   }
 
   ngOnDestroy(): void {
@@ -214,7 +204,12 @@ export class CheckoutComponent implements OnDestroy {
   @HostListener('window:focus')
   refreshAvailability(): void {
     if (this.items().length === 0) return;
-    this.availability.validateNow(this.items()).subscribe({ error: () => undefined });
+    if (this.submitting() || this.couponApplying()) return;
+    if (this.normalizeCouponCode(this.form.controls.couponCode.value)) {
+      this.invalidateAppliedQuote('Ponovo primijenite kupon za novi obračun korpe.');
+    } else {
+      this.quoteService.scheduleValidation(this.items());
+    }
   }
 
   fieldMessage(controlName: keyof typeof this.form.controls): string {
@@ -292,16 +287,6 @@ export class CheckoutComponent implements OnDestroy {
       return;
     }
 
-    if (!this.availability.canCheckout()) {
-      this.couponFeedback.set({
-        kind: 'error',
-        text: this.availability.error()
-          ? 'Dostupnost proizvoda trenutno nije moguće provjeriti.'
-          : 'Prvo riješite nedostupne stavke u korpi.',
-      });
-      return;
-    }
-
     if (this.form.controls.couponCode.invalid) {
       this.couponFeedback.set({
         kind: 'error',
@@ -348,19 +333,18 @@ export class CheckoutComponent implements OnDestroy {
     }
 
     const snapshot = this.createQuoteSnapshot(couponCode, email, orderItems);
-    const payload: CreateOrderQuoteDTO = { orderItems, email, couponCode };
 
     this.appliedCoupon.set(null);
     this.quoteNeedsReapply.set(false);
     this.couponApplying.set(true);
 
-    this.ordersApi
-      .createOrderQuote(payload)
+    this.quoteService
+      .validateNow(this.items(), { email, couponCode })
       .pipe(
         finalize(() => {
           this.couponApplying.set(false);
-          this.turnstile.reset('checkout');
         }),
+        takeUntil(this.destroy$),
       )
       .subscribe({
         next: (response) => {
@@ -375,6 +359,8 @@ export class CheckoutComponent implements OnDestroy {
 
           const applied = this.toAppliedCoupon(response, snapshot);
           if (!applied) {
+            this.quoteService.invalidate();
+            this.quoteNeedsReapply.set(true);
             this.couponFeedback.set({
               kind: 'error',
               text: 'Obračun trenutno nije dostupan. Pokušajte ponovo.',
@@ -389,7 +375,7 @@ export class CheckoutComponent implements OnDestroy {
         },
         error: (error: unknown) => {
           this.appliedCoupon.set(null);
-          this.quoteNeedsReapply.set(false);
+          this.quoteNeedsReapply.set(true);
 
           if (this.httpStatus(error) === 400) {
             const backendMessage = this.extractBackendMessage(error);
@@ -412,13 +398,14 @@ export class CheckoutComponent implements OnDestroy {
     this.appliedCoupon.set(null);
     this.quoteNeedsReapply.set(false);
     this.couponFeedback.set(null);
-    this.form.controls.couponCode.setValue('');
+    this.form.controls.couponCode.setValue('', { emitEvent: false });
+    this.quoteService.scheduleValidation(this.items());
     this.form.controls.couponCode.markAsPristine();
     this.form.controls.couponCode.markAsUntouched();
   }
 
   submit() {
-    if (this.submitting() || this.validatingBeforeSubmit()) return;
+    if (this.submitting() || this.couponApplying()) return;
 
     this.errorMsg.set(null);
 
@@ -485,33 +472,22 @@ export class CheckoutComponent implements OnDestroy {
       ...(desc ? { description: desc } : {}),
     };
 
-    this.validatingBeforeSubmit.set(true);
-    this.availability
-      .validateNow(this.items())
-      .pipe(
-        finalize(() => this.validatingBeforeSubmit.set(false)),
-      )
-      .subscribe({
-        next: (availability) => {
-          const allItemsValidated =
-            availability.valid &&
-            availability.items.length === orderItems.length &&
-            availability.items.every((item) => item.available);
-          if (!allItemsValidated) {
-            this.errorMsg.set(
-              'Neke stavke više nisu dostupne u traženoj količini. Uredite korpu prije naručivanja.',
-            );
-            return;
-          }
+    if (!this.quoteMatchesCart()) {
+      this.errorMsg.set('Sačekajte uspješan obračun trenutne korpe prije naručivanja.');
+      return;
+    }
 
-          this.createOrder(payload);
-        },
-        error: () => {
-          this.errorMsg.set(
-            'Trenutno nije moguće provjeriti dostupnost proizvoda. Pokušajte ponovo.',
-          );
-        },
-      });
+    // The quote token has already been consumed. Use the fresh token for the final order,
+    // whose endpoint revalidates stock, prices and coupon according to Swagger.
+    this.createOrder(payload);
+  }
+
+  private quoteMatchesCart(): boolean {
+    const applied = this.appliedCoupon();
+    return this.quoteService.matches(this.items(), applied ? {
+      couponCode: applied.snapshot.couponCode,
+      email: applied.snapshot.email,
+    } : {}) && (!applied || this.quoteMatchesCurrentState(applied));
   }
 
   private createOrder(payload: CreateUnregisteredOrderDTO): void {
@@ -538,12 +514,14 @@ export class CheckoutComponent implements OnDestroy {
             },
           });
         },
-        error: (err) => {
+        error: (err: unknown) => {
+          this.quoteService.invalidate();
+          this.appliedCoupon.set(null);
+          this.quoteNeedsReapply.set(!!this.form.controls.couponCode.value.trim());
           if (this.isInventoryConflict(err)) {
             this.errorMsg.set(
-              'Zaliha se promijenila tokom naručivanja. Uredite označene stavke i pokušajte ponovo.',
+              'Zaliha se promijenila tokom naručivanja. Uredite korpu i ponovite obračun.',
             );
-            this.availability.validateNow(this.items()).subscribe({ error: () => undefined });
             return;
           }
 
@@ -657,13 +635,14 @@ export class CheckoutComponent implements OnDestroy {
 
   private quoteMatchesCurrentState(applied: AppliedCouponState): boolean {
     return (
-      this.quoteSnapshotMatchesCurrentState(applied.snapshot) &&
-      applied.code === applied.snapshot.couponCode
+      this.normalizeCouponCode(this.form.controls.couponCode.value) === applied.code &&
+      this.normalizeEmail(this.form.controls.email.value) === applied.snapshot.email &&
+      this.orderItemsKey(this.buildOrderItems()) === applied.snapshot.orderItemsKey
     );
   }
 
   private invalidateAppliedQuote(message: string): void {
-    if (!this.appliedCoupon() && this.quoteNeedsReapply()) return;
+    this.quoteService.invalidate();
     this.appliedCoupon.set(null);
     this.quoteNeedsReapply.set(true);
     this.couponFeedback.set({ kind: 'info', text: message });
@@ -707,7 +686,7 @@ export class CheckoutComponent implements OnDestroy {
       totalPrice,
       couponType,
       couponValue,
-      snapshot: { ...submittedSnapshot, couponCode: code },
+      snapshot: submittedSnapshot,
     };
   }
 

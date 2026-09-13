@@ -7,6 +7,7 @@ import { ProductDetailsModel } from '../../shared/data/products.models';
 import { runtimeMediaUrl } from '../../core/config/runtime-config.service';
 import { normalizeCurrencyCode } from '../../shared/utils/currency';
 import { Variant } from '../../core/api/catalog.models';
+import { hasProductStock } from '../../core/api/product-stock';
 import { ProductCard } from '../../shared/ui/product-card/product-card';
 
 export type ProductDetailsResolved = ProductDetailsModel & {
@@ -223,9 +224,7 @@ function toResolvedProduct(dto: Variant, id: string): ProductDetailsResolved {
   const oldPrice = originalPrice > finalPrice ? originalPrice : null;
 
   const { sizeQtyMap, sizeAttrElementIdMap, sizes } = buildSizeMaps(dto);
-  const inStockFromSizes = Object.values(sizeQtyMap).some((qty) => qty > 0);
-  const inStockFromVariant = Number(dto?.quantity ?? 0) > 0;
-  const inStock = sizes.length > 0 ? inStockFromSizes : inStockFromVariant;
+  const inStock = hasProductStock(dto);
 
   const gallery = buildGallery(dto, name);
 
