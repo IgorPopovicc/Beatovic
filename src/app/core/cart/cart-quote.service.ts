@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { EMPTY, Observable, Subject, defer, throwError } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, switchMap, take, takeUntil, tap } from 'rxjs/operators';
@@ -14,6 +14,7 @@ type QuoteOptions = Pick<CreateOrderQuoteDTO, 'couponCode' | 'email'>;
 // Scoped to the cart/checkout component so navigation cancels pending requests.
 @Injectable()
 export class CartQuoteService {
+  private readonly destroyRef = inject(DestroyRef);
   private readonly ordersApi = inject(OrdersApiService);
   private readonly tokens = inject(TurnstileTokenService);
   private readonly token$ = toObservable(computed(() => this.tokens.token('checkout')));
@@ -120,6 +121,7 @@ export class CartQuoteService {
         return throwError(() => error);
       }),
       takeUntil(this.cancelled),
+      takeUntilDestroyed(this.destroyRef),
       finalize(() => {
         this.loading.set(false);
         // Tokens are single-use, including failures and cancelled HTTP requests.

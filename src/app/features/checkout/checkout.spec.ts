@@ -347,4 +347,54 @@ describe('CheckoutComponent', () => {
     expect(component.quoteService.canCheckout()).toBeFalse();
     expect(component.quoteService.quote()).toBeNull();
   });
+  it('quotes a cart without a coupon and allows a valid final order with a fresh token', () => {
+    addCartItem();
+    component.form.patchValue({
+      fullName: 'Amar Hadžić', email: 'kupac@example.com', phoneNumber: '+387 61 123 456',
+      address: 'Testna 1', municipality: 'Sarajevo', postalCode: '71000', privacyPolicyAccepted: true,
+    });
+    expect(component.originalTotal().amount).toBe(120);
+    expect(component.total().amount).toBe(120);
+    expect(component.canSubmit()).toBeFalse();
+    turnstile.setToken('checkout', 'final-order-token');
+    expect(component.canSubmit()).toBeTrue();
+    ordersApi.createUnregisteredOrder.and.returnValue(new Subject<never>());
+    component.submit();
+    expect(ordersApi.createOrderQuote).not.toHaveBeenCalled();
+    expect(ordersApi.createUnregisteredOrder).toHaveBeenCalledTimes(1);
+    expect(ordersApi.createUnregisteredOrder.calls.mostRecent().args[0].couponCode).toBeUndefined();
+  });
+
+  it('blocks same-tick submission when quantity no longer matches the quote', () => {
+    addCartItem();
+    component.form.patchValue({
+      fullName: 'Amar Hadžić', email: 'kupac@example.com', phoneNumber: '+387 61 123 456',
+      address: 'Testna 1', municipality: 'Sarajevo', postalCode: '71000', privacyPolicyAccepted: true,
+    });
+    turnstile.setToken('checkout', 'final-order-token');
+    cart.inc('size-attribute-a::M');
+    component.submit();
+    expect(ordersApi.createUnregisteredOrder).not.toHaveBeenCalled();
+    expect(component.canSubmit()).toBeFalse();
+  });
+
+  it('keeps the coupon code after quantity change and does not request a second plain quote', async () => {
+    addCartItem();
+    prepareQuote();
+    ordersApi.createOrderQuote.and.returnValue(of(successfulQuote()));
+    component.applyCoupon();
+    cart.inc('size-attribute-a::M');
+    TestBed.tick();
+    turnstile.setToken('checkout', 'replacement-token');
+    TestBed.tick();
+    await new Promise<void>((resolve) => setTimeout(resolve, 220));
+    expect(component.form.controls.couponCode.value).toBe('SAVE10');
+    expect(component.quoteNeedsReapply()).toBeTrue();
+    expect(component.total().amount).toBeNull();
+    expect(ordersApi.createOrderQuote).toHaveBeenCalledTimes(1);
+    component.applyCoupon();
+    expect(ordersApi.createOrderQuote.calls.mostRecent().args[0].couponCode).toBe('SAVE10');
+    expect(ordersApi.createOrderQuote.calls.mostRecent().args[0].orderItems[0].quantity).toBe(2);
+  });
+
 });

@@ -39,7 +39,10 @@ export class ProductsApiService {
           catchError(() => of(null)),
         ))).pipe(map((related) => ({
           ...variant,
-          relatedProducts: related.filter((product): product is Variant => product !== null),
+          relatedProducts: related.filter((product): product is Variant => product !== null).map((product) => {
+            const image = product.images?.find((image) => image.displayed) ?? product.images?.[0];
+            return { ...product, mainImageWebUrl: image?.webUrl, mainImageThumbnailUrl: image?.thumbnailUrl };
+          }),
         })));
       }),
     );

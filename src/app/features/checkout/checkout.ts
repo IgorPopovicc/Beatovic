@@ -44,9 +44,6 @@ type QuoteSnapshot = {
 
 type AppliedCouponState = {
   code: string;
-  subtotal: number;
-  discountAmount: number;
-  totalPrice: number;
   couponType: OrderQuoteCouponType | null;
   couponValue: number | null;
   snapshot: QuoteSnapshot;
@@ -272,7 +269,7 @@ export class CheckoutComponent implements OnDestroy {
   }
 
   applyCoupon(): void {
-    if (this.couponApplying() || this.submitting()) return;
+    if (this.couponApplying() || this.submitting() || this.quoteService.loading()) return;
 
     const couponCode = this.normalizeCouponCode(this.form.controls.couponCode.value);
     const email = this.normalizeEmail(this.form.controls.email.value);
@@ -395,6 +392,7 @@ export class CheckoutComponent implements OnDestroy {
   }
 
   removeCoupon(): void {
+    if (this.submitting()) return;
     this.appliedCoupon.set(null);
     this.quoteNeedsReapply.set(false);
     this.couponFeedback.set(null);
@@ -553,6 +551,7 @@ export class CheckoutComponent implements OnDestroy {
 
   private isInventoryConflict(error: unknown): boolean {
     const status = this.httpStatus(error);
+    if (status === 409) return true;
     const body = (error as { error?: ApiErrorDTO | string } | null | undefined)?.error;
     if (body && typeof body === 'object' && body.code === 'INVENTORY_CONFLICT') return true;
 
@@ -653,22 +652,10 @@ export class CheckoutComponent implements OnDestroy {
     submittedSnapshot: QuoteSnapshot,
   ): AppliedCouponState | null {
     const code = this.normalizeCouponCode(response.couponCode ?? '');
-    const subtotal = response.subtotal;
-    const discountAmount = response.discountAmount;
-    const totalPrice = response.totalPrice;
     const couponType = response.couponType ?? null;
     const couponValue = response.couponValue ?? null;
 
     if (!code) return null;
-    if (
-      typeof subtotal !== 'number' ||
-      typeof discountAmount !== 'number' ||
-      typeof totalPrice !== 'number' ||
-      ![subtotal, discountAmount, totalPrice].every(Number.isFinite)
-    ) {
-      return null;
-    }
-    if (subtotal < 0 || discountAmount < 0 || totalPrice < 0) return null;
     if (couponType !== null && couponType !== 'PERCENTAGE' && couponType !== 'FIXED_AMOUNT') {
       return null;
     }
@@ -681,9 +668,6 @@ export class CheckoutComponent implements OnDestroy {
 
     return {
       code,
-      subtotal,
-      discountAmount,
-      totalPrice,
       couponType,
       couponValue,
       snapshot: submittedSnapshot,

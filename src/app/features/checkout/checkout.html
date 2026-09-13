@@ -196,7 +196,7 @@
                   type="button"
                   class="btn coupon-apply"
                   (click)="applyCoupon()"
-                  [disabled]="couponApplying() || submitting() || count() === 0"
+                  [disabled]="couponApplying() || quoteService.loading() || submitting() || count() === 0"
                   [attr.aria-busy]="couponApplying()"
                 >
                   @if (couponApplying()) {
