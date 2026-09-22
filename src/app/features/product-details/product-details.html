@@ -92,9 +92,9 @@
             }
 
             <div class="price">
-              <div class="current">{{ p.price | number: '1.0-0' }} {{ currencyLabel(p.currency) }}</div>
+              <div class="current">{{ p.price | number: '1.2-2' }} {{ currencyLabel(p.currency) }}</div>
               @if (hasDiscount()) {
-                <div class="old">{{ p.oldPrice! | number: '1.0-0' }} {{ currencyLabel(p.currency) }}</div>
+                <div class="old">{{ p.oldPrice! | number: '1.2-2' }} {{ currencyLabel(p.currency) }}</div>
               }
             </div>
 

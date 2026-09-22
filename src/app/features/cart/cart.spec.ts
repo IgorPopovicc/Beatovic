@@ -68,6 +68,29 @@ describe('CartComponent', () => {
     expect(component.items()[0].qty).toBe(1);
   });
 
+  it('preserves decimal unit prices through quantity changes and formats floating-point line totals', async () => {
+    for (const [amount, qty, displayed] of [[19.20, 2, '38.40'], [19.99, 3, '59.97'],
+      [19.01, 2, '38.02'], [0.07, 3, '0.21']] as const) {
+      component.cart.clear();
+      component.cart.add({ ...storedItem, qty, unitPrice: { amount, currency: 'BAM' } });
+      fixture.detectChanges();
+      expect(component.items()[0].unitPrice.amount).toBe(amount);
+      expect(fixture.nativeElement.querySelector('.row .total').textContent.trim()).toBe(`${displayed} KM`);
+      component.increase(id);
+      component.decrease(id);
+      expect(component.items()[0].unitPrice.amount).toBe(amount);
+      expect(component.items()[0].qty).toBe(qty);
+    }
+
+    tokens.setToken('checkout', 'decimal-quote-token');
+    await settle();
+    http.expectOne('/api/orders/quote').flush({ subtotal: 0.21, discountAmount: 0, totalPrice: 0.21 });
+    fixture.detectChanges();
+    expect(component.total().amount).toBe(0.21);
+    expect(fixture.nativeElement.querySelector('.sum-row.big').textContent).toContain('0.21 KM');
+    expect(fixture.nativeElement.querySelector('.free-title strong').textContent).toContain('99.78 KM');
+  });
+
   it('requotes increases and decreases, then cancels validation when the last item is removed', async () => {
     tokens.setToken('checkout', 'initial-token');
     await settle();

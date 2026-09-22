@@ -55,6 +55,15 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
+.price-notice {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .table-body .row.unavailable {
   border-left: 4px solid #e01824;
   background: rgba(224, 24, 36, 0.035);

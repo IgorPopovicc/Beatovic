@@ -1,5 +1,7 @@
+import { registerLocaleData } from '@angular/common';
+import localeBs from '@angular/common/locales/bs';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
-import { provideZonelessChangeDetection } from '@angular/core';
+import { LOCALE_ID, provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
@@ -9,6 +11,8 @@ import { CreateUnregisteredOrderDTO, OrderQuoteDTO } from '../../core/api/orders
 import { CartStore } from '../../core/cart/cart.store';
 import { TurnstileTokenService } from '../../core/security/turnstile-token.service';
 import { CheckoutComponent } from './checkout';
+
+registerLocaleData(localeBs);
 
 describe('CheckoutComponent', () => {
   let component: CheckoutComponent;
@@ -69,6 +73,7 @@ describe('CheckoutComponent', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         provideHttpClient(),
+        { provide: LOCALE_ID, useValue: 'bs' },
         { provide: OrdersApiService, useValue: ordersApi },
       ],
     }).compileComponents();
@@ -85,6 +90,24 @@ describe('CheckoutComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('renders decimal server totals and fixed coupons using the storefront locale', () => {
+    addCartItem();
+    prepareQuote();
+    ordersApi.createOrderQuote.and.returnValue(of(successfulQuote({
+      subtotal: 59.97, discountAmount: 19.20, totalPrice: 40.77,
+      couponType: 'FIXED_AMOUNT', couponValue: 19.20,
+    })));
+    component.applyCoupon();
+    fixture.detectChanges();
+
+    expect(component.total().amount).toBe(40.77);
+    expect(component.discountLabel()).toBe('19,20 KM');
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.querySelector('.totals')?.textContent).toContain('59,97');
+    expect(root.querySelector('.discount')?.textContent).toContain('-19,20 KM');
+    expect(root.querySelector('.trow.big')?.textContent).toContain('40,77 KM');
   });
 
   it('sends the current order snapshot and renders backend pricing as authoritative', () => {

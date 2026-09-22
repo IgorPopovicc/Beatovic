@@ -1,9 +1,10 @@
 // src/app/pages/checkout/checkout.ts
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatNumber } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   HostListener,
+  LOCALE_ID,
   OnDestroy,
   computed,
   effect,
@@ -64,6 +65,7 @@ type AppliedCouponState = {
   styleUrl: './checkout.scss',
 })
 export class CheckoutComponent implements OnDestroy {
+  private readonly locale = inject(LOCALE_ID);
   private readonly fb = inject(FormBuilder);
   private readonly cart = inject(CartStore);
   private readonly ordersApi = inject(OrdersApiService);
@@ -571,7 +573,7 @@ export class CheckoutComponent implements OnDestroy {
       return `${applied.couponValue}%`;
     }
     if (applied.couponType === 'FIXED_AMOUNT' && applied.couponValue !== null) {
-      return `${applied.couponValue.toFixed(2)} ${this.currencyLabel(this.subtotal().currency)}`;
+      return `${formatNumber(applied.couponValue, this.locale, '1.2-2')} ${this.currencyLabel(this.subtotal().currency)}`;
     }
     return '';
   }
