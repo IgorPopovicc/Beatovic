@@ -22,11 +22,19 @@ import {
   ProductCardComponent,
 } from '../../shared/ui/product-card/product-card';
 import { ProductImageComponent } from '../../shared/ui/product-image/product-image';
+import { BackButtonComponent } from '../../shared/ui/back-button/back-button';
 
 @Component({
   selector: 'app-product-details',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, RouterLink, ProductCardComponent, ProductImageComponent],
+  imports: [
+    CommonModule,
+    DecimalPipe,
+    RouterLink,
+    ProductCardComponent,
+    ProductImageComponent,
+    BackButtonComponent,
+  ],
   templateUrl: './product-details.html',
   styleUrl: './product-details.scss',
 })

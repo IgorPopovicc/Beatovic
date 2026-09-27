@@ -1,6 +1,23 @@
 import { CommonModule, ViewportScroller } from '@angular/common';
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, ParamMap, Params, Router, RouterLink } from '@angular/router';
+import {
+  afterRenderEffect,
+  Component,
+  computed,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  ActivatedRoute,
+  NavigationStart,
+  ParamMap,
+  Params,
+  Router,
+  RouterLink,
+  Scroll,
+} from '@angular/router';
 import { EMPTY, Subscription, combineLatest, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
@@ -118,6 +135,7 @@ export class Products implements OnInit, OnDestroy {
   private scrollAfterPageLoad = false;
   private currentQueryParams: ParamMap | null = null;
   private readonly pendingInternalQueryStates = new Set<string>();
+  private readonly restorePosition = signal<[number, number] | null>(null);
 
   filtersOpen = signal(false);
   loading = signal(true);
@@ -310,6 +328,27 @@ export class Products implements OnInit, OnDestroy {
   });
 
   visiblePages = computed(() => visiblePageRange(this.page(), this.totalPages()));
+
+  constructor() {
+    this.router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
+      if (event instanceof NavigationStart) {
+        this.restorePosition.set(null);
+        if (event.navigationTrigger === 'popstate') this.scrollAfterPageLoad = false;
+      } else if (event instanceof Scroll) {
+        this.restorePosition.set(event.position);
+      }
+    });
+
+    // Router scroll restoration can run while the asynchronous listing is still short.
+    // Reapply its own saved position once the products have actually rendered.
+    afterRenderEffect(() => {
+      const position = this.restorePosition();
+      if (position && !this.loading()) {
+        this.viewportScroller.scrollToPosition(position);
+        this.restorePosition.set(null);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.routeSub = combineLatest([this.route.paramMap, this.route.queryParamMap])

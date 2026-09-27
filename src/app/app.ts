@@ -13,6 +13,7 @@ import { CartAddToastComponent } from './shared/ui/cart-add-toast/cart-add-toast
 import { CookieConsentComponent } from './shared/ui/cookie-consent/cookie-consent';
 import { RuntimeConfigService } from './core/config/runtime-config.service';
 import { MaintenanceComponent } from './features/maintenance/maintenance';
+import { BackNavigationService } from './core/navigation/back-navigation.service';
 
 @Component({
   selector: 'app-root',
@@ -53,6 +54,8 @@ export class App {
   );
 
   constructor() {
+    // Track native entries from the first route, before a detail button is instantiated.
+    inject(BackNavigationService);
     effect(() => {
       if (this.showMaintenance()) {
         this.seo.setPage({

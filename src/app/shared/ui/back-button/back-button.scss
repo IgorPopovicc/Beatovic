@@ -1,0 +1,68 @@
+@use '../../../../styles/colors' as *;
+
+:host {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 16px;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  background: #fff;
+  color: $color-text-primary;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  touch-action: manipulation;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: #fafafa;
+      border-color: $color-text-secondary;
+    }
+  }
+
+  &:active:not(:disabled) {
+    background: $color-background;
+    transform: translateY(1px);
+  }
+
+  &:focus-visible {
+    outline: 3px solid $color-text-secondary;
+    outline-offset: 3px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

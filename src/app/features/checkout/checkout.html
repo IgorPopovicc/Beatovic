@@ -1,9 +1,7 @@
 <section class="co" aria-label="Naplata">
   <header class="co-head">
     <div class="left">
-      <button class="back" type="button" (click)="goBack()" aria-label="Nazad na korpu">
-        ← Nazad
-      </button>
+      <app-back-button fallback="/cart" [disabled]="submitting()" />
       <h1>Naplata</h1>
       <p class="muted">Popunite podatke za isporuku i pošaljite narudžbu.</p>
     </div>
@@ -277,9 +275,7 @@
           <app-turnstile-widget context="checkout" />
 
           <div class="actions">
-            <button class="btn ghost" type="button" [disabled]="submitting()" (click)="goBack()">
-              Nazad
-            </button>
+            <app-back-button fallback="/cart" [disabled]="submitting()" />
 
             <button class="btn primary" type="submit" [disabled]="!canSubmit()">
               @if (submitting()) {

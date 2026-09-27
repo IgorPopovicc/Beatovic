@@ -1,9 +1,18 @@
-import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
+import {
+  ActivatedRoute,
+  convertToParamMap,
+  Event,
+  NavigationEnd,
+  NavigationStart,
+  provideRouter,
+  Router,
+  Scroll,
+} from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ViewportScroller } from '@angular/common';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 
 import { ProductsApiService } from '../../core/api/products-api.service';
 import { CatalogApiService } from '../../core/api/catalog-api.sevice';
@@ -66,6 +75,31 @@ describe('Products', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('restores the router scroll position only after asynchronous listing content renders', async () => {
+    const events = TestBed.inject(Router).events as Subject<Event>;
+    viewportScroller.scrollToPosition.calls.reset();
+    component.loading.set(true);
+    events.next(
+      new Scroll(new NavigationEnd(2, '/products?page=5', '/products?page=5'), [0, 900], null),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(viewportScroller.scrollToPosition).not.toHaveBeenCalled();
+
+    component.loading.set(false);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(viewportScroller.scrollToPosition).toHaveBeenCalledOnceWith([0, 900]);
+
+    component.loading.set(true);
+    events.next(new Scroll(new NavigationEnd(3, '/products', '/products'), [0, 400], null));
+    events.next(new NavigationStart(4, '/product/a'));
+    component.loading.set(false);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(viewportScroller.scrollToPosition).toHaveBeenCalledTimes(1);
   });
 
   it('defaults storefront search to recommended priority sorting', () => {

@@ -32,6 +32,7 @@ import { TurnstileTokenService } from '../../core/security/turnstile-token.servi
 import { isTurnstileVerificationError } from '../../core/security/turnstile.interceptor';
 import { ProductImageComponent } from '../../shared/ui/product-image/product-image';
 import { CartQuoteService } from '../../core/cart/cart-quote.service';
+import { BackButtonComponent } from '../../shared/ui/back-button/back-button';
 
 const PHONE_REGEX = /^\+?[0-9][0-9\s/-]{5,19}$/;
 const POSTAL_CODE_REGEX = /^\d{5}$/;
@@ -59,6 +60,7 @@ type AppliedCouponState = {
     RouterLink,
     TurnstileWidgetComponent,
     ProductImageComponent,
+    BackButtonComponent,
   ],
   providers: [CartQuoteService],
   templateUrl: './checkout.html',
@@ -194,10 +196,6 @@ export class CheckoutComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  goBack() {
-    this.router.navigateByUrl('/cart');
   }
 
   @HostListener('window:focus')

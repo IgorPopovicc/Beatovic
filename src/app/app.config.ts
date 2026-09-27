@@ -32,7 +32,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(
       routes,
       withInMemoryScrolling({
-        scrollPositionRestoration: 'top',
+        scrollPositionRestoration: 'enabled',
         anchorScrolling: 'enabled',
       }),
       withRouterConfig({

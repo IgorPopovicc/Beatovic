@@ -1,0 +1,14 @@
+@if (navigation.canNavigate(fallback())) {
+  <button
+    type="button"
+    class="back-button"
+    aria-label="Nazad na prethodnu stranicu"
+    [disabled]="disabled() || navigation.pending()"
+    (click)="navigation.back(fallback())"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="m14 6-6 6 6 6M8 12h12" />
+    </svg>
+    <span>Nazad</span>
+  </button>
+}

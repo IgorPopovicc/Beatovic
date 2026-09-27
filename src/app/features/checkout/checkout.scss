@@ -42,25 +42,10 @@
     color: inherit;
     background: #fff;
   }
+}
 
-  .back {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 900;
-    font: inherit;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    user-select: none;
-    text-decoration: none;
-    color: inherit;
-    opacity: 0.85;
-  }
-  .back:hover {
-    opacity: 1;
-  }
+.actions app-back-button {
+  margin-bottom: 0;
 }
 
 .co-grid {

@@ -1,11 +1,12 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { BackButtonComponent } from '../../shared/ui/back-button/back-button';
 import { SeoService } from '../../core/seo/seo.service';
 
 @Component({
   selector: 'app-privacy-policy',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, BackButtonComponent],
   templateUrl: './privacy-policy.html',
   styleUrl: './privacy-policy.scss',
 })
