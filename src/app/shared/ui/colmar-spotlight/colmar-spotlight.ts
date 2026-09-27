@@ -17,6 +17,6 @@ export class ColmarSpotlight {
     ctaLabel: 'Istražite Colmar kolekciju',
     ctaLink: ['/products'],
     ctaQueryParams: { search: 'colmar' },
-    campaignImage: 'assets/images/home/colmar.jpg',
+    campaignImage: 'assets/images/home/colmar-banner.webp',
   } as const;
 }

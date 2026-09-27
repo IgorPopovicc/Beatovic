@@ -777,6 +777,7 @@ export class Products implements OnInit, OnDestroy {
 
     const next = {
       ...this.createDefaultRequestState(context),
+      initialCategoryFilters: state.initialCategoryFilters,
       pageSize: state.pageSize,
       sortBy: state.sortBy,
       sortOrder: state.sortOrder,
@@ -914,6 +915,10 @@ export class Products implements OnInit, OnDestroy {
     return {
       ...defaults,
       ...sort,
+      initialCategoryFilters: {
+        ...this.decodeFilterMap(queryParams.get('icf')),
+        ...defaults.initialCategoryFilters,
+      },
       categoryFilters: {
         ...defaults.categoryFilters,
         ...restoredCategoryFilters,
@@ -952,6 +957,12 @@ export class Products implements OnInit, OnDestroy {
   }
 
   private queryParamsForState(state: ProductsRequestState, context: RouteContext): Params {
+    const initialCategoryFilters = Object.fromEntries(
+      Object.entries(state.initialCategoryFilters).filter(
+        ([groupId, valueIds]) =>
+          !this.sameStringArray(valueIds, context.initialCategoryFilters[groupId] ?? []),
+      ),
+    );
     const userCategoryFilters = Object.fromEntries(
       Object.entries(state.categoryFilters).filter(
         ([groupId, valueIds]) =>
@@ -970,6 +981,7 @@ export class Products implements OnInit, OnDestroy {
       minPrice: state.minPrice,
       maxPrice: state.maxPrice,
       cf: this.encodeFilterMap(userCategoryFilters),
+      icf: this.encodeFilterMap(initialCategoryFilters),
       af: this.encodeFilterMap(state.attributeFilters),
     };
   }
@@ -1034,6 +1046,7 @@ export class Products implements OnInit, OnDestroy {
       value('minPrice'),
       value('maxPrice'),
       value('cf'),
+      value('icf'),
       value('af'),
     ]);
   }
@@ -1049,6 +1062,7 @@ export class Products implements OnInit, OnDestroy {
       value('minPrice'),
       value('maxPrice'),
       value('cf'),
+      value('icf'),
       value('af'),
     ]);
   }

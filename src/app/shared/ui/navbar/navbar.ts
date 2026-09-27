@@ -1,6 +1,7 @@
 import {
   Component,
   computed,
+  DestroyRef,
   ElementRef,
   HostListener,
   inject,
@@ -11,7 +12,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { DecimalPipe, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
-import { NavigationStart, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationStart, Params, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Subscription, forkJoin, of } from 'rxjs';
 import {
   catchError,
@@ -24,7 +25,7 @@ import {
   tap,
 } from 'rxjs/operators';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { CatalogApiService } from '../../../core/api/catalog-api.sevice';
 import { CategoryVisibilityService } from '../../../core/api/category-visibility.service';
 import { toLabel, toSlug } from '../../../core/api/catalog-slug';
@@ -64,6 +65,7 @@ export class Navbar implements OnInit, OnDestroy {
   private categoryVisibility = inject(CategoryVisibilityService);
   private cart = inject(CartStore);
   private productsApi = inject(ProductsApiService);
+  private readonly destroyRef = inject(DestroyRef);
   private navigationStartSub?: Subscription;
   private mobileMediaQuery?: MediaQueryList;
   private readonly onMobileMediaChange = (event: MediaQueryListEvent): void => {
@@ -226,9 +228,11 @@ export class Navbar implements OnInit, OnDestroy {
   private loadDynamicMenu() {
     const pol$ = this.catalogApi.getCategoryIdByName('POL');
     const kat$ = this.catalogApi.getCategoryIdByName('KATEGORIJA');
+    const football$ = this.initialSearchMenuItem('SPORT', 'FUDBAL', 'Fudbal');
+    const colmar$ = this.initialSearchMenuItem('BREND', 'COLMAR', 'Colmar', true);
 
-    forkJoin([pol$, kat$]).subscribe({
-      next: ([polId, katId]) => {
+    forkJoin([pol$, kat$, football$, colmar$]).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ([polId, katId, football, colmar]) => {
         if (!polId || !katId) {
           this.setFallbackMenu();
           return;
@@ -237,7 +241,7 @@ export class Navbar implements OnInit, OnDestroy {
         forkJoin([
           this.catalogApi.getCategoryValues(polId, { onlyRoot: true }),
           this.catalogApi.getCategoryValues(katId, { onlyRoot: true }),
-        ]).subscribe({
+        ]).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: ([polValues, rootCategories]) => {
             const toMenuValue = (
               item: ApiCategoryValue,
@@ -315,11 +319,12 @@ export class Navbar implements OnInit, OnDestroy {
               const base: MenuItem[] = [
                 { label: 'Početna', link: '/' },
                 ...genderItems,
+                ...(football ? [football] : []),
                 ...(toys
                   ? [
                       {
                         label: toys.label,
-                        dividerBefore: true,
+                        dividerBefore: !football,
                         children: [
                           {
                             key: `all:${toys.id}`,
@@ -339,7 +344,7 @@ export class Navbar implements OnInit, OnDestroy {
                   ? [
                       {
                         label: 'Ostalo',
-                        dividerBefore: !toys,
+                        dividerBefore: !toys && !football,
                         children: remaining.map((category) => ({
                           key: `all:${category.id}`,
                           id: category.id,
@@ -353,6 +358,7 @@ export class Navbar implements OnInit, OnDestroy {
                       },
                     ]
                   : []),
+                ...(colmar ? [colmar] : []),
                 { label: 'Brendovi', link: '/brands', dividerBefore: true },
               ];
 
@@ -367,6 +373,26 @@ export class Navbar implements OnInit, OnDestroy {
       },
       error: () => this.setFallbackMenu(),
     });
+  }
+
+  private initialSearchMenuItem(categoryName: string, valueName: string, label: string, featured = false) {
+    return this.catalogApi.getCategoryValuesByName(categoryName).pipe(
+      map((category): MenuItem | null => {
+        const value = category?.values.find(
+          (item) => this.normalizeMenuValue(item.value) === valueName,
+        );
+        if (!category?.categoryId?.trim() || !value?.id?.trim()) return null;
+        return {
+          label,
+          link: '/products',
+          queryParams: { icf: JSON.stringify({ [category.categoryId]: [value.id] }) },
+          dividerBefore: true,
+          featured,
+        };
+      }),
+      // Follow the menu's existing safe fallback: an unresolved entry is not a link to all products.
+      catchError(() => of(null)),
+    );
   }
 
   private setFallbackMenu(): void {
@@ -746,6 +772,8 @@ export class Navbar implements OnInit, OnDestroy {
 interface MenuItem {
   label: string;
   link?: string;
+  queryParams?: Params;
+  featured?: boolean;
   dividerBefore?: boolean;
   children?: MenuChild[];
 }

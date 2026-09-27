@@ -1,4 +1,16 @@
 <section class="catalog" aria-label="Pregled proizvoda">
+  <nav class="listing-navigation" aria-label="Navigacija kroz stranice kataloga">
+    <button
+      class="page-btn page-previous"
+      type="button"
+      (click)="goPage(page() - 1)"
+      [disabled]="page() === 1 || loading() || !!error()"
+      aria-label="Prethodna stranica"
+    >
+      <span class="page-arrow" aria-hidden="true">‹</span>
+      <span>Prethodna stranica</span>
+    </button>
+  </nav>
   <!-- MOBILE TOP BAR -->
   <div class="catalog-topbar">
     <button class="filters-btn" type="button" (click)="openFilters()">Filteri</button>

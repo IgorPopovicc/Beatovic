@@ -428,7 +428,7 @@
   font-weight: 850;
 }
 
-.menu-item.has-children .chev {
+.menu-item .chev {
   width: 20px;
   height: 20px;
   flex: 0 0 20px;
@@ -438,6 +438,39 @@
   stroke-linecap: round;
   stroke-linejoin: round;
   color: rgba(17, 17, 17, 0.58);
+}
+
+.menu-item.colmar {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid #d8ccc0;
+  background: #eee7de;
+  color: #372b26;
+  letter-spacing: 0.16em;
+}
+
+.menu-item.colmar::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 96px;
+  height: 96px;
+  right: 28px;
+  top: -23px;
+  border: 1px solid #c9b49f;
+  border-radius: 50%;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.menu-item.colmar:hover {
+  background: #e5d9cd;
+}
+
+.menu-item.colmar:focus-visible {
+  outline: 2px solid #604637;
+  outline-offset: -3px;
 }
 
 .menu-loading {

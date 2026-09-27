@@ -13,6 +13,7 @@
         [attr.aria-hidden]="i === index() ? 'false' : 'true'"
         [style.--slide-bg-desktop]="'url(' + s.desktop + ')'"
         [style.--slide-bg-mobile]="'url(' + s.mobile + ')'"
+        [style.--slide-mobile-fit]="s.mobileFit || 'cover'"
       >
         <picture class="slide-media">
           <source [srcset]="s.mobile" media="(max-width: 768px)" />

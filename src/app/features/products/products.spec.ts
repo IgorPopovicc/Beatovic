@@ -136,6 +136,35 @@ describe('Products', () => {
     expect(viewportScroller.scrollToPosition).toHaveBeenCalledTimes(1);
   });
 
+  it('uses existing pagination from the top control and cannot go below page one', () => {
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    const previous = (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('.page-previous')!;
+    const initialRequests = productsApi.search.calls.count();
+    expect(previous.disabled).toBeTrue();
+    previous.click();
+    expect(productsApi.search.calls.count()).toBe(initialRequests);
+
+    component.goPage(2);
+    fixture.detectChanges();
+    navigate.calls.reset();
+    productsApi.search.calls.reset();
+    previous.click();
+    fixture.detectChanges();
+    expect(component.page()).toBe(1);
+    expect(productsApi.search).toHaveBeenCalledTimes(1);
+    expect(productsApi.search.calls.mostRecent().args[0].page).toBe(0);
+    expect(navigate).toHaveBeenCalledOnceWith([], jasmine.objectContaining({
+      queryParams: jasmine.objectContaining({ page: null }), queryParamsHandling: 'merge',
+    }));
+    expect(previous.disabled).toBeTrue();
+
+    component.goPage(2);
+    component.loading.set(true);
+    fixture.detectChanges();
+    expect(previous.disabled).toBeTrue();
+  });
+
   it('navigates directly with numeric buttons and ignores the already active page', () => {
     const navigateSpy = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     productsApi.search.and.returnValue(
@@ -225,6 +254,55 @@ describe('Products', () => {
 });
 
 describe('Products URL state restoration', () => {
+  it('passes menu filters to initial search and preserves them through pagination, sorting and reset', async () => {
+    const football = { 'sport-runtime-id': ['football-runtime-id'] };
+    const colmar = { 'brand-runtime-id': ['colmar-runtime-id'] };
+    const queryParams = new BehaviorSubject(convertToParamMap({ icf: JSON.stringify(football) }));
+    const productsApi = jasmine.createSpyObj<ProductsApiService>('ProductsApiService', ['search']);
+    productsApi.search.and.returnValue(of({
+      variants: [], availableCategories: [], availableAttributes: [], totalResults: 500,
+    }));
+    await TestBed.configureTestingModule({
+      imports: [Products],
+      providers: [
+        provideRouter([]), provideHttpClient(), provideZonelessChangeDetection(),
+        { provide: ProductsApiService, useValue: productsApi },
+        { provide: ActivatedRoute, useValue: {
+          paramMap: of(convertToParamMap({})), queryParamMap: queryParams.asObservable(),
+        } },
+        { provide: ViewportScroller, useValue: jasmine.createSpyObj('ViewportScroller', ['scrollToPosition']) },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(Products);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.callFake((_, extras) => {
+      queryParams.next(convertToParamMap(Object.fromEntries(
+        Object.entries(extras?.queryParams ?? {}).filter(([, value]) => value !== null),
+      )));
+      return Promise.resolve(true);
+    });
+    const request = () => productsApi.search.calls.mostRecent().args[0];
+    expect(request().initialCategoryFilters).toEqual(football);
+    expect(request().categoryFilters).toEqual({});
+    component.goPage(2);
+    expect(request().page).toBe(1);
+    expect(request().initialCategoryFilters).toEqual(football);
+    expect(productsApi.search.calls.count()).toBe(2);
+    component.setSort('cijena_rastuce');
+    component.setInStock(true);
+    component.resetFilters(false);
+    expect(request().initialCategoryFilters).toEqual(football);
+    expect(request().hasActiveStock).toBeFalse();
+    expect(navigate.calls.mostRecent().args[1]?.queryParams?.['icf']).toBe(JSON.stringify(football));
+    queryParams.next(convertToParamMap({ icf: JSON.stringify(colmar) }));
+    expect(request().initialCategoryFilters).toEqual(colmar);
+    queryParams.next(convertToParamMap({ icf: JSON.stringify(football) }));
+    expect(request().initialCategoryFilters).toEqual(football);
+    queryParams.next(convertToParamMap({}));
+    expect(request().initialCategoryFilters).toEqual({});
+  });
+
   it('restores page, search, filters, sorting, and price state from query parameters', async () => {
     const productsApi = jasmine.createSpyObj<ProductsApiService>('ProductsApiService', ['search']);
     productsApi.search.and.returnValue(

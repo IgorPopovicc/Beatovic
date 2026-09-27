@@ -209,11 +209,17 @@ export class ProductDetails implements OnDestroy {
   }
 
   prev(): void {
-    this.setActive(this.activeIndex() - 1);
+    this.moveImage(-1);
   }
 
   next(): void {
-    this.setActive(this.activeIndex() + 1);
+    this.moveImage(1);
+  }
+
+  private moveImage(direction: -1 | 1): void {
+    const count = this.gallery().length;
+    if (count < 2) return;
+    this.setActive((this.activeIndex() + direction + count) % count);
   }
 
   selectSize(size: string): void {

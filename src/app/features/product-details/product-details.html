@@ -45,12 +45,14 @@
               />
             }
 
-            <button class="nav prev" type="button" (click)="prev()" aria-label="Prethodna slika">
-              ‹
-            </button>
-            <button class="nav next" type="button" (click)="next()" aria-label="Sljedeća slika">
-              ›
-            </button>
+            @if (gallery().length > 1) {
+              <button class="nav prev" type="button" (click)="prev()" aria-label="Prethodna slika">
+                ‹
+              </button>
+              <button class="nav next" type="button" (click)="next()" aria-label="Sljedeća slika">
+                ›
+              </button>
+            }
 
             @if (hasDiscount()) {
               <div class="badge">{{ percentOff() }}</div>

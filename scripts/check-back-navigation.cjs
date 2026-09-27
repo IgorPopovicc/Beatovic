@@ -14,6 +14,7 @@ const mime = {
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
+  '.webp': 'image/webp',
   '.woff2': 'font/woff2',
 };
 const server = http.createServer(async (req, res) => {
@@ -25,6 +26,8 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (!path.extname(file)) file = path.join(root, 'index.csr.html');
+    if (/gallery-test-\d+\.svg$/.test(file))
+      file = path.join(root, 'assets/images/products/no-image.svg');
     res.setHeader('Content-Type', mime[path.extname(file)] || 'application/octet-stream');
     res.end(await fs.readFile(file));
   } catch {
@@ -40,14 +43,12 @@ const variant = (id) => ({
   currency: 'BAM',
   brand: 'Planeta',
   productDescription: 'Opis proizvoda',
-  images: [
-    {
-      id: 'image',
-      displayed: true,
-      webUrl: '/assets/images/products/no-image.svg',
-      thumbnailUrl: '/assets/images/products/no-image.svg',
-    },
-  ],
+  images: Array.from({ length: id === 'a' ? 3 : 1 }, (_, index) => ({
+    id: `image-${index}`,
+    displayed: index === 0,
+    webUrl: `/assets/images/products/gallery-test-${index}.svg`,
+    thumbnailUrl: `/assets/images/products/gallery-test-${index}.svg`,
+  })),
   attributes: [
     {
       id: `size-${id}`,
@@ -143,6 +144,8 @@ let browser;
       '/products?page=5',
       `/products?${query}`,
       `/products?${String(query).replace('page=3', 'page=5')}`,
+      `/products?${String(query).replace('page=3', 'page=4')}`,
+      '/catalog/muskarci/obuca?page=2',
       '/catalog/muskarci/obuca/patike?page=5',
     ]) {
       await page.goto(base + url);
@@ -169,6 +172,44 @@ let browser;
       await page.goBack();
       await page.waitForURL(expected);
       await listingReady();
+
+      // Listing Previous is pagination, independent of detail Back and its forward entry.
+      const previous = page.locator('.page-previous');
+      const previousBox = await previous.boundingBox();
+      assert.ok(previousBox.height >= 44 && previousBox.width <= width);
+      const currentPage = Number(new URL(expected).searchParams.get('page') || 1);
+      if (currentPage === 1) {
+        assert.equal(await previous.isDisabled(), true);
+      } else {
+        if (width <= 768) await previous.tap();
+        else await previous.click();
+        await page.waitForFunction(
+          (number) =>
+            document.querySelector('.page-number.active')?.textContent.trim() === String(number),
+          currentPage - 1,
+        );
+        const previousURL = page.url();
+        assert.deepEqual(searches.at(-1), { ...request, page: request.page - 1 });
+        const before = new URL(expected);
+        const after = new URL(previousURL);
+        assert.equal(after.pathname, before.pathname);
+        for (const [key, value] of before.searchParams) {
+          if (key === 'page') continue;
+          if (key === 'af' || key === 'cf') {
+            assert.deepEqual(JSON.parse(after.searchParams.get(key)), JSON.parse(value));
+          } else assert.equal(after.searchParams.get(key), value);
+        }
+        // One entry replaces the discarded product Forward branch, with no duplicates.
+        assert.equal(await page.evaluate(() => history.length), entries + 1);
+        await page.goBack();
+        await page.waitForURL(expected);
+        await listingReady();
+        await page.goForward();
+        await page.waitForURL(previousURL);
+        await listingReady();
+        await previous.scrollIntoViewIfNeeded();
+        await page.screenshot({ path: path.join(output, `listing-previous-${width}.png`) });
+      }
     }
     // Product A -> B -> Back, refresh of B, and a new tab with an opener.
     await clickProduct();
@@ -176,11 +217,40 @@ let browser;
     await assertURL('/product/b');
     await page.reload();
     await back.waitFor();
+    assert.equal(await page.locator('.gallery .nav').count(), 0);
     await activateBack();
     await assertURL('/product/a');
     await back.waitFor();
     await page.locator('#startup-splash').waitFor({ state: 'detached' });
     await page.screenshot({ path: path.join(output, `product-${width}.png`), fullPage: false });
+
+    const selectedImage = async (index) =>
+      page.waitForFunction(
+        (number) =>
+          document.querySelector('.thumb.active')?.getAttribute('aria-label') ===
+          `Izaberite sliku ${number + 1}`,
+        index,
+      );
+    await page.getByRole('button', { name: 'Prethodna slika', exact: true }).click();
+    await selectedImage(2);
+    await page.getByRole('button', { name: 'Sljedeća slika', exact: true }).click();
+    await selectedImage(0);
+    await page.getByRole('button', { name: 'Izaberite sliku 3', exact: true }).click();
+    await selectedImage(2);
+    await page.keyboard.press('ArrowRight');
+    await selectedImage(0);
+    await page.keyboard.press('ArrowLeft');
+    await selectedImage(2);
+    if (width <= 768) {
+      await page.locator('.gallery .stage').evaluate((stage) => {
+        const touch = (x) => new Touch({ identifier: 1, target: stage, clientX: x, clientY: 100 });
+        stage.dispatchEvent(new TouchEvent('touchstart', { touches: [touch(180)], bubbles: true }));
+        stage.dispatchEvent(
+          new TouchEvent('touchend', { changedTouches: [touch(40)], bubbles: true }),
+        );
+      });
+      await selectedImage(0);
+    }
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
       page.evaluate(() => window.open('/product/b', '_blank')),
@@ -280,10 +350,36 @@ let browser;
     await page.goto(base + '/politika-privatnosti');
     await back.click();
     await assertURL('/');
+
+    // The supplied photo is the fourth hero slide, using smaller assets without unsafe crops.
+    await page.getByRole('button', { name: 'Prikaži slajd 4', exact: true }).click();
+    const colmar = page.locator('app-hero-slider .slide.active img');
+    await page.waitForFunction(() => {
+      const img = document.querySelector('app-hero-slider .slide.active img');
+      return img?.alt.includes('Colmar') && img.complete && img.naturalWidth > 0;
+    });
+    assert.ok((await colmar.getAttribute('alt')).includes('Colmar'));
+    assert.equal(await colmar.getAttribute('loading'), 'lazy');
+    assert.equal(await colmar.evaluate((img) => getComputedStyle(img).objectFit), 'contain');
+    assert.ok(
+      (await colmar.evaluate((img) => img.currentSrc)).endsWith(
+        width <= 768 ? '/colmar-banner-mobile.webp' : '/colmar-banner.webp',
+      ),
+    );
+    const hero = page.locator('app-hero-slider');
+    await hero.scrollIntoViewIfNeeded();
+    await hero.screenshot({
+      path: path.join(output, `colmar-hero-${width}.png`),
+      animations: 'disabled',
+    });
+    await page.getByRole('button', { name: 'Sljedeći banner', exact: true }).click();
+    await page.waitForFunction(() =>
+      document.querySelector('app-hero-slider .dot')?.classList.contains('active'),
+    );
     assert.deepEqual(errors, []);
     report.push({ width, touch: width <= 768, passed: true });
     console.log(
-      `PASS: ${width}px, listing state, history, refresh, new tab, fallback, keyboard, scroll${width <= 768 ? ', touch, drawer' : ''}`,
+      `PASS: ${width}px, listing Previous/state, history, refresh, new tab, fallback, keyboard, scroll, gallery loop, Colmar hero${width <= 768 ? ', touch, drawer, swipe' : ''}`,
     );
     await context.close();
   }

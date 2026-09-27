@@ -143,7 +143,7 @@
   }
 
   .slide-media img {
-    object-fit: cover;
+    object-fit: var(--slide-mobile-fit, cover);
   }
 }
 

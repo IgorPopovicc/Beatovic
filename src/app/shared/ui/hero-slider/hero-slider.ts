@@ -6,6 +6,7 @@ type Slide = {
   alt: string;
   desktop: string;
   mobile: string;
+  mobileFit?: 'cover' | 'contain';
 };
 
 @Component({
@@ -45,6 +46,12 @@ export class HeroSlider implements OnInit, OnDestroy {
       alt: 'Trening i performanse bez kompromisa',
       desktop: 'assets/images/home/hero-slide-3.jpg',
       mobile: 'assets/images/home/hero-slide-3-mobile.jpg',
+    },
+    {
+      alt: 'Colmar lifestyle kolekcija: bež trenerka i višebojne patike',
+      desktop: 'assets/images/home/colmar-banner.webp',
+      mobile: 'assets/images/home/colmar-banner-mobile.webp',
+      mobileFit: 'contain',
     },
   ];
 

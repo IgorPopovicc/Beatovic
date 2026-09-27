@@ -293,13 +293,20 @@
             <li [class.menu-divider]="item.dividerBefore">
               <a
                 class="menu-item"
+                [class.colmar]="item.featured"
                 [routerLink]="item.link"
+                [queryParams]="item.queryParams"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: item.link === '/' }"
                 ariaCurrentWhenActive="page"
                 (click)="closeMenu(false)"
               >
                 <span class="label">{{ item.label }}</span>
+                @if (item.queryParams) {
+                  <svg class="chev" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m9 5 7 7-7 7" />
+                  </svg>
+                }
               </a>
             </li>
           } @else {

@@ -6,7 +6,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Navbar } from './navbar';
 import { CatalogApiService } from '../../../core/api/catalog-api.sevice';
 import { CategoryVisibilityService } from '../../../core/api/category-visibility.service';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 describe('Navbar', () => {
   let component: Navbar;
@@ -19,7 +19,16 @@ describe('Navbar', () => {
       'getCategoryIdByName',
       'getCategoryValues',
       'getCategoryChildren',
+      'getCategoryValuesByName',
     ]);
+    catalogApi.getCategoryValuesByName.and.callFake((name) =>
+      of({
+        categoryId: name === 'SPORT' ? 'sport-runtime-id' : 'brand-runtime-id',
+        values: name === 'SPORT'
+          ? [{ id: 'football-runtime-id', value: ' fudbal ' }]
+          : [{ id: 'colmar-runtime-id', value: 'colmar' }],
+      }),
+    );
     catalogApi.getCategoryIdByName.and.callFake((name) =>
       of(name === 'POL' ? 'pol-id' : name === 'KATEGORIJA' ? 'category-id' : null),
     );
@@ -107,11 +116,71 @@ describe('Navbar', () => {
       'Žene',
       'Djeca',
       'Bebe',
+      'Fudbal',
       'Igračke',
       'Ostalo',
+      'Colmar',
       'Brendovi',
     ]);
     expect(component.menuLoading()).toBeFalse();
+  });
+
+  it('uses runtime SPORT/FUDBAL and BREND/COLMAR IDs as initial filters on normal listing links', () => {
+    expect(catalogApi.getCategoryValuesByName.calls.allArgs()).toEqual([['SPORT'], ['BREND']]);
+    const entries = [
+      ['Fudbal', { 'sport-runtime-id': ['football-runtime-id'] }],
+      ['Colmar', { 'brand-runtime-id': ['colmar-runtime-id'] }],
+    ] as const;
+    for (const [label, filters] of entries) {
+      const item = component.menu().find((entry) => entry.label === label)!;
+      expect(item.link).toBe('/products');
+      expect(JSON.parse(item.queryParams!['icf'])).toEqual(filters);
+    }
+    expect(component.menu().filter((item) => item.featured).map((item) => item.label))
+      .toEqual(['Colmar']);
+  });
+
+  for (const group of ['SPORT', 'BREND']) {
+    for (const failure of ['missing category', 'missing value', 'blank id', 'API failure']) {
+      it(`keeps existing entries usable with ${group}: ${failure}`, () => {
+        catalogApi.getCategoryValuesByName.and.callFake((name) => {
+          if (name !== group) return of({ categoryId: 'other', values: [
+            { id: 'other-value', value: name === 'SPORT' ? 'FUDBAL' : 'COLMAR' },
+          ] });
+          if (failure === 'API failure') return throwError(() => new Error('unavailable'));
+          if (failure === 'missing category') return of(null);
+          return of({ categoryId: 'group', values: failure === 'missing value'
+            ? [{ id: 'wrong-value', value: 'OTHER' }]
+            : [{ id: ' ', value: name === 'SPORT' ? 'FUDBAL' : 'COLMAR' }] });
+        });
+        (component as unknown as { loadDynamicMenu(): void }).loadDynamicMenu();
+        expect(component.menuLoading()).toBeFalse();
+        expect(component.menu().some((item) => item.label === (group === 'SPORT' ? 'Fudbal' : 'Colmar')))
+          .toBeFalse();
+        expect(component.menu().map((item) => item.label)).toContain('Igračke');
+        expect(component.menu().map((item) => item.label)).toContain('Ostalo');
+        expect(component.menu().map((item) => item.label)).toContain('Brendovi');
+      });
+    }
+  }
+
+  it('waits for asynchronous values without exposing an unfiltered link', async () => {
+    fixture.destroy();
+    const values = new Subject<{ categoryId: string; values: { id: string; value: string }[] }>();
+    catalogApi.getCategoryValuesByName.and.returnValue(values);
+    fixture = TestBed.createComponent(Navbar);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    expect(component.menuLoading()).toBeTrue();
+    expect(component.menu().some((item) => item.link === '/products')).toBeFalse();
+    (fixture.nativeElement.querySelector('.menu-btn') as HTMLElement).click();
+    values.next({ categoryId: 'sport-late-id', values: [{ id: 'football-late-id', value: 'FUDBAL' }] });
+    values.complete();
+    await fixture.whenStable();
+    expect(component.menuLoading()).toBeFalse();
+    const link = fixture.nativeElement.querySelector('a[href^="/products"]') as HTMLAnchorElement;
+    expect(JSON.parse(new URL(link.href).searchParams.get('icf')!))
+      .toEqual({ 'sport-late-id': ['football-late-id'] });
   });
 
   it('skips a known no-image candidate when a later real search image exists', () => {

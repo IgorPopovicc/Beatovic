@@ -359,6 +359,20 @@
 }
 
 /* ===== PAGINATION ===== */
+.listing-navigation {
+  margin-bottom: 12px;
+}
+
+.page-btn.page-previous {
+  width: auto;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0 14px;
+  gap: 8px;
+  font-size: 14px;
+  touch-action: manipulation;
+}
+
 .pagination {
   display: flex;
   align-items: center;
@@ -392,6 +406,11 @@
   border-color: #111;
   background: #f5f5f5;
   transform: translateY(-1px);
+}
+
+.page-btn.page-previous:active:not(:disabled) {
+  transform: translateY(1px);
+  background: #efeded;
 }
 
 .page-btn:focus-visible {
